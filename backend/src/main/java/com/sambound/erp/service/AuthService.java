@@ -60,8 +60,28 @@ public class AuthService {
                 new UsernamePasswordAuthenticationToken(request.username(), request.password())
             );
 
-            User user = userRepository.findByUsername(request.username())
+            // 使用JOIN FETCH确保加载角色和权限
+            User user = userRepository.findByUsernameWithRolesAndPermissions(request.username())
                     .orElseThrow(() -> new UsernameNotFoundException("用户不存在"));
+
+            // 检查用户状态
+            if (!user.isEnabled()) {
+                throw new BusinessException("账户已被禁用，请联系管理员");
+            }
+            if (!user.isAccountNonLocked()) {
+                throw new BusinessException("账户已被锁定，请联系管理员");
+            }
+            if (!user.isAccountNonExpired()) {
+                throw new BusinessException("账户已过期，请联系管理员");
+            }
+            if (!user.isCredentialsNonExpired()) {
+                throw new BusinessException("凭证已过期，请修改密码");
+            }
+
+            // 检查用户是否有角色
+            if (user.getRoles() == null || user.getRoles().isEmpty()) {
+                throw new BusinessException("账户未分配角色，请联系管理员");
+            }
 
             String token = jwtUtil.generateToken(user.getUsername(), user.getId());
 
@@ -92,6 +112,19 @@ public class AuthService {
                 user.getFullName(),
                 roles
             );
+        } catch (org.springframework.security.authentication.BadCredentialsException e) {
+            // 记录失败登录的审计日志
+            AuditLog auditLog = AuditLogHelper.failure("登录失败: 密码错误")
+                    .username(request.username())
+                    .userId(null)
+                    .action(AuditLogHelper.ACTION_LOGIN)
+                    .module(AuditLogHelper.MODULE_AUTH)
+                    .description("用户登录失败：密码错误")
+                    .build();
+            auditLogService.saveAuditLogAsync(auditLog);
+            
+            logger.warn("用户 {} 登录失败：密码错误", request.username());
+            throw new BusinessException("用户名或密码错误");
         } catch (Exception e) {
             // 记录失败登录的审计日志
             AuditLog auditLog = AuditLogHelper.failure("登录失败: " + e.getMessage())

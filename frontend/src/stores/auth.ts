@@ -12,7 +12,7 @@ export const useAuthStore = defineStore('auth', () => {
   // 计算属性
   const isAuthenticated = computed(() => !!token.value)
   const hasRole = computed(() => (roleName: string) => {
-    return user.value?.roles.some(role => role.name === roleName) || false
+    return user.value?.roles?.some(role => role.name === roleName) || false
   })
   const hasPermission = computed(() => (permissionName: string) => {
     if (!user.value) return false
@@ -63,9 +63,31 @@ export const useAuthStore = defineStore('auth', () => {
     try {
       user.value = await authApi.getCurrentUser()
       localStorage.setItem('user', JSON.stringify(user.value))
-    } catch (error) {
+    } catch (error: any) {
       console.error('获取用户信息失败:', error)
-      logout()
+      // 如果是 403 错误，说明账户可能被禁用或没有权限，需要重新登录
+      if (error?.response?.status === 403) {
+        ElMessage.error(error?.response?.data?.detail || '账户权限异常，请重新登录')
+        logout()
+        // 跳转到登录页
+        window.location.href = '/login'
+      } else if (error?.response?.status === 401) {
+        // 401 错误已在请求拦截器中处理
+        logout()
+      } else {
+        // 其他错误，尝试使用已保存的用户信息
+        const storedUser = localStorage.getItem('user')
+        if (storedUser) {
+          try {
+            user.value = JSON.parse(storedUser)
+          } catch (e) {
+            console.error('解析已保存的用户信息失败:', e)
+            logout()
+          }
+        } else {
+          logout()
+        }
+      }
     }
   }
 

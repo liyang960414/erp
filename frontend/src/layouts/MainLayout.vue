@@ -56,7 +56,7 @@
           text-color="#bfcbd9"
           active-text-color="#409EFF"
         >
-          <el-menu-item index="/">
+          <el-menu-item index="/home">
             <el-icon><HomeFilled /></el-icon>
             <span>{{ $t('menu.home') }}</span>
           </el-menu-item>
