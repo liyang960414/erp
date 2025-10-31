@@ -14,3 +14,7 @@ spring:
       hibernate:
         dialect: org.hibernate.dialect.PostgreSQLDialect
         format_sql: true
+
+jwt:
+  secret: mySecretKeyForJWTTokenGenerationAndValidationMustBeAtLeast256Bits
+  expiration: 86400000 # 24小时
