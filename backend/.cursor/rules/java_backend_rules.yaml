@@ -32,6 +32,28 @@ agent:
         * 对于 Repository 层，使用 `@DataJpaTest`。
         * 对于 Service 层，使用 JUnit 5 和 Mockito 进行单元测试。
 
+    ### IV. 日志与审计
+    1.  **日志框架**: 使用 SLF4J 作为日志门面，配合 Logback 或 Log4j2 作为日志实现。通过 `LoggerFactory.getLogger()` 获取 Logger 实例。
+    2.  **关键操作审计日志**:
+        * 使用 `logger.info()` 记录关键业务操作，包括：
+          - 用户认证与授权操作（登录、登出、权限变更）
+          - 数据的创建、更新、删除（Create, Update, Delete）
+          - 重要的状态变更（如订单状态、审批流程）
+          - 系统配置变更
+        * 审计日志必须包含：操作者身份、操作时间、操作类型、目标对象、操作结果
+        * 示例：`logger.info("用户 {} 创建了订单 {}", userId, orderId)`
+    3.  **调试日志**:
+        * 使用 `logger.debug()` 记录一般的调试信息，包括：
+          - 方法进入与退出
+          - 重要的中间变量值
+          - 业务逻辑执行流程
+          - 数据库查询结果数量
+        * 示例：`logger.debug("查询订单列表，参数: page={}, size={}", page, size)`
+    4.  **错误日志**:
+        * 使用 `logger.error()` 记录异常信息，必须包含完整的堆栈跟踪
+        * 示例：`logger.error("处理订单失败，订单ID: {}", orderId, exception)`
+    5.  **日志级别配置**: 生产环境建议设置为 INFO，开发环境设置为 DEBUG。敏感信息禁止记录到日志中。
+
 paths:
   # 自动将这些文件/目录包含到 Agent 的上下文
   include:

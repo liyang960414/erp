@@ -1,85 +1,71 @@
-<script setup lang="ts">
-import { RouterLink, RouterView } from 'vue-router'
-import HelloWorld from './components/HelloWorld.vue'
-</script>
-
 <template>
-  <header>
-    <img alt="Vue logo" class="logo" src="@/assets/logo.svg" width="125" height="125" />
-
-    <div class="wrapper">
-      <HelloWorld msg="You did it!" />
-
-      <nav>
-        <RouterLink to="/">Home</RouterLink>
-        <RouterLink to="/about">About</RouterLink>
-      </nav>
-    </div>
-  </header>
-
-  <RouterView />
+  <el-config-provider :locale="elementLocale">
+    <router-view />
+  </el-config-provider>
 </template>
 
-<style scoped>
-header {
-  line-height: 1.5;
-  max-height: 100vh;
+<script setup lang="ts">
+import { computed, onMounted } from 'vue'
+import { useAuthStore } from '@/stores/auth'
+import { useLocaleStore } from '@/stores/locale'
+// @ts-ignore - Element Plus locale files
+import zhCn from 'element-plus/dist/locale/zh-cn.mjs'
+// @ts-ignore - Element Plus locale files
+import vi from 'element-plus/dist/locale/vi.mjs'
+// @ts-ignore - Element Plus locale files
+import en from 'element-plus/dist/locale/en.mjs'
+// @ts-ignore - Element Plus locale files
+import id from 'element-plus/dist/locale/id.mjs'
+
+const authStore = useAuthStore()
+const localeStore = useLocaleStore()
+
+// Element Plus 的 locale 映射
+const elementPlusLocaleMap: Record<string, any> = {
+  'zh-CN': zhCn,
+  vi: vi,
+  en: en,
+  id: id,
 }
 
-.logo {
-  display: block;
-  margin: 0 auto 2rem;
+const elementLocale = computed(() => {
+  return elementPlusLocaleMap[localeStore.currentLocale] || zhCn
+})
+
+onMounted(() => {
+  // 初始化用户信息
+  authStore.initUser()
+})
+</script>
+
+<style>
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
 }
 
-nav {
+#app {
   width: 100%;
-  font-size: 12px;
-  text-align: center;
-  margin-top: 2rem;
+  height: 100vh;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial,
+    sans-serif;
+  line-height: 1.6;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
 }
 
-nav a.router-link-exact-active {
-  color: var(--color-text);
+body {
+  margin: 0;
+  padding: 0;
+  font-size: 14px;
+  color: #333;
 }
 
-nav a.router-link-exact-active:hover {
-  background-color: transparent;
-}
-
-nav a {
-  display: inline-block;
-  padding: 0 1rem;
-  border-left: 1px solid var(--color-border);
-}
-
-nav a:first-of-type {
-  border: 0;
-}
-
+/* 桌面端适配 - 最小宽度限制 */
 @media (min-width: 1024px) {
-  header {
-    display: flex;
-    place-items: center;
-    padding-right: calc(var(--section-gap) / 2);
-  }
-
-  .logo {
-    margin: 0 2rem 0 0;
-  }
-
-  header .wrapper {
-    display: flex;
-    place-items: flex-start;
-    flex-wrap: wrap;
-  }
-
-  nav {
-    text-align: left;
-    margin-left: -1rem;
-    font-size: 1rem;
-
-    padding: 1rem 0;
-    margin-top: 1rem;
+  body {
+    font-size: 14px;
   }
 }
 </style>

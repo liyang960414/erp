@@ -1,0 +1,42 @@
+export default {
+  auditLog: '审计日志',
+  username: '用户名',
+  usernamePlaceholder: '请输入用户名',
+  action: '操作类型',
+  actionPlaceholder: '请选择操作类型',
+  module: '模块',
+  modulePlaceholder: '请选择模块',
+  status: '状态',
+  statusPlaceholder: '请选择状态',
+  statusSuccess: '成功',
+  statusFailure: '失败',
+  startTime: '开始时间',
+  startTimePlaceholder: '请选择开始时间',
+  endTime: '结束时间',
+  endTimePlaceholder: '请选择结束时间',
+  resourceType: '资源类型',
+  description: '操作描述',
+  ipAddress: 'IP地址',
+  createdAt: '操作时间',
+  errorDetails: '错误详情',
+  viewError: '查看错误',
+  close: '关闭',
+
+  // 操作类型
+  actionLogin: '用户登录',
+  actionRegister: '用户注册',
+  actionCreateUser: '创建用户',
+  actionUpdateUser: '更新用户',
+  actionDeleteUser: '删除用户',
+  actionChangePassword: '修改密码',
+  actionCreateRole: '创建角色',
+  actionUpdateRole: '更新角色',
+  actionDeleteRole: '删除角色',
+
+  // 模块类型
+  moduleAuth: '认证模块',
+  moduleUserManagement: '用户管理',
+  moduleRoleManagement: '角色管理',
+  modulePermissionManagement: '权限管理',
+}
+

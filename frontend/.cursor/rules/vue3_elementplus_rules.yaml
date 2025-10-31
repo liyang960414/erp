@@ -29,6 +29,117 @@ agent:
     1.  **代码风格**: 遵循项目中 ESLint 和 Prettier 的配置。
     2.  **命名**: 组件使用 PascalCase (如 `UserForm.vue`)，文件和目录使用 kebab-case (如 `user-form.vue`)。
 
+    ### IV. 国际化 (i18n) 规范
+    1.  **库选择**: 必须使用 `vue-i18n` 库实现国际化功能。
+    2.  **支持的语言**: 项目必须支持以下四种语言：
+        * 中文 (zh-CN) - 简体中文
+        * 越南文 (vi) - Tiếng Việt
+        * 英文 (en) - English
+        * 印度尼西亚语 (id) - Bahasa Indonesia
+    3.  **语言文件组织**:
+        * 语言文件存放在 `src/locales/` 目录下。
+        * 按模块组织语言文件，如 `src/locales/zh-CN/common.ts`、`src/locales/en/user.ts`。
+        * 每种语言必须有对应的目录结构：`src/locales/{locale}/`。
+        * 推荐的结构：
+          ```
+          src/locales/
+          ├── index.ts              # i18n 实例配置和导出
+          ├── zh-CN/               # 中文
+          │   ├── common.ts        # 通用翻译
+          │   ├── user.ts          # 用户相关翻译
+          │   └── index.ts         # 统一导出
+          ├── vi/                  # 越南文
+          │   ├── common.ts
+          │   ├── user.ts
+          │   └── index.ts
+          ├── en/                  # 英文
+          │   ├── common.ts
+          │   ├── user.ts
+          │   └── index.ts
+          └── id/                  # 印度尼西亚语
+              ├── common.ts
+              ├── user.ts
+              └── index.ts
+          ```
+    4.  **在组件中使用**:
+        * 模板中使用 `$t()` 函数：`<el-button>{{ $t('common.save') }}</el-button>`
+        * 在 `<script setup>` 中使用 `useI18n()`：
+          ```typescript
+          import { useI18n } from 'vue-i18n'
+          const { t } = useI18n()
+          const message = t('common.welcome')
+          ```
+        * 在脚本中动态切换语言：`const { locale } = useI18n(); locale.value = 'zh-CN'`
+    5.  **Element Plus 国际化**:
+        * Element Plus 组件必须与 vue-i18n 的 locale 同步。
+        * 在 `main.ts` 中配置 Element Plus 的 locale：
+          ```typescript
+          import zhCn from 'element-plus/dist/locale/zh-cn.mjs'
+          import vi from 'element-plus/dist/locale/vi.mjs'
+          import en from 'element-plus/dist/locale/en.mjs'
+          import id from 'element-plus/dist/locale/id.mjs'
+          ```
+    6.  **类型安全**:
+        * 使用 TypeScript 定义翻译键的类型，确保类型安全。
+        * 推荐使用 `vue-i18n` 的类型定义特性。
+    7.  **默认语言**:
+        * 默认语言设置为中文 (zh-CN)。
+        * 语言偏好应保存在 localStorage 中，以便持久化。
+    8.  **命名规范**:
+        * 翻译键使用点分隔的命名空间，如 `common.save`、`user.name`。
+        * 键名使用 camelCase 或 kebab-case，保持一致性。
+    9.  **硬编码文本处理**:
+        * **严禁**在模板或脚本中硬编码任何用户可见的文本。
+        * 所有用户可见的文本都必须使用 `$t()` 或 `t()` 函数从语言文件中获取。
+        * 路由 meta 中的 title 也应使用国际化：`meta: { title: t('route.home') }`
+
+    ### V. 桌面端适配规范
+    1.  **目标设备**: 项目主要针对桌面端（PC 端）进行优化，屏幕宽度 ≥ 1024px。
+    2.  **布局容器**:
+        * 主要内容区域应使用固定最大宽度或响应式容器，推荐使用 `max-width: 1200px` 或 `1400px`。
+        * 使用 `<el-container>`、`<el-header>`、`<el-main>`、`<el-aside>`、`<el-footer>` 构建页面布局。
+        * 容器应居中显示：`margin: 0 auto` 或使用 Flexbox/Grid 居中。
+    3.  **响应式断点**:
+        * 主要断点参考：`≥ 1024px`（桌面端）、`≥ 768px`（平板，可选支持）、`< 768px`（移动端，可选支持）。
+        * 使用 Element Plus 的响应式工具或 CSS 媒体查询：`@media (min-width: 1024px)`。
+        * 优先保证桌面端体验，移动端可做降级处理。
+    4.  **表格和数据展示**:
+        * 桌面端优先使用 `<el-table>` 展示数据，充分利用屏幕宽度。
+        * 表格列可以根据需要固定宽度或自适应：`<el-table-column width="150">` 或 `min-width`。
+        * 支持横向滚动，避免在小屏幕上强制压缩列宽。
+        * 使用 `<el-pagination>` 进行分页，桌面端每页显示数量可适当增加（如 20、50、100）。
+    5.  **表单布局**:
+        * 使用 `<el-form>` 的 `inline` 或 `label-position` 属性，充分利用桌面端横向空间。
+        * 多列表单布局：使用 `<el-row>` 和 `<el-col :span="12">` 实现多列布局。
+        * 表单标签宽度：桌面端可设置固定宽度，如 `label-width="120px"`。
+    6.  **对话框和抽屉**:
+        * 使用 `<el-dialog>` 时，桌面端可设置合适的宽度：`width="600px"` 或 `width="800px"`。
+        * 使用 `<el-drawer>` 时，桌面端可设置 `size="400px"` 或 `50%`。
+        * 确保对话框和抽屉在桌面端居中显示且易于操作。
+    7.  **交互方式优化**:
+        * 优化鼠标悬停效果：使用 `hover` 状态提供视觉反馈。
+        * 支持键盘快捷键操作，提升桌面端操作效率。
+        * 使用 `<el-tooltip>` 提供额外的信息提示。
+        * 按钮间距和点击区域：桌面端按钮间距可适当增大，确保易点击。
+    8.  **导航和菜单**:
+        * 桌面端优先使用水平导航菜单：`<el-menu mode="horizontal">`。
+        * 侧边栏菜单：使用 `<el-menu>` 配合 `<el-aside>`，可设置 `width="200px"` 或更宽。
+        * 面包屑导航：使用 `<el-breadcrumb>` 显示页面路径。
+    9.  **字体和间距**:
+        * 桌面端可适当增大字体大小，提升可读性。
+        * 使用合适的行高和间距：`line-height: 1.6`，`padding`、`margin` 使用 `8px` 的倍数。
+        * 使用 Element Plus 的间距工具类或 CSS 变量。
+    10. **栅格系统**:
+        * 使用 `<el-row>` 和 `<el-col>` 进行布局，桌面端可使用 24 列栅格系统。
+        * 推荐使用 `:span` 属性控制列宽，如 `<el-col :span="6">`（占 1/4 宽度）。
+    11. **组件尺寸**:
+        * 桌面端优先使用默认尺寸或 `large` 尺寸的组件。
+        * 使用 `size="large"` 或 `size="default"` 确保桌面端良好的视觉效果。
+    12. **性能优化**:
+        * 桌面端可加载更多数据，但需注意性能。
+        * 使用虚拟滚动（如 `<el-table>` 的虚拟滚动）处理大量数据。
+        * 图片和资源优化，确保桌面端加载速度。
+
 paths:
   # 自动将这些文件/目录包含到 Agent 的上下文，确保它理解项目结构和配置
   include:
@@ -36,10 +147,13 @@ paths:
     - src/**/*.ts
     - src/router/**/*.ts
     - src/views/**/*.vue
+    - src/locales/**/*.ts
     - package.json
     - tsconfig.json
 
-# 当 Agent 在 Vue 文件上工作时，提醒它注意 Element Plus 的使用
+# 当 Agent 在相关文件上工作时，提醒它注意相关规范
 auto_attached:
   - path: src/**/*.vue
-    prompt_modifier: "Ensure the generated Vue component strictly utilizes Element Plus components according to best practices (e.g., <el-button>, <el-form>)."
+    prompt_modifier: "Ensure the generated Vue component strictly utilizes Element Plus components according to best practices (e.g., <el-button>, <el-form>). All user-visible text MUST use $t() or t() function from vue-i18n. Never hardcode any text. The component should be optimized for desktop/PC devices (≥1024px width), with appropriate layout containers, responsive breakpoints, and desktop-friendly interactions."
+  - path: src/locales/**/*.ts
+    prompt_modifier: "Ensure translations are provided for all four supported languages: zh-CN (Chinese), vi (Vietnamese), en (English), and id (Indonesian). Maintain consistent key naming and structure across all language files."
