@@ -4,8 +4,7 @@ import com.sambound.erp.entity.AuditLog;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
-import org.springframework.data.jpa.repository.Query;
-import org.springframework.data.repository.query.Param;
+import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 import org.springframework.stereotype.Repository;
 
 import java.time.LocalDateTime;
@@ -14,7 +13,7 @@ import java.time.LocalDateTime;
  * 审计日志Repository
  */
 @Repository
-public interface AuditLogRepository extends JpaRepository<AuditLog, Long> {
+public interface AuditLogRepository extends JpaRepository<AuditLog, Long>, JpaSpecificationExecutor<AuditLog> {
     
     /**
      * 根据用户名查询审计日志
@@ -42,27 +41,6 @@ public interface AuditLogRepository extends JpaRepository<AuditLog, Long> {
     Page<AuditLog> findByCreatedAtBetweenOrderByCreatedAtDesc(
             LocalDateTime startTime, 
             LocalDateTime endTime, 
-            Pageable pageable
-    );
-    
-    /**
-     * 根据多个条件查询审计日志
-     */
-    @Query("SELECT al FROM AuditLog al WHERE " +
-           "(:username IS NULL OR al.username = :username) AND " +
-           "(:action IS NULL OR al.action = :action) AND " +
-           "(:module IS NULL OR al.module = :module) AND " +
-           "(:status IS NULL OR al.status = :status) AND " +
-           "(:startTime IS NULL OR al.createdAt >= :startTime) AND " +
-           "(:endTime IS NULL OR al.createdAt <= :endTime) " +
-           "ORDER BY al.createdAt DESC")
-    Page<AuditLog> findByMultipleConditions(
-            @Param("username") String username,
-            @Param("action") String action,
-            @Param("module") String module,
-            @Param("status") String status,
-            @Param("startTime") LocalDateTime startTime,
-            @Param("endTime") LocalDateTime endTime,
             Pageable pageable
     );
 }

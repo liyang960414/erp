@@ -52,7 +52,7 @@ request.interceptors.response.use(
           router.push('/login')
           break
         case 403:
-          message = '没有权限访问'
+          message = res.detail || res.title || '没有权限访问，请联系管理员'
           break
         case 404:
           message = '请求的资源不存在'

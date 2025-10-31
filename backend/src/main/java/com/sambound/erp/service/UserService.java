@@ -17,7 +17,8 @@ public class UserService {
     }
 
     public User findByUsername(String username) {
-        return userRepository.findByUsername(username)
+        // 使用JOIN FETCH确保加载角色和权限，用于返回给前端
+        return userRepository.findByUsernameWithRolesAndPermissions(username)
                 .orElseThrow(() -> new BusinessException("用户不存在"));
     }
 

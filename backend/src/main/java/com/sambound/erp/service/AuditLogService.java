@@ -3,15 +3,21 @@ package com.sambound.erp.service;
 import com.sambound.erp.dto.AuditLogResponse;
 import com.sambound.erp.entity.AuditLog;
 import com.sambound.erp.repository.AuditLogRepository;
+import jakarta.persistence.criteria.Predicate;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.concurrent.CompletableFuture;
 
 /**
@@ -120,6 +126,7 @@ public class AuditLogService {
 
     /**
      * 多条件查询审计日志
+     * 使用 Specification API 构建动态查询，避免 PostgreSQL 参数类型推断问题
      */
     public Page<AuditLogResponse> getAuditLogsByConditions(
             String username,
@@ -129,8 +136,55 @@ public class AuditLogService {
             LocalDateTime startTime,
             LocalDateTime endTime,
             Pageable pageable) {
-        return auditLogRepository.findByMultipleConditions(
-                username, action, module, status, startTime, endTime, pageable)
+        
+        Specification<AuditLog> spec = (root, query, cb) -> {
+            List<Predicate> predicates = new ArrayList<>();
+            
+            // 用户名条件
+            if (username != null && !username.trim().isEmpty()) {
+                predicates.add(cb.equal(root.get("username"), username));
+            }
+            
+            // 操作类型条件
+            if (action != null && !action.trim().isEmpty()) {
+                predicates.add(cb.equal(root.get("action"), action));
+            }
+            
+            // 模块条件
+            if (module != null && !module.trim().isEmpty()) {
+                predicates.add(cb.equal(root.get("module"), module));
+            }
+            
+            // 状态条件
+            if (status != null && !status.trim().isEmpty()) {
+                predicates.add(cb.equal(root.get("status"), status));
+            }
+            
+            // 开始时间条件
+            if (startTime != null) {
+                predicates.add(cb.greaterThanOrEqualTo(root.get("createdAt"), startTime));
+            }
+            
+            // 结束时间条件
+            if (endTime != null) {
+                predicates.add(cb.lessThanOrEqualTo(root.get("createdAt"), endTime));
+            }
+            
+            return cb.and(predicates.toArray(new Predicate[0]));
+        };
+        
+        // 构建排序，如果原 Pageable 没有排序，则使用默认排序
+        Pageable sortedPageable = pageable;
+        if (!pageable.getSort().isSorted()) {
+            Sort sort = Sort.by(Sort.Direction.DESC, "createdAt", "id");
+            sortedPageable = PageRequest.of(
+                    pageable.getPageNumber(),
+                    pageable.getPageSize(),
+                    sort
+            );
+        }
+        
+        return auditLogRepository.findAll(spec, sortedPageable)
                 .map(this::convertToResponse);
     }
 
