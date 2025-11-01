@@ -97,18 +97,16 @@
 			<artifactId>commons-csv</artifactId>
 			<version>1.10.0</version>
 		</dependency>
-		
-		<!-- Excel解析库 -->
-		<dependency>
-			<groupId>org.apache.poi</groupId>
-			<artifactId>poi</artifactId>
-			<version>5.2.5</version>
-		</dependency>
-		<dependency>
-			<groupId>org.apache.poi</groupId>
-			<artifactId>poi-ooxml</artifactId>
-			<version>5.2.5</version>
-		</dependency>
+
+	
+	<!-- FastExcel 流式读取库 -->
+	<!-- 注意：fastexcel 依赖 ehcache 3.11.1，该版本在 Java 25 中会触发废弃警告 -->
+	<!-- 已在 Spring Boot Maven 插件中配置 JVM 参数抑制警告 -->
+	<dependency>
+        <groupId>cn.idev.excel</groupId>
+        <artifactId>fastexcel</artifactId>
+		<version>1.3.0</version>
+	</dependency>
 </dependencies>
 
 	<build>
@@ -135,6 +133,10 @@
 							<artifactId>lombok</artifactId>
 						</exclude>
 					</excludes>
+					<!-- 添加 JVM 参数抑制 Java 25 中 sun.misc.Unsafe 废弃警告 -->
+					<jvmArguments>
+						--sun-misc-unsafe-memory-access=allow
+					</jvmArguments>
 				</configuration>
 			</plugin>
 		</plugins>

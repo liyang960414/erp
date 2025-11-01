@@ -27,7 +27,7 @@ spring:
   jpa:
     hibernate:
       ddl-auto: update
-    show-sql: true
+    show-sql: false
     properties:
       hibernate:
         dialect: org.hibernate.dialect.PostgreSQLDialect
@@ -35,11 +35,19 @@ spring:
   servlet:
     multipart:
       enabled: true
-      max-file-size: 50MB
-      max-request-size: 50MB
+      max-file-size: 200MB
+      max-request-size: 200MB
+      file-size-threshold: 10MB
 
 server:
-  connection-timeout: 300000 # 5分钟连接超时
+  connection-timeout: 600000 # 10分钟连接超时（大文件上传需要更长时间）
+  tomcat:
+    max-threads: 200
+    accept-count: 100
+    connection-timeout: 600000 # 10分钟连接超时
+    max-connections: 10000
+    max-http-post-size: 209715200 # 200MB (字节)
+    max-swallow-size: 209715200 # 200MB (字节)
 
 jwt:
   secret: mySecretKeyForJWTTokenGenerationAndValidationMustBeAtLeast256Bits
@@ -48,8 +56,8 @@ jwt:
 logging:
   level:
     root: INFO
-    com.sambound.erp: INFO
+    com.sambound.erp: DEBUG
     # 可选：启用 HikariCP 调试日志以监控连接池状态
     # com.zaxxer.hikari: DEBUG
   file:
-    path: ./
+    path: ./target/logs/

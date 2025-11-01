@@ -73,6 +73,12 @@ const router = createRouter({
           component: () => import('@/views/UnitManagementView.vue'),
           meta: { title: '单位管理', requiresAuth: true },
         },
+        {
+          path: 'basic-info/materials',
+          name: 'materials',
+          component: () => import('@/views/MaterialManagementView.vue'),
+          meta: { title: '物料管理', requiresAuth: true },
+        },
       ],
     },
   ],

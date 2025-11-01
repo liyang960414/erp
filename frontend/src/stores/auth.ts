@@ -65,39 +65,45 @@ export const useAuthStore = defineStore('auth', () => {
       localStorage.setItem('user', JSON.stringify(user.value))
     } catch (error: any) {
       console.error('获取用户信息失败:', error)
-      // 如果是 403 错误，说明账户可能被禁用或没有权限，需要重新登录
-      if (error?.response?.status === 403) {
-        ElMessage.error(error?.response?.data?.detail || '账户权限异常，请重新登录')
-        logout()
-        // 跳转到登录页
-        window.location.href = '/login'
-      } else if (error?.response?.status === 401) {
-        // 401 错误已在请求拦截器中处理
-        logout()
-      } else {
-        // 其他错误，尝试使用已保存的用户信息
-        const storedUser = localStorage.getItem('user')
-        if (storedUser) {
-          try {
-            user.value = JSON.parse(storedUser)
-          } catch (e) {
-            console.error('解析已保存的用户信息失败:', e)
-            logout()
-          }
-        } else {
-          logout()
+      const status = error?.response?.status
+      
+      // 401和403错误已在请求拦截器中统一处理（会自动调用logout和跳转）
+      if (status === 401 || status === 403) {
+        // 直接调用logout清除状态（请求拦截器已经处理了跳转）
+        await logout()
+        return
+      }
+      
+      // 其他错误，尝试使用已保存的用户信息
+      const storedUser = localStorage.getItem('user')
+      if (storedUser) {
+        try {
+          user.value = JSON.parse(storedUser)
+        } catch (e) {
+          console.error('解析已保存的用户信息失败:', e)
+          await logout()
         }
+      } else {
+        await logout()
       }
     }
   }
 
   // 登出
   async function logout() {
+    // 先清除状态，确保即使API调用失败也能正常退出
     token.value = ''
     user.value = null
     localStorage.removeItem('token')
     localStorage.removeItem('user')
-    await authApi.logout()
+    
+    // 尝试调用登出API，但不阻塞退出流程
+    try {
+      await authApi.logout()
+    } catch (error) {
+      // 即使登出API调用失败（比如网络问题或token已失效），也不影响退出流程
+      console.warn('登出API调用失败，但已清除本地状态:', error)
+    }
   }
 
   // 初始化用户信息

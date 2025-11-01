@@ -1,19 +1,19 @@
-FBillHead(BD_MATERIAL),FNumber,FName#2052,FSpecification#2052,FMnemonicCode,FOldNumber,FDescription#2052,FMaterialGroup,FMaterialGroup#Name,F_PSWZ_DirectLCost,F_PSWZ_OutsourcingFee,F_PSWZ_StandardCost,F_PSWZ_OutsourcingMCost,*Split*1,SubHeadEntity,FBARCODE,FErpClsID,FBaseUnitId,FBaseUnitId#Name
-*ÎïÁÏ(ÊµÌåÐòºÅ),(ÎïÁÏ)±àÂë,*(ÎïÁÏ)Ãû³Æ#ÖÐÎÄ(¼òÌå),(ÎïÁÏ)¹æ¸ñÐÍºÅ#ÖÐÎÄ(¼òÌå),(ÎïÁÏ)Öú¼ÇÂë,(ÎïÁÏ)¾ÉÎïÁÏ±àÂë,(ÎïÁÏ)ÃèÊö#ÖÐÎÄ(¼òÌå),(ÎïÁÏ)ÎïÁÏ·Ö×é#±àÂë,(ÎïÁÏ)ÎïÁÏ·Ö×é#Ãû³Æ,(ÎïÁÏ)Ö±½ÓÈË¹¤·Ñ,(ÎïÁÏ)Î¯Íâ¼Ó¹¤·Ñ,(ÎïÁÏ)±ê×¼³É±¾,(ÎïÁÏ)Î¯Íâ²ÄÁÏ·Ñ,ÊµÌå¼ä¸ôÁÐ,*»ù±¾(ÊµÌåÐòºÅ),(»ù±¾)ÌõÂë,*(»ù±¾)ÎïÁÏÊôÐÔ,*(»ù±¾)»ù±¾µ¥Î»#±àÂë,(»ù±¾)»ù±¾µ¥Î»#Ãû³Æ
-150853,01.01XXX757-01XXXR,ABSÆæÃÀ757 Ô­ÁÏ/nguy¨ºn li?u nh?a abs  757 k? m?,ABS757(Ì¨Íå)/ABS757 (?¨¤i Loan), , , ,1,Ô­ÁÏÀà,,,21,,,110018,,Íâ¹º,kg,Ç§¿Ë
-150855,01.01XXX757-02XXXR,ABSÆæÃÀ757 Ë®¿ÚÁÏ,ABS757Ë®¿Ú, , , ,1,Ô­ÁÏÀà,,,,,,110019,,Íâ¹º,kg,Ç§¿Ë
-150856,01.01XXX920-01XXXR,Í¸Ã÷MABS920Ô­ÁÏ/nguy¨ºn li?u nh?a mabs920 trong su?t,Í¸Ã÷MABS920/MABS920 trong su?t, , , ,1,Ô­ÁÏÀà,,,18.5,,,110020,,Íâ¹º,kg,Ç§¿Ë
-392473,03.H52374XX-XXXXXR,ROHS É«·Û/b?t m¨¤u,"H-52374ºÚÉ«BLACK MATTE£¬ 303¿Ë/H-52374 M?U ?EN, 303g", , , ,3,É«·ÛÀà,,,,,,152368,,Íâ¹º,ST,ST
-392474,05.P240063X-XXXXXR,ROHS ÓÍÆá/s?n,"Ó²½ºÅçÓÍPMS10261 ,P-240063À¶É«  (µ×É«black matte ºÚÉ«)/Ti¨ºm nh?a c?ng PMS10261, P-240063 m¨¤u xanh (n?n ?en m?)", , , ,5,ÅçÓÍÓÍÆáÀà,,,,,,152369,,Íâ¹º,L,Éý
-392475,05.P240062X-XXXXXR,ROHS ÓÍÆá/s?n,"Ó²½ºÅçÓÍPMS10394c ,P-240062Ç³»ÒÉ«  (µ×É«black matte ºÚÉ«)/Ti¨ºm nh?a c?ng PMS10394c, P-240062 m¨¤u x¨¢m nh?t (n?n ?en m?)", , , ,5,ÅçÓÍÓÍÆáÀà,,,,,,152370,,Íâ¹º,L,Éý
-392479,05.A266521X-XXXXXR,ROHS ÓÍÆá/s?n,"Èí½ºÅçÓÍPMS10261c,A-266521À¶É«(µ×É«black matte ºÚÉ«)/Ti¨ºm nh?a m?m PMS10261c, A-266521 m¨¤u xanh (n?n ?en m? ?en)", , , ,5,ÅçÓÍÓÍÆáÀà,,,,,,152374,,Íâ¹º,L,Éý
-392480,01.03NPF100-01XXXR,»·±£PVC100¶È±¾°×Ô­ÁÏ/nguy¨ºn li?u nh?a PVC100 ??c,(±¦¶¦)NPF100A/QAH812#(Rohs+Non-Phthalate), , , ,1,Ô­ÁÏÀà,,,13,,,152375,,Íâ¹º,kg,Ç§¿Ë
-392495,03.S81777XX-XXXXXR,ROHS É«·Û/b?t m¨¤u,"S-81777×ØÉ«pms730£¬92¿Ë¡£/S-81777 n?u pms730, 92 gram.", , , ,3,É«·ÛÀà,,,,,,152386,,Íâ¹º,ST,ST
-392500,03.H52372XX-XXXXXR,ROHS É«·Û/b?t m¨¤u,H-52372»Ò°×É«PMS10389C£¬80¿Ë/H-52372 PMS10389C, , , ,3,É«·ÛÀà,,,,,,152391,,Íâ¹º,ST,ST
-392551,03.H52370XX-XXXXXR,ROHS É«·Û/b?t m¨¤u,H-52370»Ò°×É«PMS COOL GREY 1C£¬126¿Ë, , , ,3,É«·ÛÀà,,,,,,152438,,Íâ¹º,ST,ST
-392735,00.010385PC-XXXXXR,385 PC½ºË®,385 PC½ºË®, , , ,0,¸¨ÁÏÀà,,,108.71,,,152501,,Íâ¹º,kg,Ç§¿Ë
-392789,00.01000066-XXXXXR,DOG66½ºË®/KEO DOG 66,DOG 66, , , ,0,¸¨ÁÏÀà,,,,,,152534,,Íâ¹º,kg,Ç§¿Ë
-393073,03.YLF99572-XXXXXR,ROHS É«·Û/B?t m¨¤u,YLF-99572ºìÉ«pms186c£¬70¿Ë, , , ,3,É«·ÛÀà,,,,,,152683,,Íâ¹º,kg,Ç§¿Ë
-393074,03.YLF99570-XXXXXR,ROHS É«·Û/B?t m¨¤u,YLF-99570ºÚÉ«BLACK MATTE£¬250  ¿Ë, , , ,3,É«·ÛÀà,,,,,,152684,,Íâ¹º,kg,Ç§¿Ë
-393075,03.YLF99571-XXXXXR,ROHS É«·Û/B?t m¨¤u,YLF-99571ºÚÉ«BLACK MATTE£¬ 30 ¿Ë, , , ,3,É«·ÛÀà,,,,,,152685,,Íâ¹º,kg,Ç§¿Ë
-991308,PF.004285,? c?ng ADATA 512G_ASU650SS- 512GT-R, , , , ,PF001,°ì¹«ÓÃÆ·,,,,,,285374,,Íâ¹º,Pcs,Pcs
+ï»¿FBillHead(BD_MATERIAL),FNumber,FName#2052,FSpecification#2052,FMnemonicCode,FOldNumber,FDescription#2052,FMaterialGroup,FMaterialGroup#Name,F_PSWZ_DirectLCost,F_PSWZ_OutsourcingFee,F_PSWZ_StandardCost,F_PSWZ_OutsourcingMCost,*Split*1,SubHeadEntity,FBARCODE,FErpClsID,FBaseUnitId,FBaseUnitId#Name
+*ç‰©æ–™(å®žä½“åºå·),(ç‰©æ–™)ç¼–ç ,*(ç‰©æ–™)åç§°#ä¸­æ–‡(ç®€ä½“),(ç‰©æ–™)è§„æ ¼åž‹å·#ä¸­æ–‡(ç®€ä½“),(ç‰©æ–™)åŠ©è®°ç ,(ç‰©æ–™)æ—§ç‰©æ–™ç¼–ç ,(ç‰©æ–™)æè¿°#ä¸­æ–‡(ç®€ä½“),(ç‰©æ–™)ç‰©æ–™åˆ†ç»„#ç¼–ç ,(ç‰©æ–™)ç‰©æ–™åˆ†ç»„#åç§°,(ç‰©æ–™)ç›´æŽ¥äººå·¥è´¹,(ç‰©æ–™)å§”å¤–åŠ å·¥è´¹,(ç‰©æ–™)æ ‡å‡†æˆæœ¬,(ç‰©æ–™)å§”å¤–ææ–™è´¹,å®žä½“é—´éš”åˆ—,*åŸºæœ¬(å®žä½“åºå·),(åŸºæœ¬)æ¡ç ,*(åŸºæœ¬)ç‰©æ–™å±žæ€§,*(åŸºæœ¬)åŸºæœ¬å•ä½#ç¼–ç ,(åŸºæœ¬)åŸºæœ¬å•ä½#åç§°
+150853,01.01XXX757-01XXXR,ABSå¥‡ç¾Ž757 åŽŸæ–™/nguyÃªn li?u nh?a abs  757 k? m?,ABS757(å°æ¹¾)/ABS757 (?Ã i Loan), , , ,1,åŽŸæ–™ç±»,,,21,,,110018,,å¤–è´­,kg,åƒå…‹
+150855,01.01XXX757-02XXXR,ABSå¥‡ç¾Ž757 æ°´å£æ–™,ABS757æ°´å£, , , ,1,åŽŸæ–™ç±»,,,,,,110019,,å¤–è´­,kg,åƒå…‹
+150856,01.01XXX920-01XXXR,é€æ˜ŽMABS920åŽŸæ–™/nguyÃªn li?u nh?a mabs920 trong su?t,é€æ˜ŽMABS920/MABS920 trong su?t, , , ,1,åŽŸæ–™ç±»,,,18.5,,,110020,,å¤–è´­,kg,åƒå…‹
+392473,03.H52374XX-XXXXXR,ROHS è‰²ç²‰/b?t mÃ u,"H-52374é»‘è‰²BLACK MATTEï¼Œ 303å…‹/H-52374 M?U ?EN, 303g", , , ,3,è‰²ç²‰ç±»,,,,,,152368,,å¤–è´­,ST,ST
+392474,05.P240063X-XXXXXR,ROHS æ²¹æ¼†/s?n,"ç¡¬èƒ¶å–·æ²¹PMS10261 ,P-240063è“è‰²  (åº•è‰²black matte é»‘è‰²)/TiÃªm nh?a c?ng PMS10261, P-240063 mÃ u xanh (n?n ?en m?)", , , ,5,å–·æ²¹æ²¹æ¼†ç±»,,,,,,152369,,å¤–è´­,L,å‡
+392475,05.P240062X-XXXXXR,ROHS æ²¹æ¼†/s?n,"ç¡¬èƒ¶å–·æ²¹PMS10394c ,P-240062æµ…ç°è‰²  (åº•è‰²black matte é»‘è‰²)/TiÃªm nh?a c?ng PMS10394c, P-240062 mÃ u xÃ¡m nh?t (n?n ?en m?)", , , ,5,å–·æ²¹æ²¹æ¼†ç±»,,,,,,152370,,å¤–è´­,L,å‡
+392479,05.A266521X-XXXXXR,ROHS æ²¹æ¼†/s?n,"è½¯èƒ¶å–·æ²¹PMS10261c,A-266521è“è‰²(åº•è‰²black matte é»‘è‰²)/TiÃªm nh?a m?m PMS10261c, A-266521 mÃ u xanh (n?n ?en m? ?en)", , , ,5,å–·æ²¹æ²¹æ¼†ç±»,,,,,,152374,,å¤–è´­,L,å‡
+392480,01.03NPF100-01XXXR,çŽ¯ä¿PVC100åº¦æœ¬ç™½åŽŸæ–™/nguyÃªn li?u nh?a PVC100 ??c,(å®é¼Ž)NPF100A/QAH812#(Rohs+Non-Phthalate), , , ,1,åŽŸæ–™ç±»,,,13,,,152375,,å¤–è´­,kg,åƒå…‹
+392495,03.S81777XX-XXXXXR,ROHS è‰²ç²‰/b?t mÃ u,"S-81777æ£•è‰²pms730ï¼Œ92å…‹ã€‚/S-81777 n?u pms730, 92 gram.", , , ,3,è‰²ç²‰ç±»,,,,,,152386,,å¤–è´­,ST,ST
+392500,03.H52372XX-XXXXXR,ROHS è‰²ç²‰/b?t mÃ u,H-52372ç°ç™½è‰²PMS10389Cï¼Œ80å…‹/H-52372 PMS10389C, , , ,3,è‰²ç²‰ç±»,,,,,,152391,,å¤–è´­,ST,ST
+392551,03.H52370XX-XXXXXR,ROHS è‰²ç²‰/b?t mÃ u,H-52370ç°ç™½è‰²PMS COOL GREY 1Cï¼Œ126å…‹, , , ,3,è‰²ç²‰ç±»,,,,,,152438,,å¤–è´­,ST,ST
+392735,00.010385PC-XXXXXR,385 PCèƒ¶æ°´,385 PCèƒ¶æ°´, , , ,0,è¾…æ–™ç±»,,,108.71,,,152501,,å¤–è´­,kg,åƒå…‹
+392789,00.01000066-XXXXXR,DOG66èƒ¶æ°´/KEO DOG 66,DOG 66, , , ,0,è¾…æ–™ç±»,,,,,,152534,,å¤–è´­,kg,åƒå…‹
+393073,03.YLF99572-XXXXXR,ROHS è‰²ç²‰/B?t mÃ u,YLF-99572çº¢è‰²pms186cï¼Œ70å…‹, , , ,3,è‰²ç²‰ç±»,,,,,,152683,,å¤–è´­,kg,åƒå…‹
+393074,03.YLF99570-XXXXXR,ROHS è‰²ç²‰/B?t mÃ u,YLF-99570é»‘è‰²BLACK MATTEï¼Œ250  å…‹, , , ,3,è‰²ç²‰ç±»,,,,,,152684,,å¤–è´­,kg,åƒå…‹
+393075,03.YLF99571-XXXXXR,ROHS è‰²ç²‰/B?t mÃ u,YLF-99571é»‘è‰²BLACK MATTEï¼Œ 30 å…‹, , , ,3,è‰²ç²‰ç±»,,,,,,152685,,å¤–è´­,kg,åƒå…‹
+991308,PF.004285,? c?ng ADATA 512G_ASU650SS- 512GT-R, , , , ,PF001,åŠžå…¬ç”¨å“,,,,,,285374,,å¤–è´­,Pcs,Pcs

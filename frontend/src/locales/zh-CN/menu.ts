@@ -6,6 +6,7 @@ export default {
   orderManagement: '订单管理',
   basicInfoManagement: '基础信息管理',
   unitManagement: '单位管理',
+  materialManagement: '物料管理',
   systemSettings: '系统设置',
   basicSettings: '基本设置',
   roleManagement: '角色管理',

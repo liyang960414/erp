@@ -85,6 +85,7 @@
               <span>{{ $t('menu.basicInfoManagement') }}</span>
             </template>
             <el-menu-item index="/basic-info/units">{{ $t('menu.unitManagement') }}</el-menu-item>
+            <el-menu-item index="/basic-info/materials">{{ $t('menu.materialManagement') }}</el-menu-item>
           </el-sub-menu>
 
           <el-sub-menu index="/system" v-if="authStore.hasRole('ADMIN')">
