@@ -6,10 +6,28 @@ spring:
     username: user_CHEbAR
     password: password_pakbNy
     driver-class-name: org.postgresql.Driver
+    # HikariCP 连接池配置
+    hikari:
+      # 连接池最小空闲连接数（建议与最大连接数相同，避免连接创建开销）
+      minimum-idle: 5
+      # 连接池最大连接数（根据并发量调整，建议 10-20）
+      maximum-pool-size: 10
+      # 连接最大存活时间（设置为小于数据库/网络超时时间，建议 20-25 分钟）
+      max-lifetime: 1200000  # 20分钟（毫秒）
+      # 连接空闲超时时间（空闲连接在此时间后被关闭）
+      idle-timeout: 600000   # 10分钟（毫秒）
+      # 连接获取超时时间（从池中获取连接的最大等待时间）
+      connection-timeout: 30000  # 30秒（毫秒）
+      # 连接泄漏检测时间（连接在指定时间未关闭将被视为泄漏）
+      leak-detection-threshold: 60000  # 60秒（毫秒）
+      # 连接验证查询（PostgreSQL 推荐使用 SELECT 1）
+      connection-test-query: SELECT 1
+      # 连接验证超时时间
+      validation-timeout: 5000  # 5秒（毫秒）
   jpa:
     hibernate:
       ddl-auto: update
-    show-sql: false
+    show-sql: true
     properties:
       hibernate:
         dialect: org.hibernate.dialect.PostgreSQLDialect
@@ -31,5 +49,7 @@ logging:
   level:
     root: INFO
     com.sambound.erp: INFO
+    # 可选：启用 HikariCP 调试日志以监控连接池状态
+    # com.zaxxer.hikari: DEBUG
   file:
     path: ./

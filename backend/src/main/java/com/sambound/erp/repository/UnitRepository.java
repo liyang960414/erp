@@ -1,6 +1,9 @@
 package com.sambound.erp.repository;
 
 import com.sambound.erp.entity.Unit;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -22,6 +25,10 @@ public interface UnitRepository extends JpaRepository<Unit, Long> {
     
     @Query("SELECT u FROM Unit u JOIN FETCH u.unitGroup ORDER BY u.unitGroup.code, u.code")
     List<Unit> findAllWithUnitGroup();
+    
+    @EntityGraph(attributePaths = {"unitGroup"})
+    @Query("SELECT u FROM Unit u JOIN u.unitGroup ORDER BY u.unitGroup.code, u.code")
+    Page<Unit> findAllWithUnitGroupPaged(Pageable pageable);
     
     /**
      * 使用 PostgreSQL 的 INSERT ... ON CONFLICT 实现原子性的插入或获取操作
