@@ -930,3 +930,375 @@ Caused by: org.springframework.transaction.UnexpectedRollbackException: Transact
 2025-11-01T16:56:03.082+07:00  INFO 6900 --- [erp] [SpringApplicationShutdownHook] com.zaxxer.hikari.HikariDataSource       : HikariPool-1 - Shutdown completed.
 2025-11-01T16:57:28.773+07:00  INFO 14516 --- [erp] [main] com.sambound.erp.ErpApplication          : Starting ErpApplication v0.0.1-SNAPSHOT using Java 25 with PID 14516 (E:\Projects\erp\backend\target\erp-0.0.1-SNAPSHOT.jar started by 98310 in E:\Projects\erp\backend)
 2025-11-01T16:57:28.776+07:00  INFO 14516 --- [erp] [main] com.sambound.erp.ErpApplication          : No active profile set, falling back to 1 default profile: "default"
+2025-11-01T18:44:23.870+07:00  INFO 10084 --- [erp] [main] com.sambound.erp.ErpApplication          : Starting ErpApplication v0.0.1-SNAPSHOT using Java 25.0.1 with PID 10084 (C:\Users\LY\Code\erp\backend\target\erp-0.0.1-SNAPSHOT.jar started by LY in C:\Users\LY\Code\erp\backend)
+2025-11-01T18:44:23.874+07:00  INFO 10084 --- [erp] [main] com.sambound.erp.ErpApplication          : No active profile set, falling back to 1 default profile: "default"
+2025-11-01T18:44:24.758+07:00  INFO 10084 --- [erp] [main] .s.d.r.c.RepositoryConfigurationDelegate : Bootstrapping Spring Data JPA repositories in DEFAULT mode.
+2025-11-01T18:44:24.832+07:00  INFO 10084 --- [erp] [main] .s.d.r.c.RepositoryConfigurationDelegate : Finished Spring Data repository scanning in 65 ms. Found 6 JPA repository interfaces.
+2025-11-01T18:44:25.591+07:00  INFO 10084 --- [erp] [main] o.s.boot.tomcat.TomcatWebServer          : Tomcat initialized with port 8080 (http)
+2025-11-01T18:44:25.617+07:00  INFO 10084 --- [erp] [main] o.apache.catalina.core.StandardService   : Starting service [Tomcat]
+2025-11-01T18:44:25.617+07:00  INFO 10084 --- [erp] [main] o.apache.catalina.core.StandardEngine    : Starting Servlet engine: [Apache Tomcat/11.0.13]
+2025-11-01T18:44:25.661+07:00  INFO 10084 --- [erp] [main] b.w.c.s.WebApplicationContextInitializer : Root WebApplicationContext: initialization completed in 1733 ms
+2025-11-01T18:44:25.847+07:00  INFO 10084 --- [erp] [main] o.hibernate.jpa.internal.util.LogHelper  : HHH000204: Processing PersistenceUnitInfo [name: default]
+2025-11-01T18:44:26.057+07:00  INFO 10084 --- [erp] [main] org.hibernate.Version                    : HHH000412: Hibernate ORM core version 7.1.4.Final
+2025-11-01T18:44:26.566+07:00  INFO 10084 --- [erp] [main] o.s.o.j.p.SpringPersistenceUnitInfo      : No LoadTimeWeaver setup: ignoring JPA class transformer
+2025-11-01T18:44:26.612+07:00  INFO 10084 --- [erp] [main] com.zaxxer.hikari.HikariDataSource       : HikariPool-1 - Starting...
+2025-11-01T18:44:27.169+07:00  INFO 10084 --- [erp] [main] com.zaxxer.hikari.pool.HikariPool        : HikariPool-1 - Added connection org.postgresql.jdbc.PgConnection@4e933cf1
+2025-11-01T18:44:27.171+07:00  INFO 10084 --- [erp] [main] com.zaxxer.hikari.HikariDataSource       : HikariPool-1 - Start completed.
+2025-11-01T18:44:27.246+07:00  WARN 10084 --- [erp] [main] org.hibernate.orm.deprecation            : HHH90000025: PostgreSQLDialect does not need to be specified explicitly using 'hibernate.dialect' (remove the property setting and it will be selected by default)
+2025-11-01T18:44:27.434+07:00  INFO 10084 --- [erp] [main] org.hibernate.orm.connections.pooling    : HHH10001005: Database info:
+	Database JDBC URL [jdbc:postgresql://43.161.248.212:5446/order_db]
+	Database driver: PostgreSQL JDBC Driver
+	Database dialect: PostgreSQLDialect
+	Database version: 17.6
+	Default catalog/schema: order_db/public
+	Autocommit mode: undefined/unknown
+	Isolation level: READ_COMMITTED [default READ_COMMITTED]
+	JDBC fetch size: none
+	Pool: DatasourceConnectionProviderImpl
+	Minimum pool size: undefined/unknown
+	Maximum pool size: undefined/unknown
+2025-11-01T18:44:28.320+07:00  INFO 10084 --- [erp] [main] o.h.e.t.j.p.i.JtaPlatformInitiator       : HHH000489: No JTA platform available (set 'hibernate.transaction.jta.platform' to enable JTA platform integration)
+2025-11-01T18:44:29.871+07:00  INFO 10084 --- [erp] [main] j.LocalContainerEntityManagerFactoryBean : Initialized JPA EntityManagerFactory for persistence unit 'default'
+2025-11-01T18:44:29.931+07:00  INFO 10084 --- [erp] [main] o.s.d.j.r.query.QueryEnhancerFactories   : Hibernate is in classpath; If applicable, HQL parser will be used.
+2025-11-01T18:44:30.771+07:00  INFO 10084 --- [erp] [main] eAuthenticationProviderManagerConfigurer : Global AuthenticationManager configured with AuthenticationProvider bean with name authenticationProvider
+2025-11-01T18:44:30.772+07:00  WARN 10084 --- [erp] [main] r$InitializeUserDetailsManagerConfigurer : Global AuthenticationManager configured with an AuthenticationProvider bean. UserDetailsService beans will not be used by Spring Security for automatically configuring username/password login. Consider removing the AuthenticationProvider bean. Alternatively, consider using the UserDetailsService in a manually instantiated DaoAuthenticationProvider. If the current configuration is intentional, to turn off this warning, increase the logging level of 'org.springframework.security.config.annotation.authentication.configuration.InitializeUserDetailsBeanManagerConfigurer' to ERROR
+2025-11-01T18:44:31.077+07:00  WARN 10084 --- [erp] [main] JpaBaseConfiguration$JpaWebConfiguration : spring.jpa.open-in-view is enabled by default. Therefore, database queries may be performed during view rendering. Explicitly configure spring.jpa.open-in-view to disable this warning
+2025-11-01T18:44:31.716+07:00  INFO 10084 --- [erp] [main] o.s.boot.tomcat.TomcatWebServer          : Tomcat started on port 8080 (http) with context path '/'
+2025-11-01T18:44:31.725+07:00  INFO 10084 --- [erp] [main] com.sambound.erp.ErpApplication          : Started ErpApplication in 8.399 seconds (process running for 9.043)
+2025-11-01T18:45:07.636+07:00  INFO 10084 --- [erp] [http-nio-8080-exec-3] o.a.c.c.C.[Tomcat].[localhost].[/]       : Initializing Spring DispatcherServlet 'dispatcherServlet'
+2025-11-01T18:45:07.636+07:00  INFO 10084 --- [erp] [http-nio-8080-exec-3] o.s.web.servlet.DispatcherServlet        : Initializing Servlet 'dispatcherServlet'
+2025-11-01T18:45:07.636+07:00  INFO 10084 --- [erp] [http-nio-8080-exec-3] o.s.web.servlet.DispatcherServlet        : Completed initialization in 0 ms
+2025-11-01T18:45:08.229+07:00  WARN 10084 --- [erp] [http-nio-8080-exec-6] com.zaxxer.hikari.pool.PoolBase          : HikariPool-1 - Failed to validate connection org.postgresql.jdbc.PgConnection@6737d589 (This connection has been closed.). Possibly consider using a shorter maxLifetime value.
+2025-11-01T18:45:08.229+07:00  WARN 10084 --- [erp] [http-nio-8080-exec-7] com.zaxxer.hikari.pool.PoolBase          : HikariPool-1 - Failed to validate connection org.postgresql.jdbc.PgConnection@4e933cf1 (This connection has been closed.). Possibly consider using a shorter maxLifetime value.
+2025-11-01T18:45:08.253+07:00  WARN 10084 --- [erp] [http-nio-8080-exec-6] com.zaxxer.hikari.pool.PoolBase          : HikariPool-1 - Failed to validate connection org.postgresql.jdbc.PgConnection@1ce4fc7b (This connection has been closed.). Possibly consider using a shorter maxLifetime value.
+2025-11-01T18:45:08.310+07:00  WARN 10084 --- [erp] [http-nio-8080-exec-6] com.zaxxer.hikari.pool.PoolBase          : HikariPool-1 - Failed to validate connection org.postgresql.jdbc.PgConnection@4526e9f3 (This connection has been closed.). Possibly consider using a shorter maxLifetime value.
+2025-11-01T18:45:08.369+07:00  WARN 10084 --- [erp] [http-nio-8080-exec-6] com.zaxxer.hikari.pool.PoolBase          : HikariPool-1 - Failed to validate connection org.postgresql.jdbc.PgConnection@69cc8c09 (This connection has been closed.). Possibly consider using a shorter maxLifetime value.
+2025-11-01T18:45:08.670+07:00  WARN 10084 --- [erp] [http-nio-8080-exec-6] com.zaxxer.hikari.pool.PoolBase          : HikariPool-1 - Failed to validate connection org.postgresql.jdbc.PgConnection@5df53b62 (This connection has been closed.). Possibly consider using a shorter maxLifetime value.
+2025-11-01T18:45:08.963+07:00  WARN 10084 --- [erp] [http-nio-8080-exec-6] com.zaxxer.hikari.pool.PoolBase          : HikariPool-1 - Failed to validate connection org.postgresql.jdbc.PgConnection@66491383 (This connection has been closed.). Possibly consider using a shorter maxLifetime value.
+2025-11-01T18:45:08.963+07:00  WARN 10084 --- [erp] [http-nio-8080-exec-7] com.zaxxer.hikari.pool.PoolBase          : HikariPool-1 - Failed to validate connection org.postgresql.jdbc.PgConnection@675fcfa4 (This connection has been closed.). Possibly consider using a shorter maxLifetime value.
+2025-11-01T18:45:09.053+07:00  WARN 10084 --- [erp] [http-nio-8080-exec-6] com.zaxxer.hikari.pool.PoolBase          : HikariPool-1 - Failed to validate connection org.postgresql.jdbc.PgConnection@14d217c8 (This connection has been closed.). Possibly consider using a shorter maxLifetime value.
+2025-11-01T18:45:09.070+07:00  WARN 10084 --- [erp] [http-nio-8080-exec-7] com.zaxxer.hikari.pool.PoolBase          : HikariPool-1 - Failed to validate connection org.postgresql.jdbc.PgConnection@50726505 (This connection has been closed.). Possibly consider using a shorter maxLifetime value.
+2025-11-01T18:45:45.119+07:00  WARN 10084 --- [erp] [http-nio-8080-exec-9] com.zaxxer.hikari.pool.PoolBase          : HikariPool-1 - Failed to validate connection org.postgresql.jdbc.PgConnection@544aeeca (This connection has been closed.). Possibly consider using a shorter maxLifetime value.
+2025-11-01T18:47:18.345+07:00  WARN 10084 --- [erp] [HikariPool-1:housekeeper] com.zaxxer.hikari.pool.PoolBase          : HikariPool-1 - Failed to validate connection org.postgresql.jdbc.PgConnection@2918522a (This connection has been closed.). Possibly consider using a shorter maxLifetime value.
+2025-11-01T18:47:28.701+07:00  WARN 10084 --- [erp] [HikariPool-1:housekeeper] com.zaxxer.hikari.pool.PoolBase          : HikariPool-1 - Failed to validate connection org.postgresql.jdbc.PgConnection@78e590da (This connection has been closed.). Possibly consider using a shorter maxLifetime value.
+2025-11-01T18:48:33.693+07:00  WARN 10084 --- [erp] [HikariPool-1:housekeeper] com.zaxxer.hikari.pool.PoolBase          : HikariPool-1 - Failed to validate connection org.postgresql.jdbc.PgConnection@5ccfa942 (This connection has been closed.). Possibly consider using a shorter maxLifetime value.
+2025-11-01T18:48:45.895+07:00  WARN 10084 --- [erp] [HikariPool-1:housekeeper] com.zaxxer.hikari.pool.PoolBase          : HikariPool-1 - Failed to validate connection org.postgresql.jdbc.PgConnection@7cab8c86 (This connection has been closed.). Possibly consider using a shorter maxLifetime value.
+2025-11-01T18:48:45.931+07:00  WARN 10084 --- [erp] [HikariPool-1:housekeeper] com.zaxxer.hikari.pool.PoolBase          : HikariPool-1 - Failed to validate connection org.postgresql.jdbc.PgConnection@358eee4 (This connection has been closed.). Possibly consider using a shorter maxLifetime value.
+2025-11-01T18:48:47.491+07:00  WARN 10084 --- [erp] [HikariPool-1:housekeeper] com.zaxxer.hikari.pool.PoolBase          : HikariPool-1 - Failed to validate connection org.postgresql.jdbc.PgConnection@4e596042 (This connection has been closed.). Possibly consider using a shorter maxLifetime value.
+2025-11-01T18:48:48.812+07:00  WARN 10084 --- [erp] [HikariPool-1:housekeeper] com.zaxxer.hikari.pool.PoolBase          : HikariPool-1 - Failed to validate connection org.postgresql.jdbc.PgConnection@6e361ab3 (This connection has been closed.). Possibly consider using a shorter maxLifetime value.
+2025-11-01T18:48:52.080+07:00  WARN 10084 --- [erp] [HikariPool-1:housekeeper] com.zaxxer.hikari.pool.PoolBase          : HikariPool-1 - Failed to validate connection org.postgresql.jdbc.PgConnection@2a3c0f63 (This connection has been closed.). Possibly consider using a shorter maxLifetime value.
+2025-11-01T18:48:53.934+07:00  WARN 10084 --- [erp] [HikariPool-1:housekeeper] com.zaxxer.hikari.pool.PoolBase          : HikariPool-1 - Failed to validate connection org.postgresql.jdbc.PgConnection@6ed7fb0e (This connection has been closed.). Possibly consider using a shorter maxLifetime value.
+2025-11-01T18:49:02.926+07:00  WARN 10084 --- [erp] [HikariPool-1:housekeeper] com.zaxxer.hikari.pool.PoolBase          : HikariPool-1 - Failed to validate connection org.postgresql.jdbc.PgConnection@6b09dde6 (This connection has been closed.). Possibly consider using a shorter maxLifetime value.
+2025-11-01T18:50:24.095+07:00  WARN 10084 --- [erp] [HikariPool-1:housekeeper] com.zaxxer.hikari.pool.PoolBase          : HikariPool-1 - Failed to validate connection org.postgresql.jdbc.PgConnection@7fb9e774 (This connection has been closed.). Possibly consider using a shorter maxLifetime value.
+2025-11-01T18:50:34.007+07:00  WARN 10084 --- [erp] [HikariPool-1:housekeeper] com.zaxxer.hikari.pool.PoolBase          : HikariPool-1 - Failed to validate connection org.postgresql.jdbc.PgConnection@b2472c1 (This connection has been closed.). Possibly consider using a shorter maxLifetime value.
+2025-11-01T18:50:39.023+07:00  WARN 10084 --- [erp] [HikariPool-1:housekeeper] com.zaxxer.hikari.pool.PoolBase          : HikariPool-1 - Failed to validate connection org.postgresql.jdbc.PgConnection@2b3f1d40 (This connection has been closed.). Possibly consider using a shorter maxLifetime value.
+2025-11-01T18:52:42.782+07:00  INFO 10084 --- [erp] [SpringApplicationShutdownHook] o.s.boot.tomcat.GracefulShutdown         : Commencing graceful shutdown. Waiting for active requests to complete
+2025-11-01T18:52:42.790+07:00  INFO 10084 --- [erp] [tomcat-shutdown] o.s.boot.tomcat.GracefulShutdown         : Graceful shutdown complete
+2025-11-01T18:52:42.795+07:00  INFO 10084 --- [erp] [SpringApplicationShutdownHook] j.LocalContainerEntityManagerFactoryBean : Closing JPA EntityManagerFactory for persistence unit 'default'
+2025-11-01T18:52:42.797+07:00  INFO 10084 --- [erp] [SpringApplicationShutdownHook] com.zaxxer.hikari.HikariDataSource       : HikariPool-1 - Shutdown initiated...
+2025-11-01T18:52:42.799+07:00  INFO 10084 --- [erp] [SpringApplicationShutdownHook] com.zaxxer.hikari.HikariDataSource       : HikariPool-1 - Shutdown completed.
+2025-11-01T18:52:59.224+07:00  INFO 5872 --- [erp] [main] com.sambound.erp.ErpApplication          : Starting ErpApplication v0.0.1-SNAPSHOT using Java 25.0.1 with PID 5872 (C:\Users\LY\Code\erp\backend\target\erp-0.0.1-SNAPSHOT.jar started by LY in C:\Users\LY\Code\erp\backend)
+2025-11-01T18:52:59.227+07:00  INFO 5872 --- [erp] [main] com.sambound.erp.ErpApplication          : No active profile set, falling back to 1 default profile: "default"
+2025-11-01T18:52:59.971+07:00  INFO 5872 --- [erp] [main] .s.d.r.c.RepositoryConfigurationDelegate : Bootstrapping Spring Data JPA repositories in DEFAULT mode.
+2025-11-01T18:53:00.034+07:00  INFO 5872 --- [erp] [main] .s.d.r.c.RepositoryConfigurationDelegate : Finished Spring Data repository scanning in 54 ms. Found 6 JPA repository interfaces.
+2025-11-01T18:53:00.650+07:00  INFO 5872 --- [erp] [main] o.s.boot.tomcat.TomcatWebServer          : Tomcat initialized with port 8080 (http)
+2025-11-01T18:53:00.674+07:00  INFO 5872 --- [erp] [main] o.apache.catalina.core.StandardService   : Starting service [Tomcat]
+2025-11-01T18:53:00.675+07:00  INFO 5872 --- [erp] [main] o.apache.catalina.core.StandardEngine    : Starting Servlet engine: [Apache Tomcat/11.0.13]
+2025-11-01T18:53:00.716+07:00  INFO 5872 --- [erp] [main] b.w.c.s.WebApplicationContextInitializer : Root WebApplicationContext: initialization completed in 1434 ms
+2025-11-01T18:53:00.768+07:00 DEBUG 5872 --- [erp] [main] com.zaxxer.hikari.util.UtilityElf        : Class org.postgresql.Driver found in Thread context class loader TomcatEmbeddedWebappClassLoader
+  context: ROOT
+  delegate: true
+----------> Parent Classloader:
+org.springframework.boot.loader.launch.LaunchedClassLoader@279f2327
+
+2025-11-01T18:53:00.867+07:00  INFO 5872 --- [erp] [main] o.hibernate.jpa.internal.util.LogHelper  : HHH000204: Processing PersistenceUnitInfo [name: default]
+2025-11-01T18:53:01.066+07:00  INFO 5872 --- [erp] [main] org.hibernate.Version                    : HHH000412: Hibernate ORM core version 7.1.4.Final
+2025-11-01T18:53:01.547+07:00  INFO 5872 --- [erp] [main] o.s.o.j.p.SpringPersistenceUnitInfo      : No LoadTimeWeaver setup: ignoring JPA class transformer
+2025-11-01T18:53:01.576+07:00 DEBUG 5872 --- [erp] [main] com.zaxxer.hikari.HikariConfig           : HikariPool-1 - configuration:
+2025-11-01T18:53:01.580+07:00 DEBUG 5872 --- [erp] [main] com.zaxxer.hikari.HikariConfig           : allowPoolSuspension.............false
+2025-11-01T18:53:01.581+07:00 DEBUG 5872 --- [erp] [main] com.zaxxer.hikari.HikariConfig           : autoCommit......................true
+2025-11-01T18:53:01.581+07:00 DEBUG 5872 --- [erp] [main] com.zaxxer.hikari.HikariConfig           : catalog.........................none
+2025-11-01T18:53:01.582+07:00 DEBUG 5872 --- [erp] [main] com.zaxxer.hikari.HikariConfig           : connectionInitSql...............none
+2025-11-01T18:53:01.582+07:00 DEBUG 5872 --- [erp] [main] com.zaxxer.hikari.HikariConfig           : connectionTestQuery............."SELECT 1"
+2025-11-01T18:53:01.584+07:00 DEBUG 5872 --- [erp] [main] com.zaxxer.hikari.HikariConfig           : connectionTimeout...............30000
+2025-11-01T18:53:01.584+07:00 DEBUG 5872 --- [erp] [main] com.zaxxer.hikari.HikariConfig           : credentials.....................com.zaxxer.hikari.util.Credentials@342dc040
+2025-11-01T18:53:01.585+07:00 DEBUG 5872 --- [erp] [main] com.zaxxer.hikari.HikariConfig           : credentialsProvider.............none
+2025-11-01T18:53:01.585+07:00 DEBUG 5872 --- [erp] [main] com.zaxxer.hikari.HikariConfig           : credentialsProviderClassName....none
+2025-11-01T18:53:01.585+07:00 DEBUG 5872 --- [erp] [main] com.zaxxer.hikari.HikariConfig           : dataSource......................none
+2025-11-01T18:53:01.586+07:00 DEBUG 5872 --- [erp] [main] com.zaxxer.hikari.HikariConfig           : dataSourceClassName.............none
+2025-11-01T18:53:01.586+07:00 DEBUG 5872 --- [erp] [main] com.zaxxer.hikari.HikariConfig           : dataSourceJNDI..................none
+2025-11-01T18:53:01.586+07:00 DEBUG 5872 --- [erp] [main] com.zaxxer.hikari.HikariConfig           : dataSourceProperties............{password=<masked>}
+2025-11-01T18:53:01.587+07:00 DEBUG 5872 --- [erp] [main] com.zaxxer.hikari.HikariConfig           : driverClassName................."org.postgresql.Driver"
+2025-11-01T18:53:01.587+07:00 DEBUG 5872 --- [erp] [main] com.zaxxer.hikari.HikariConfig           : exceptionOverride...............none
+2025-11-01T18:53:01.587+07:00 DEBUG 5872 --- [erp] [main] com.zaxxer.hikari.HikariConfig           : exceptionOverrideClassName......none
+2025-11-01T18:53:01.587+07:00 DEBUG 5872 --- [erp] [main] com.zaxxer.hikari.HikariConfig           : healthCheckProperties...........{}
+2025-11-01T18:53:01.588+07:00 DEBUG 5872 --- [erp] [main] com.zaxxer.hikari.HikariConfig           : healthCheckRegistry.............none
+2025-11-01T18:53:01.588+07:00 DEBUG 5872 --- [erp] [main] com.zaxxer.hikari.HikariConfig           : idleTimeout.....................600000
+2025-11-01T18:53:01.588+07:00 DEBUG 5872 --- [erp] [main] com.zaxxer.hikari.HikariConfig           : initializationFailTimeout.......1
+2025-11-01T18:53:01.588+07:00 DEBUG 5872 --- [erp] [main] com.zaxxer.hikari.HikariConfig           : isolateInternalQueries..........false
+2025-11-01T18:53:01.589+07:00 DEBUG 5872 --- [erp] [main] com.zaxxer.hikari.HikariConfig           : jdbcUrl.........................jdbc:postgresql://43.161.248.212:5446/order_db
+2025-11-01T18:53:01.589+07:00 DEBUG 5872 --- [erp] [main] com.zaxxer.hikari.HikariConfig           : keepaliveTime...................120000
+2025-11-01T18:53:01.589+07:00 DEBUG 5872 --- [erp] [main] com.zaxxer.hikari.HikariConfig           : leakDetectionThreshold..........60000
+2025-11-01T18:53:01.589+07:00 DEBUG 5872 --- [erp] [main] com.zaxxer.hikari.HikariConfig           : maxLifetime.....................1200000
+2025-11-01T18:53:01.589+07:00 DEBUG 5872 --- [erp] [main] com.zaxxer.hikari.HikariConfig           : maximumPoolSize.................10
+2025-11-01T18:53:01.590+07:00 DEBUG 5872 --- [erp] [main] com.zaxxer.hikari.HikariConfig           : metricRegistry..................none
+2025-11-01T18:53:01.590+07:00 DEBUG 5872 --- [erp] [main] com.zaxxer.hikari.HikariConfig           : metricsTrackerFactory...........none
+2025-11-01T18:53:01.590+07:00 DEBUG 5872 --- [erp] [main] com.zaxxer.hikari.HikariConfig           : minimumIdle.....................5
+2025-11-01T18:53:01.590+07:00 DEBUG 5872 --- [erp] [main] com.zaxxer.hikari.HikariConfig           : password........................<masked>
+2025-11-01T18:53:01.591+07:00 DEBUG 5872 --- [erp] [main] com.zaxxer.hikari.HikariConfig           : poolName........................"HikariPool-1"
+2025-11-01T18:53:01.591+07:00 DEBUG 5872 --- [erp] [main] com.zaxxer.hikari.HikariConfig           : readOnly........................false
+2025-11-01T18:53:01.591+07:00 DEBUG 5872 --- [erp] [main] com.zaxxer.hikari.HikariConfig           : registerMbeans..................false
+2025-11-01T18:53:01.591+07:00 DEBUG 5872 --- [erp] [main] com.zaxxer.hikari.HikariConfig           : scheduledExecutor...............none
+2025-11-01T18:53:01.592+07:00 DEBUG 5872 --- [erp] [main] com.zaxxer.hikari.HikariConfig           : schema..........................none
+2025-11-01T18:53:01.592+07:00 DEBUG 5872 --- [erp] [main] com.zaxxer.hikari.HikariConfig           : threadFactory...................internal
+2025-11-01T18:53:01.592+07:00 DEBUG 5872 --- [erp] [main] com.zaxxer.hikari.HikariConfig           : transactionIsolation............default
+2025-11-01T18:53:01.592+07:00 DEBUG 5872 --- [erp] [main] com.zaxxer.hikari.HikariConfig           : username........................"user_CHEbAR"
+2025-11-01T18:53:01.593+07:00 DEBUG 5872 --- [erp] [main] com.zaxxer.hikari.HikariConfig           : validationTimeout...............5000
+2025-11-01T18:53:01.593+07:00  INFO 5872 --- [erp] [main] com.zaxxer.hikari.HikariDataSource       : HikariPool-1 - Starting...
+2025-11-01T18:53:01.605+07:00 DEBUG 5872 --- [erp] [main] com.zaxxer.hikari.pool.PoolBase          : HikariPool-1 - Attempting to create/setup new connection (dfe254c2-cb44-4886-88d3-a198cd90eace)
+2025-11-01T18:53:03.366+07:00 DEBUG 5872 --- [erp] [main] com.zaxxer.hikari.pool.PoolBase          : HikariPool-1 - Established new connection (dfe254c2-cb44-4886-88d3-a198cd90eace)
+2025-11-01T18:53:03.368+07:00  INFO 5872 --- [erp] [main] com.zaxxer.hikari.pool.HikariPool        : HikariPool-1 - Added connection org.postgresql.jdbc.PgConnection@279ab15e
+2025-11-01T18:53:03.370+07:00  INFO 5872 --- [erp] [main] com.zaxxer.hikari.HikariDataSource       : HikariPool-1 - Start completed.
+2025-11-01T18:53:03.470+07:00 DEBUG 5872 --- [erp] [HikariPool-1:housekeeper] com.zaxxer.hikari.pool.HikariPool        : HikariPool-1 - Before cleanup stats (total=1/10, idle=0/5, active=1, waiting=0)
+2025-11-01T18:53:03.472+07:00 DEBUG 5872 --- [erp] [HikariPool-1:housekeeper] com.zaxxer.hikari.pool.HikariPool        : HikariPool-1 - After  cleanup stats (total=1/10, idle=0/5, active=1, waiting=0)
+2025-11-01T18:53:03.473+07:00 DEBUG 5872 --- [erp] [HikariPool-1:connection-adder] com.zaxxer.hikari.pool.PoolBase          : HikariPool-1 - Attempting to create/setup new connection (6e946a76-4eeb-4831-afd5-0d04b53d5a84)
+2025-11-01T18:53:03.476+07:00  WARN 5872 --- [erp] [main] org.hibernate.orm.deprecation            : HHH90000025: PostgreSQLDialect does not need to be specified explicitly using 'hibernate.dialect' (remove the property setting and it will be selected by default)
+2025-11-01T18:53:03.665+07:00  INFO 5872 --- [erp] [main] org.hibernate.orm.connections.pooling    : HHH10001005: Database info:
+	Database JDBC URL [jdbc:postgresql://43.161.248.212:5446/order_db]
+	Database driver: PostgreSQL JDBC Driver
+	Database dialect: PostgreSQLDialect
+	Database version: 17.6
+	Default catalog/schema: order_db/public
+	Autocommit mode: undefined/unknown
+	Isolation level: READ_COMMITTED [default READ_COMMITTED]
+	JDBC fetch size: none
+	Pool: DatasourceConnectionProviderImpl
+	Minimum pool size: undefined/unknown
+	Maximum pool size: undefined/unknown
+2025-11-01T18:53:03.737+07:00 DEBUG 5872 --- [erp] [HikariPool-1:connection-adder] com.zaxxer.hikari.pool.PoolBase          : HikariPool-1 - Established new connection (6e946a76-4eeb-4831-afd5-0d04b53d5a84)
+2025-11-01T18:53:03.738+07:00 DEBUG 5872 --- [erp] [HikariPool-1:connection-adder] com.zaxxer.hikari.pool.HikariPool        : HikariPool-1 - Added connection org.postgresql.jdbc.PgConnection@478c27ab
+2025-11-01T18:53:03.770+07:00 DEBUG 5872 --- [erp] [HikariPool-1:connection-adder] com.zaxxer.hikari.pool.HikariPool        : HikariPool-1 - After adding stats (total=2/10, idle=2/5, active=0, waiting=0)
+2025-11-01T18:53:03.770+07:00 DEBUG 5872 --- [erp] [HikariPool-1:connection-adder] com.zaxxer.hikari.pool.PoolBase          : HikariPool-1 - Attempting to create/setup new connection (149ba3a8-1f4c-4f14-a6a3-75b34c5a0190)
+2025-11-01T18:53:03.988+07:00 DEBUG 5872 --- [erp] [HikariPool-1:connection-adder] com.zaxxer.hikari.pool.PoolBase          : HikariPool-1 - Established new connection (149ba3a8-1f4c-4f14-a6a3-75b34c5a0190)
+2025-11-01T18:53:03.988+07:00 DEBUG 5872 --- [erp] [HikariPool-1:connection-adder] com.zaxxer.hikari.pool.HikariPool        : HikariPool-1 - Added connection org.postgresql.jdbc.PgConnection@4d744cdb
+2025-11-01T18:53:04.019+07:00 DEBUG 5872 --- [erp] [HikariPool-1:connection-adder] com.zaxxer.hikari.pool.HikariPool        : HikariPool-1 - After adding stats (total=3/10, idle=3/5, active=0, waiting=0)
+2025-11-01T18:53:04.019+07:00 DEBUG 5872 --- [erp] [HikariPool-1:connection-adder] com.zaxxer.hikari.pool.PoolBase          : HikariPool-1 - Attempting to create/setup new connection (beb9ce95-4e04-46f4-8fc9-95b198fc6dbc)
+2025-11-01T18:53:04.241+07:00 DEBUG 5872 --- [erp] [HikariPool-1:connection-adder] com.zaxxer.hikari.pool.PoolBase          : HikariPool-1 - Established new connection (beb9ce95-4e04-46f4-8fc9-95b198fc6dbc)
+2025-11-01T18:53:04.242+07:00 DEBUG 5872 --- [erp] [HikariPool-1:connection-adder] com.zaxxer.hikari.pool.HikariPool        : HikariPool-1 - Added connection org.postgresql.jdbc.PgConnection@876cb11
+2025-11-01T18:53:04.274+07:00 DEBUG 5872 --- [erp] [HikariPool-1:connection-adder] com.zaxxer.hikari.pool.HikariPool        : HikariPool-1 - After adding stats (total=4/10, idle=4/5, active=0, waiting=0)
+2025-11-01T18:53:04.274+07:00 DEBUG 5872 --- [erp] [HikariPool-1:connection-adder] com.zaxxer.hikari.pool.PoolBase          : HikariPool-1 - Attempting to create/setup new connection (5bea2e83-29dc-427c-8e7a-5aaeb113602c)
+2025-11-01T18:53:04.617+07:00  INFO 5872 --- [erp] [main] o.h.e.t.j.p.i.JtaPlatformInitiator       : HHH000489: No JTA platform available (set 'hibernate.transaction.jta.platform' to enable JTA platform integration)
+2025-11-01T18:53:04.813+07:00 DEBUG 5872 --- [erp] [HikariPool-1:connection-adder] com.zaxxer.hikari.pool.PoolBase          : HikariPool-1 - Established new connection (5bea2e83-29dc-427c-8e7a-5aaeb113602c)
+2025-11-01T18:53:04.814+07:00 DEBUG 5872 --- [erp] [HikariPool-1:connection-adder] com.zaxxer.hikari.pool.HikariPool        : HikariPool-1 - Added connection org.postgresql.jdbc.PgConnection@2e6104cb
+2025-11-01T18:53:04.846+07:00 DEBUG 5872 --- [erp] [HikariPool-1:connection-adder] com.zaxxer.hikari.pool.HikariPool        : HikariPool-1 - After adding stats (total=5/10, idle=4/5, active=1, waiting=0)
+2025-11-01T18:53:04.846+07:00 DEBUG 5872 --- [erp] [HikariPool-1:connection-adder] com.zaxxer.hikari.pool.PoolBase          : HikariPool-1 - Attempting to create/setup new connection (8553408c-4941-4d63-a67f-ade9c9eeae69)
+2025-11-01T18:53:05.663+07:00 DEBUG 5872 --- [erp] [HikariPool-1:connection-adder] com.zaxxer.hikari.pool.PoolBase          : HikariPool-1 - Established new connection (8553408c-4941-4d63-a67f-ade9c9eeae69)
+2025-11-01T18:53:05.664+07:00 DEBUG 5872 --- [erp] [HikariPool-1:connection-adder] com.zaxxer.hikari.pool.HikariPool        : HikariPool-1 - Added connection org.postgresql.jdbc.PgConnection@3934c2bc
+2025-11-01T18:53:05.696+07:00 DEBUG 5872 --- [erp] [HikariPool-1:connection-adder] com.zaxxer.hikari.pool.HikariPool        : HikariPool-1 - After adding stats (total=6/10, idle=5/5, active=1, waiting=0)
+2025-11-01T18:53:06.811+07:00  INFO 5872 --- [erp] [main] j.LocalContainerEntityManagerFactoryBean : Initialized JPA EntityManagerFactory for persistence unit 'default'
+2025-11-01T18:53:06.870+07:00  INFO 5872 --- [erp] [main] o.s.d.j.r.query.QueryEnhancerFactories   : Hibernate is in classpath; If applicable, HQL parser will be used.
+2025-11-01T18:53:07.558+07:00  INFO 5872 --- [erp] [main] eAuthenticationProviderManagerConfigurer : Global AuthenticationManager configured with AuthenticationProvider bean with name authenticationProvider
+2025-11-01T18:53:07.558+07:00  WARN 5872 --- [erp] [main] r$InitializeUserDetailsManagerConfigurer : Global AuthenticationManager configured with an AuthenticationProvider bean. UserDetailsService beans will not be used by Spring Security for automatically configuring username/password login. Consider removing the AuthenticationProvider bean. Alternatively, consider using the UserDetailsService in a manually instantiated DaoAuthenticationProvider. If the current configuration is intentional, to turn off this warning, increase the logging level of 'org.springframework.security.config.annotation.authentication.configuration.InitializeUserDetailsBeanManagerConfigurer' to ERROR
+2025-11-01T18:53:07.839+07:00  WARN 5872 --- [erp] [main] JpaBaseConfiguration$JpaWebConfiguration : spring.jpa.open-in-view is enabled by default. Therefore, database queries may be performed during view rendering. Explicitly configure spring.jpa.open-in-view to disable this warning
+2025-11-01T18:53:08.444+07:00  INFO 5872 --- [erp] [main] o.s.boot.tomcat.TomcatWebServer          : Tomcat started on port 8080 (http) with context path '/'
+2025-11-01T18:53:08.453+07:00  INFO 5872 --- [erp] [main] com.sambound.erp.ErpApplication          : Started ErpApplication in 9.726 seconds (process running for 10.223)
+2025-11-01T18:53:33.480+07:00 DEBUG 5872 --- [erp] [HikariPool-1:housekeeper] com.zaxxer.hikari.pool.HikariPool        : HikariPool-1 - Before cleanup stats (total=6/10, idle=6/5, active=0, waiting=0)
+2025-11-01T18:53:33.480+07:00 DEBUG 5872 --- [erp] [HikariPool-1:housekeeper] com.zaxxer.hikari.pool.HikariPool        : HikariPool-1 - After  cleanup stats (total=6/10, idle=6/5, active=0, waiting=0)
+2025-11-01T18:53:33.480+07:00 DEBUG 5872 --- [erp] [HikariPool-1:housekeeper] com.zaxxer.hikari.pool.HikariPool        : HikariPool-1 - Fill pool skipped, pool has sufficient level or currently being filled.
+2025-11-01T18:53:35.411+07:00  INFO 5872 --- [erp] [http-nio-8080-exec-2] o.a.c.c.C.[Tomcat].[localhost].[/]       : Initializing Spring DispatcherServlet 'dispatcherServlet'
+2025-11-01T18:53:35.411+07:00  INFO 5872 --- [erp] [http-nio-8080-exec-2] o.s.web.servlet.DispatcherServlet        : Initializing Servlet 'dispatcherServlet'
+2025-11-01T18:53:35.414+07:00  INFO 5872 --- [erp] [http-nio-8080-exec-2] o.s.web.servlet.DispatcherServlet        : Completed initialization in 2 ms
+2025-11-01T18:54:03.489+07:00 DEBUG 5872 --- [erp] [HikariPool-1:housekeeper] com.zaxxer.hikari.pool.HikariPool        : HikariPool-1 - Before cleanup stats (total=6/10, idle=6/5, active=0, waiting=0)
+2025-11-01T18:54:03.517+07:00 DEBUG 5872 --- [erp] [HikariPool-1:housekeeper] com.zaxxer.hikari.pool.HikariPool        : HikariPool-1 - After  cleanup stats (total=6/10, idle=6/5, active=0, waiting=0)
+2025-11-01T18:54:03.534+07:00 DEBUG 5872 --- [erp] [HikariPool-1:housekeeper] com.zaxxer.hikari.pool.HikariPool        : HikariPool-1 - Fill pool skipped, pool has sufficient level or currently being filled.
+2025-11-01T18:54:33.575+07:00 DEBUG 5872 --- [erp] [HikariPool-1:housekeeper] com.zaxxer.hikari.pool.HikariPool        : HikariPool-1 - Before cleanup stats (total=6/10, idle=6/5, active=0, waiting=0)
+2025-11-01T18:54:33.575+07:00 DEBUG 5872 --- [erp] [HikariPool-1:housekeeper] com.zaxxer.hikari.pool.HikariPool        : HikariPool-1 - After  cleanup stats (total=6/10, idle=6/5, active=0, waiting=0)
+2025-11-01T18:54:33.576+07:00 DEBUG 5872 --- [erp] [HikariPool-1:housekeeper] com.zaxxer.hikari.pool.HikariPool        : HikariPool-1 - Fill pool skipped, pool has sufficient level or currently being filled.
+2025-11-01T18:54:43.874+07:00 DEBUG 5872 --- [erp] [HikariPool-1:housekeeper] com.zaxxer.hikari.pool.HikariPool        : HikariPool-1 - keepalive: connection org.postgresql.jdbc.PgConnection@4d744cdb is alive
+2025-11-01T18:54:47.041+07:00 DEBUG 5872 --- [erp] [HikariPool-1:housekeeper] com.zaxxer.hikari.pool.HikariPool        : HikariPool-1 - keepalive: connection org.postgresql.jdbc.PgConnection@279ab15e is alive
+2025-11-01T18:54:48.599+07:00 DEBUG 5872 --- [erp] [HikariPool-1:housekeeper] com.zaxxer.hikari.pool.HikariPool        : HikariPool-1 - keepalive: connection org.postgresql.jdbc.PgConnection@876cb11 is alive
+2025-11-01T18:54:52.771+07:00 DEBUG 5872 --- [erp] [HikariPool-1:housekeeper] com.zaxxer.hikari.pool.HikariPool        : HikariPool-1 - keepalive: connection org.postgresql.jdbc.PgConnection@2e6104cb is alive
+2025-11-01T18:54:57.345+07:00 DEBUG 5872 --- [erp] [HikariPool-1:housekeeper] com.zaxxer.hikari.pool.HikariPool        : HikariPool-1 - keepalive: connection org.postgresql.jdbc.PgConnection@3934c2bc is alive
+2025-11-01T18:54:58.401+07:00 DEBUG 5872 --- [erp] [HikariPool-1:housekeeper] com.zaxxer.hikari.pool.HikariPool        : HikariPool-1 - keepalive: connection org.postgresql.jdbc.PgConnection@478c27ab is alive
+2025-11-01T18:55:03.589+07:00 DEBUG 5872 --- [erp] [HikariPool-1:housekeeper] com.zaxxer.hikari.pool.HikariPool        : HikariPool-1 - Before cleanup stats (total=6/10, idle=6/5, active=0, waiting=0)
+2025-11-01T18:55:03.589+07:00 DEBUG 5872 --- [erp] [HikariPool-1:housekeeper] com.zaxxer.hikari.pool.HikariPool        : HikariPool-1 - After  cleanup stats (total=6/10, idle=6/5, active=0, waiting=0)
+2025-11-01T18:55:03.589+07:00 DEBUG 5872 --- [erp] [HikariPool-1:housekeeper] com.zaxxer.hikari.pool.HikariPool        : HikariPool-1 - Fill pool skipped, pool has sufficient level or currently being filled.
+2025-11-01T18:55:33.603+07:00 DEBUG 5872 --- [erp] [HikariPool-1:housekeeper] com.zaxxer.hikari.pool.HikariPool        : HikariPool-1 - Before cleanup stats (total=6/10, idle=6/5, active=0, waiting=0)
+2025-11-01T18:55:33.603+07:00 DEBUG 5872 --- [erp] [HikariPool-1:housekeeper] com.zaxxer.hikari.pool.HikariPool        : HikariPool-1 - After  cleanup stats (total=6/10, idle=6/5, active=0, waiting=0)
+2025-11-01T18:55:33.603+07:00 DEBUG 5872 --- [erp] [HikariPool-1:housekeeper] com.zaxxer.hikari.pool.HikariPool        : HikariPool-1 - Fill pool skipped, pool has sufficient level or currently being filled.
+2025-11-01T18:56:03.606+07:00 DEBUG 5872 --- [erp] [HikariPool-1:housekeeper] com.zaxxer.hikari.pool.HikariPool        : HikariPool-1 - Before cleanup stats (total=6/10, idle=6/5, active=0, waiting=0)
+2025-11-01T18:56:03.606+07:00 DEBUG 5872 --- [erp] [HikariPool-1:housekeeper] com.zaxxer.hikari.pool.HikariPool        : HikariPool-1 - After  cleanup stats (total=6/10, idle=6/5, active=0, waiting=0)
+2025-11-01T18:56:03.607+07:00 DEBUG 5872 --- [erp] [HikariPool-1:housekeeper] com.zaxxer.hikari.pool.HikariPool        : HikariPool-1 - Fill pool skipped, pool has sufficient level or currently being filled.
+2025-11-01T18:56:23.774+07:00 DEBUG 5872 --- [erp] [HikariPool-1:housekeeper] com.zaxxer.hikari.pool.HikariPool        : HikariPool-1 - keepalive: connection org.postgresql.jdbc.PgConnection@4d744cdb is alive
+2025-11-01T18:56:30.733+07:00 DEBUG 5872 --- [erp] [HikariPool-1:housekeeper] com.zaxxer.hikari.pool.HikariPool        : HikariPool-1 - keepalive: connection org.postgresql.jdbc.PgConnection@279ab15e is alive
+2025-11-01T18:56:32.958+07:00 DEBUG 5872 --- [erp] [HikariPool-1:housekeeper] com.zaxxer.hikari.pool.HikariPool        : HikariPool-1 - keepalive: connection org.postgresql.jdbc.PgConnection@876cb11 is alive
+2025-11-01T18:56:33.613+07:00 DEBUG 5872 --- [erp] [HikariPool-1:housekeeper] com.zaxxer.hikari.pool.HikariPool        : HikariPool-1 - Before cleanup stats (total=6/10, idle=6/5, active=0, waiting=0)
+2025-11-01T18:56:33.613+07:00 DEBUG 5872 --- [erp] [HikariPool-1:housekeeper] com.zaxxer.hikari.pool.HikariPool        : HikariPool-1 - After  cleanup stats (total=6/10, idle=6/5, active=0, waiting=0)
+2025-11-01T18:56:33.613+07:00 DEBUG 5872 --- [erp] [HikariPool-1:housekeeper] com.zaxxer.hikari.pool.HikariPool        : HikariPool-1 - Fill pool skipped, pool has sufficient level or currently being filled.
+2025-11-01T18:56:40.732+07:00 DEBUG 5872 --- [erp] [HikariPool-1:housekeeper] com.zaxxer.hikari.pool.HikariPool        : HikariPool-1 - keepalive: connection org.postgresql.jdbc.PgConnection@2e6104cb is alive
+2025-11-01T18:56:49.035+07:00 DEBUG 5872 --- [erp] [HikariPool-1:housekeeper] com.zaxxer.hikari.pool.HikariPool        : HikariPool-1 - keepalive: connection org.postgresql.jdbc.PgConnection@3934c2bc is alive
+2025-11-01T18:56:58.044+07:00  WARN 5872 --- [erp] [HikariPool-1:housekeeper] com.zaxxer.hikari.pool.PoolBase          : HikariPool-1 - Failed to validate connection org.postgresql.jdbc.PgConnection@478c27ab (This connection has been closed.). Possibly consider using a shorter maxLifetime value.
+2025-11-01T18:56:58.070+07:00 DEBUG 5872 --- [erp] [HikariPool-1:connection-closer] com.zaxxer.hikari.pool.PoolBase          : HikariPool-1 - Closing connection org.postgresql.jdbc.PgConnection@478c27ab: (connection is dead)
+2025-11-01T18:57:03.615+07:00 DEBUG 5872 --- [erp] [HikariPool-1:housekeeper] com.zaxxer.hikari.pool.HikariPool        : HikariPool-1 - Before cleanup stats (total=5/10, idle=5/5, active=0, waiting=0)
+2025-11-01T18:57:03.616+07:00 DEBUG 5872 --- [erp] [HikariPool-1:housekeeper] com.zaxxer.hikari.pool.HikariPool        : HikariPool-1 - After  cleanup stats (total=5/10, idle=5/5, active=0, waiting=0)
+2025-11-01T18:57:03.617+07:00 DEBUG 5872 --- [erp] [HikariPool-1:housekeeper] com.zaxxer.hikari.pool.HikariPool        : HikariPool-1 - Fill pool skipped, pool has sufficient level or currently being filled.
+2025-11-01T18:57:33.628+07:00 DEBUG 5872 --- [erp] [HikariPool-1:housekeeper] com.zaxxer.hikari.pool.HikariPool        : HikariPool-1 - Before cleanup stats (total=5/10, idle=5/5, active=0, waiting=0)
+2025-11-01T18:57:33.628+07:00 DEBUG 5872 --- [erp] [HikariPool-1:housekeeper] com.zaxxer.hikari.pool.HikariPool        : HikariPool-1 - After  cleanup stats (total=5/10, idle=5/5, active=0, waiting=0)
+2025-11-01T18:57:33.628+07:00 DEBUG 5872 --- [erp] [HikariPool-1:housekeeper] com.zaxxer.hikari.pool.HikariPool        : HikariPool-1 - Fill pool skipped, pool has sufficient level or currently being filled.
+2025-11-01T18:58:03.645+07:00 DEBUG 5872 --- [erp] [HikariPool-1:housekeeper] com.zaxxer.hikari.pool.HikariPool        : HikariPool-1 - Before cleanup stats (total=5/10, idle=5/5, active=0, waiting=0)
+2025-11-01T18:58:03.648+07:00 DEBUG 5872 --- [erp] [HikariPool-1:housekeeper] com.zaxxer.hikari.pool.HikariPool        : HikariPool-1 - After  cleanup stats (total=5/10, idle=5/5, active=0, waiting=0)
+2025-11-01T18:58:03.648+07:00 DEBUG 5872 --- [erp] [HikariPool-1:housekeeper] com.zaxxer.hikari.pool.HikariPool        : HikariPool-1 - Fill pool skipped, pool has sufficient level or currently being filled.
+2025-11-01T18:58:03.683+07:00 DEBUG 5872 --- [erp] [HikariPool-1:housekeeper] com.zaxxer.hikari.pool.HikariPool        : HikariPool-1 - keepalive: connection org.postgresql.jdbc.PgConnection@4d744cdb is alive
+2025-11-01T18:58:14.418+07:00 DEBUG 5872 --- [erp] [HikariPool-1:housekeeper] com.zaxxer.hikari.pool.HikariPool        : HikariPool-1 - keepalive: connection org.postgresql.jdbc.PgConnection@279ab15e is alive
+2025-11-01T18:58:17.298+07:00 DEBUG 5872 --- [erp] [HikariPool-1:housekeeper] com.zaxxer.hikari.pool.HikariPool        : HikariPool-1 - keepalive: connection org.postgresql.jdbc.PgConnection@876cb11 is alive
+2025-11-01T18:58:28.698+07:00 DEBUG 5872 --- [erp] [HikariPool-1:housekeeper] com.zaxxer.hikari.pool.HikariPool        : HikariPool-1 - keepalive: connection org.postgresql.jdbc.PgConnection@2e6104cb is alive
+2025-11-01T18:58:33.662+07:00 DEBUG 5872 --- [erp] [HikariPool-1:housekeeper] com.zaxxer.hikari.pool.HikariPool        : HikariPool-1 - Before cleanup stats (total=5/10, idle=5/5, active=0, waiting=0)
+2025-11-01T18:58:33.662+07:00 DEBUG 5872 --- [erp] [HikariPool-1:housekeeper] com.zaxxer.hikari.pool.HikariPool        : HikariPool-1 - After  cleanup stats (total=5/10, idle=5/5, active=0, waiting=0)
+2025-11-01T18:58:33.662+07:00 DEBUG 5872 --- [erp] [HikariPool-1:housekeeper] com.zaxxer.hikari.pool.HikariPool        : HikariPool-1 - Fill pool skipped, pool has sufficient level or currently being filled.
+2025-11-01T18:58:40.737+07:00 DEBUG 5872 --- [erp] [HikariPool-1:housekeeper] com.zaxxer.hikari.pool.HikariPool        : HikariPool-1 - keepalive: connection org.postgresql.jdbc.PgConnection@3934c2bc is alive
+2025-11-01T18:59:03.676+07:00 DEBUG 5872 --- [erp] [HikariPool-1:housekeeper] com.zaxxer.hikari.pool.HikariPool        : HikariPool-1 - Before cleanup stats (total=5/10, idle=5/5, active=0, waiting=0)
+2025-11-01T18:59:03.676+07:00 DEBUG 5872 --- [erp] [HikariPool-1:housekeeper] com.zaxxer.hikari.pool.HikariPool        : HikariPool-1 - After  cleanup stats (total=5/10, idle=5/5, active=0, waiting=0)
+2025-11-01T18:59:03.676+07:00 DEBUG 5872 --- [erp] [HikariPool-1:housekeeper] com.zaxxer.hikari.pool.HikariPool        : HikariPool-1 - Fill pool skipped, pool has sufficient level or currently being filled.
+2025-11-01T18:59:33.684+07:00 DEBUG 5872 --- [erp] [HikariPool-1:housekeeper] com.zaxxer.hikari.pool.HikariPool        : HikariPool-1 - Before cleanup stats (total=5/10, idle=5/5, active=0, waiting=0)
+2025-11-01T18:59:33.684+07:00 DEBUG 5872 --- [erp] [HikariPool-1:housekeeper] com.zaxxer.hikari.pool.HikariPool        : HikariPool-1 - After  cleanup stats (total=5/10, idle=5/5, active=0, waiting=0)
+2025-11-01T18:59:33.685+07:00 DEBUG 5872 --- [erp] [HikariPool-1:housekeeper] com.zaxxer.hikari.pool.HikariPool        : HikariPool-1 - Fill pool skipped, pool has sufficient level or currently being filled.
+2025-11-01T18:59:43.586+07:00 DEBUG 5872 --- [erp] [HikariPool-1:housekeeper] com.zaxxer.hikari.pool.HikariPool        : HikariPool-1 - keepalive: connection org.postgresql.jdbc.PgConnection@4d744cdb is alive
+2025-11-01T18:59:58.086+07:00 DEBUG 5872 --- [erp] [HikariPool-1:housekeeper] com.zaxxer.hikari.pool.HikariPool        : HikariPool-1 - keepalive: connection org.postgresql.jdbc.PgConnection@279ab15e is alive
+2025-11-01T19:00:01.654+07:00 DEBUG 5872 --- [erp] [HikariPool-1:housekeeper] com.zaxxer.hikari.pool.HikariPool        : HikariPool-1 - keepalive: connection org.postgresql.jdbc.PgConnection@876cb11 is alive
+2025-11-01T19:00:03.691+07:00 DEBUG 5872 --- [erp] [HikariPool-1:housekeeper] com.zaxxer.hikari.pool.HikariPool        : HikariPool-1 - Before cleanup stats (total=5/10, idle=5/5, active=0, waiting=0)
+2025-11-01T19:00:03.691+07:00 DEBUG 5872 --- [erp] [HikariPool-1:housekeeper] com.zaxxer.hikari.pool.HikariPool        : HikariPool-1 - After  cleanup stats (total=5/10, idle=5/5, active=0, waiting=0)
+2025-11-01T19:00:03.691+07:00 DEBUG 5872 --- [erp] [HikariPool-1:housekeeper] com.zaxxer.hikari.pool.HikariPool        : HikariPool-1 - Fill pool skipped, pool has sufficient level or currently being filled.
+2025-11-01T19:00:16.637+07:00 DEBUG 5872 --- [erp] [HikariPool-1:housekeeper] com.zaxxer.hikari.pool.HikariPool        : HikariPool-1 - keepalive: connection org.postgresql.jdbc.PgConnection@2e6104cb is alive
+2025-11-01T19:00:32.413+07:00 DEBUG 5872 --- [erp] [HikariPool-1:housekeeper] com.zaxxer.hikari.pool.HikariPool        : HikariPool-1 - keepalive: connection org.postgresql.jdbc.PgConnection@3934c2bc is alive
+2025-11-01T19:00:33.696+07:00 DEBUG 5872 --- [erp] [HikariPool-1:housekeeper] com.zaxxer.hikari.pool.HikariPool        : HikariPool-1 - Before cleanup stats (total=5/10, idle=5/5, active=0, waiting=0)
+2025-11-01T19:00:33.696+07:00 DEBUG 5872 --- [erp] [HikariPool-1:housekeeper] com.zaxxer.hikari.pool.HikariPool        : HikariPool-1 - After  cleanup stats (total=5/10, idle=5/5, active=0, waiting=0)
+2025-11-01T19:00:33.696+07:00 DEBUG 5872 --- [erp] [HikariPool-1:housekeeper] com.zaxxer.hikari.pool.HikariPool        : HikariPool-1 - Fill pool skipped, pool has sufficient level or currently being filled.
+2025-11-01T19:01:03.702+07:00 DEBUG 5872 --- [erp] [HikariPool-1:housekeeper] com.zaxxer.hikari.pool.HikariPool        : HikariPool-1 - Before cleanup stats (total=5/10, idle=5/5, active=0, waiting=0)
+2025-11-01T19:01:03.702+07:00 DEBUG 5872 --- [erp] [HikariPool-1:housekeeper] com.zaxxer.hikari.pool.HikariPool        : HikariPool-1 - After  cleanup stats (total=5/10, idle=5/5, active=0, waiting=0)
+2025-11-01T19:01:03.702+07:00 DEBUG 5872 --- [erp] [HikariPool-1:housekeeper] com.zaxxer.hikari.pool.HikariPool        : HikariPool-1 - Fill pool skipped, pool has sufficient level or currently being filled.
+2025-11-01T19:01:23.472+07:00 DEBUG 5872 --- [erp] [HikariPool-1:housekeeper] com.zaxxer.hikari.pool.HikariPool        : HikariPool-1 - keepalive: connection org.postgresql.jdbc.PgConnection@4d744cdb is alive
+2025-11-01T19:01:33.704+07:00 DEBUG 5872 --- [erp] [HikariPool-1:housekeeper] com.zaxxer.hikari.pool.HikariPool        : HikariPool-1 - Before cleanup stats (total=5/10, idle=5/5, active=0, waiting=0)
+2025-11-01T19:01:33.704+07:00 DEBUG 5872 --- [erp] [HikariPool-1:housekeeper] com.zaxxer.hikari.pool.HikariPool        : HikariPool-1 - After  cleanup stats (total=5/10, idle=5/5, active=0, waiting=0)
+2025-11-01T19:01:33.705+07:00 DEBUG 5872 --- [erp] [HikariPool-1:housekeeper] com.zaxxer.hikari.pool.HikariPool        : HikariPool-1 - Fill pool skipped, pool has sufficient level or currently being filled.
+2025-11-01T19:01:41.762+07:00 DEBUG 5872 --- [erp] [HikariPool-1:housekeeper] com.zaxxer.hikari.pool.HikariPool        : HikariPool-1 - keepalive: connection org.postgresql.jdbc.PgConnection@279ab15e is alive
+2025-11-01T19:01:45.999+07:00 DEBUG 5872 --- [erp] [HikariPool-1:housekeeper] com.zaxxer.hikari.pool.HikariPool        : HikariPool-1 - keepalive: connection org.postgresql.jdbc.PgConnection@876cb11 is alive
+2025-11-01T19:02:03.712+07:00 DEBUG 5872 --- [erp] [HikariPool-1:housekeeper] com.zaxxer.hikari.pool.HikariPool        : HikariPool-1 - Before cleanup stats (total=5/10, idle=5/5, active=0, waiting=0)
+2025-11-01T19:02:03.712+07:00 DEBUG 5872 --- [erp] [HikariPool-1:housekeeper] com.zaxxer.hikari.pool.HikariPool        : HikariPool-1 - After  cleanup stats (total=5/10, idle=5/5, active=0, waiting=0)
+2025-11-01T19:02:03.712+07:00 DEBUG 5872 --- [erp] [HikariPool-1:housekeeper] com.zaxxer.hikari.pool.HikariPool        : HikariPool-1 - Fill pool skipped, pool has sufficient level or currently being filled.
+2025-11-01T19:02:04.590+07:00 DEBUG 5872 --- [erp] [HikariPool-1:housekeeper] com.zaxxer.hikari.pool.HikariPool        : HikariPool-1 - keepalive: connection org.postgresql.jdbc.PgConnection@2e6104cb is alive
+2025-11-01T19:02:24.101+07:00 DEBUG 5872 --- [erp] [HikariPool-1:housekeeper] com.zaxxer.hikari.pool.HikariPool        : HikariPool-1 - keepalive: connection org.postgresql.jdbc.PgConnection@3934c2bc is alive
+2025-11-01T19:02:33.720+07:00 DEBUG 5872 --- [erp] [HikariPool-1:housekeeper] com.zaxxer.hikari.pool.HikariPool        : HikariPool-1 - Before cleanup stats (total=5/10, idle=5/5, active=0, waiting=0)
+2025-11-01T19:02:33.720+07:00 DEBUG 5872 --- [erp] [HikariPool-1:housekeeper] com.zaxxer.hikari.pool.HikariPool        : HikariPool-1 - After  cleanup stats (total=5/10, idle=5/5, active=0, waiting=0)
+2025-11-01T19:02:33.721+07:00 DEBUG 5872 --- [erp] [HikariPool-1:housekeeper] com.zaxxer.hikari.pool.HikariPool        : HikariPool-1 - Fill pool skipped, pool has sufficient level or currently being filled.
+2025-11-01T19:03:03.382+07:00 DEBUG 5872 --- [erp] [HikariPool-1:housekeeper] com.zaxxer.hikari.pool.HikariPool        : HikariPool-1 - keepalive: connection org.postgresql.jdbc.PgConnection@4d744cdb is alive
+2025-11-01T19:03:03.734+07:00 DEBUG 5872 --- [erp] [HikariPool-1:housekeeper] com.zaxxer.hikari.pool.HikariPool        : HikariPool-1 - Before cleanup stats (total=5/10, idle=5/5, active=0, waiting=0)
+2025-11-01T19:03:03.734+07:00 DEBUG 5872 --- [erp] [HikariPool-1:housekeeper] com.zaxxer.hikari.pool.HikariPool        : HikariPool-1 - After  cleanup stats (total=5/10, idle=5/5, active=0, waiting=0)
+2025-11-01T19:03:03.734+07:00 DEBUG 5872 --- [erp] [HikariPool-1:housekeeper] com.zaxxer.hikari.pool.HikariPool        : HikariPool-1 - Fill pool skipped, pool has sufficient level or currently being filled.
+2025-11-01T19:03:25.421+07:00 DEBUG 5872 --- [erp] [HikariPool-1:housekeeper] com.zaxxer.hikari.pool.HikariPool        : HikariPool-1 - keepalive: connection org.postgresql.jdbc.PgConnection@279ab15e is alive
+2025-11-01T19:03:30.333+07:00 DEBUG 5872 --- [erp] [HikariPool-1:housekeeper] com.zaxxer.hikari.pool.HikariPool        : HikariPool-1 - keepalive: connection org.postgresql.jdbc.PgConnection@876cb11 is alive
+2025-11-01T19:03:33.739+07:00 DEBUG 5872 --- [erp] [HikariPool-1:housekeeper] com.zaxxer.hikari.pool.HikariPool        : HikariPool-1 - Before cleanup stats (total=5/10, idle=5/5, active=0, waiting=0)
+2025-11-01T19:03:33.739+07:00 DEBUG 5872 --- [erp] [HikariPool-1:housekeeper] com.zaxxer.hikari.pool.HikariPool        : HikariPool-1 - After  cleanup stats (total=5/10, idle=5/5, active=0, waiting=0)
+2025-11-01T19:03:33.739+07:00 DEBUG 5872 --- [erp] [HikariPool-1:housekeeper] com.zaxxer.hikari.pool.HikariPool        : HikariPool-1 - Fill pool skipped, pool has sufficient level or currently being filled.
+2025-11-01T19:03:43.385+07:00  INFO 5872 --- [erp] [SpringApplicationShutdownHook] o.s.boot.tomcat.GracefulShutdown         : Commencing graceful shutdown. Waiting for active requests to complete
+2025-11-01T19:03:43.395+07:00  INFO 5872 --- [erp] [tomcat-shutdown] o.s.boot.tomcat.GracefulShutdown         : Graceful shutdown complete
+2025-11-01T19:03:43.400+07:00  INFO 5872 --- [erp] [SpringApplicationShutdownHook] j.LocalContainerEntityManagerFactoryBean : Closing JPA EntityManagerFactory for persistence unit 'default'
+2025-11-01T19:03:43.402+07:00  INFO 5872 --- [erp] [SpringApplicationShutdownHook] com.zaxxer.hikari.HikariDataSource       : HikariPool-1 - Shutdown initiated...
+2025-11-01T19:03:43.402+07:00 DEBUG 5872 --- [erp] [SpringApplicationShutdownHook] com.zaxxer.hikari.pool.HikariPool        : HikariPool-1 - Before shutdown stats (total=5/10, idle=5/5, active=0, waiting=0)
+2025-11-01T19:03:43.403+07:00 DEBUG 5872 --- [erp] [HikariPool-1:connection-closer] com.zaxxer.hikari.pool.PoolBase          : HikariPool-1 - Closing connection org.postgresql.jdbc.PgConnection@279ab15e: (connection evicted)
+2025-11-01T19:03:43.404+07:00 DEBUG 5872 --- [erp] [HikariPool-1:connection-closer] com.zaxxer.hikari.pool.PoolBase          : HikariPool-1 - Closing connection org.postgresql.jdbc.PgConnection@4d744cdb: (connection evicted)
+2025-11-01T19:03:43.404+07:00 DEBUG 5872 --- [erp] [HikariPool-1:connection-closer] com.zaxxer.hikari.pool.PoolBase          : HikariPool-1 - Closing connection org.postgresql.jdbc.PgConnection@876cb11: (connection evicted)
+2025-11-01T19:03:43.404+07:00 DEBUG 5872 --- [erp] [HikariPool-1:connection-closer] com.zaxxer.hikari.pool.PoolBase          : HikariPool-1 - Closing connection org.postgresql.jdbc.PgConnection@2e6104cb: (connection evicted)
+2025-11-01T19:03:43.405+07:00 DEBUG 5872 --- [erp] [HikariPool-1:connection-closer] com.zaxxer.hikari.pool.PoolBase          : HikariPool-1 - Closing connection org.postgresql.jdbc.PgConnection@3934c2bc: (connection evicted)
+2025-11-01T19:03:43.405+07:00 DEBUG 5872 --- [erp] [SpringApplicationShutdownHook] com.zaxxer.hikari.pool.HikariPool        : HikariPool-1 - After  shutdown stats (total=0/10, idle=0/5, active=0, waiting=0)
+2025-11-01T19:03:43.405+07:00  INFO 5872 --- [erp] [SpringApplicationShutdownHook] com.zaxxer.hikari.HikariDataSource       : HikariPool-1 - Shutdown completed.
+2025-11-01T19:04:32.003+07:00  INFO 15864 --- [erp] [main] com.sambound.erp.ErpApplication          : Starting ErpApplication v0.0.1-SNAPSHOT using Java 25.0.1 with PID 15864 (C:\Users\LY\Code\erp\backend\target\erp-0.0.1-SNAPSHOT.jar started by LY in C:\Users\LY\Code\erp\backend)
+2025-11-01T19:04:32.007+07:00  INFO 15864 --- [erp] [main] com.sambound.erp.ErpApplication          : No active profile set, falling back to 1 default profile: "default"
+2025-11-01T19:04:32.766+07:00  INFO 15864 --- [erp] [main] .s.d.r.c.RepositoryConfigurationDelegate : Bootstrapping Spring Data JPA repositories in DEFAULT mode.
+2025-11-01T19:04:32.833+07:00  INFO 15864 --- [erp] [main] .s.d.r.c.RepositoryConfigurationDelegate : Finished Spring Data repository scanning in 60 ms. Found 6 JPA repository interfaces.
+2025-11-01T19:04:33.447+07:00  INFO 15864 --- [erp] [main] o.s.boot.tomcat.TomcatWebServer          : Tomcat initialized with port 8080 (http)
+2025-11-01T19:04:33.466+07:00  INFO 15864 --- [erp] [main] o.apache.catalina.core.StandardService   : Starting service [Tomcat]
+2025-11-01T19:04:33.467+07:00  INFO 15864 --- [erp] [main] o.apache.catalina.core.StandardEngine    : Starting Servlet engine: [Apache Tomcat/11.0.13]
+2025-11-01T19:04:33.505+07:00  INFO 15864 --- [erp] [main] b.w.c.s.WebApplicationContextInitializer : Root WebApplicationContext: initialization completed in 1439 ms
+2025-11-01T19:04:33.651+07:00  INFO 15864 --- [erp] [main] o.hibernate.jpa.internal.util.LogHelper  : HHH000204: Processing PersistenceUnitInfo [name: default]
+2025-11-01T19:04:33.857+07:00  INFO 15864 --- [erp] [main] org.hibernate.Version                    : HHH000412: Hibernate ORM core version 7.1.4.Final
+2025-11-01T19:04:34.321+07:00  INFO 15864 --- [erp] [main] o.s.o.j.p.SpringPersistenceUnitInfo      : No LoadTimeWeaver setup: ignoring JPA class transformer
+2025-11-01T19:04:34.351+07:00  INFO 15864 --- [erp] [main] com.zaxxer.hikari.HikariDataSource       : HikariPool-1 - Starting...
+2025-11-01T19:04:35.453+07:00  INFO 15864 --- [erp] [main] com.zaxxer.hikari.pool.HikariPool        : HikariPool-1 - Added connection org.postgresql.jdbc.PgConnection@7a71ebf1
+2025-11-01T19:04:35.455+07:00  INFO 15864 --- [erp] [main] com.zaxxer.hikari.HikariDataSource       : HikariPool-1 - Start completed.
+2025-11-01T19:04:35.540+07:00  WARN 15864 --- [erp] [main] org.hibernate.orm.deprecation            : HHH90000025: PostgreSQLDialect does not need to be specified explicitly using 'hibernate.dialect' (remove the property setting and it will be selected by default)
+2025-11-01T19:04:35.738+07:00  INFO 15864 --- [erp] [main] org.hibernate.orm.connections.pooling    : HHH10001005: Database info:
+	Database JDBC URL [jdbc:postgresql://43.161.248.212:5446/order_db]
+	Database driver: PostgreSQL JDBC Driver
+	Database dialect: PostgreSQLDialect
+	Database version: 17.6
+	Default catalog/schema: order_db/public
+	Autocommit mode: undefined/unknown
+	Isolation level: READ_COMMITTED [default READ_COMMITTED]
+	JDBC fetch size: none
+	Pool: DatasourceConnectionProviderImpl
+	Minimum pool size: undefined/unknown
+	Maximum pool size: undefined/unknown
+2025-11-01T19:04:36.621+07:00  INFO 15864 --- [erp] [main] o.h.e.t.j.p.i.JtaPlatformInitiator       : HHH000489: No JTA platform available (set 'hibernate.transaction.jta.platform' to enable JTA platform integration)
+2025-11-01T19:04:38.308+07:00  INFO 15864 --- [erp] [main] j.LocalContainerEntityManagerFactoryBean : Initialized JPA EntityManagerFactory for persistence unit 'default'
+2025-11-01T19:04:38.369+07:00  INFO 15864 --- [erp] [main] o.s.d.j.r.query.QueryEnhancerFactories   : Hibernate is in classpath; If applicable, HQL parser will be used.
+2025-11-01T19:04:39.133+07:00  INFO 15864 --- [erp] [main] eAuthenticationProviderManagerConfigurer : Global AuthenticationManager configured with AuthenticationProvider bean with name authenticationProvider
+2025-11-01T19:04:39.134+07:00  WARN 15864 --- [erp] [main] r$InitializeUserDetailsManagerConfigurer : Global AuthenticationManager configured with an AuthenticationProvider bean. UserDetailsService beans will not be used by Spring Security for automatically configuring username/password login. Consider removing the AuthenticationProvider bean. Alternatively, consider using the UserDetailsService in a manually instantiated DaoAuthenticationProvider. If the current configuration is intentional, to turn off this warning, increase the logging level of 'org.springframework.security.config.annotation.authentication.configuration.InitializeUserDetailsBeanManagerConfigurer' to ERROR
+2025-11-01T19:04:39.460+07:00  WARN 15864 --- [erp] [main] JpaBaseConfiguration$JpaWebConfiguration : spring.jpa.open-in-view is enabled by default. Therefore, database queries may be performed during view rendering. Explicitly configure spring.jpa.open-in-view to disable this warning
+2025-11-01T19:04:40.011+07:00  INFO 15864 --- [erp] [main] o.s.boot.tomcat.TomcatWebServer          : Tomcat started on port 8080 (http) with context path '/'
+2025-11-01T19:04:40.019+07:00  INFO 15864 --- [erp] [main] com.sambound.erp.ErpApplication          : Started ErpApplication in 8.466 seconds (process running for 8.961)
+2025-11-01T19:04:47.248+07:00  INFO 15864 --- [erp] [http-nio-8080-exec-2] o.a.c.c.C.[Tomcat].[localhost].[/]       : Initializing Spring DispatcherServlet 'dispatcherServlet'
+2025-11-01T19:04:47.248+07:00  INFO 15864 --- [erp] [http-nio-8080-exec-2] o.s.web.servlet.DispatcherServlet        : Initializing Servlet 'dispatcherServlet'
+2025-11-01T19:04:47.248+07:00  INFO 15864 --- [erp] [http-nio-8080-exec-2] o.s.web.servlet.DispatcherServlet        : Completed initialization in 0 ms
+2025-11-01T19:04:47.981+07:00  WARN 15864 --- [erp] [http-nio-8080-exec-9] ration$PageModule$WarningLoggingModifier : Serializing PageImpl instances as-is is not supported, meaning that there is no guarantee about the stability of the resulting JSON structure!
+	For a stable JSON structure, please use Spring Data's PagedModel (globally via @EnableSpringDataWebSupport(pageSerializationMode = VIA_DTO))
+	or Spring HATEOAS and Spring Data's PagedResourcesAssembler as documented in https://docs.spring.io/spring-data/commons/reference/repositories/core-extensions.html#core.web.pageables.
+
+2025-11-01T20:04:56.554+07:00  WARN 15864 --- [erp] [HikariPool-1:housekeeper] com.zaxxer.hikari.pool.PoolBase          : HikariPool-1 - Failed to validate connection org.postgresql.jdbc.PgConnection@60d7d506 (This connection has been closed.). Possibly consider using a shorter maxLifetime value.
+2025-11-01T20:05:04.063+07:00  WARN 15864 --- [erp] [HikariPool-1:housekeeper] com.zaxxer.hikari.pool.PoolBase          : HikariPool-1 - Failed to validate connection org.postgresql.jdbc.PgConnection@5c268c34 (This connection has been closed.). Possibly consider using a shorter maxLifetime value.
+2025-11-01T20:05:34.782+07:00  WARN 15864 --- [erp] [HikariPool-1:housekeeper] com.zaxxer.hikari.pool.PoolBase          : HikariPool-1 - Failed to validate connection org.postgresql.jdbc.PgConnection@6e42edeb (This connection has been closed.). Possibly consider using a shorter maxLifetime value.
+2025-11-01T20:05:43.394+07:00  WARN 15864 --- [erp] [HikariPool-1:housekeeper] com.zaxxer.hikari.pool.PoolBase          : HikariPool-1 - Failed to validate connection org.postgresql.jdbc.PgConnection@73a594d4 (This connection has been closed.). Possibly consider using a shorter maxLifetime value.
+2025-11-01T20:06:44.927+07:00  WARN 15864 --- [erp] [HikariPool-1:housekeeper] com.zaxxer.hikari.pool.PoolBase          : HikariPool-1 - Failed to validate connection org.postgresql.jdbc.PgConnection@21b13337 (This connection has been closed.). Possibly consider using a shorter maxLifetime value.
+2025-11-01T20:06:52.769+07:00  WARN 15864 --- [erp] [HikariPool-1:housekeeper] com.zaxxer.hikari.pool.PoolBase          : HikariPool-1 - Failed to validate connection org.postgresql.jdbc.PgConnection@32ce76fa (This connection has been closed.). Possibly consider using a shorter maxLifetime value.
+2025-11-01T20:12:26.192+07:00  INFO 15864 --- [erp] [SpringApplicationShutdownHook] o.s.boot.tomcat.GracefulShutdown         : Commencing graceful shutdown. Waiting for active requests to complete
+2025-11-01T20:12:26.203+07:00  INFO 15864 --- [erp] [tomcat-shutdown] o.s.boot.tomcat.GracefulShutdown         : Graceful shutdown complete
+2025-11-01T20:12:26.208+07:00  INFO 15864 --- [erp] [SpringApplicationShutdownHook] j.LocalContainerEntityManagerFactoryBean : Closing JPA EntityManagerFactory for persistence unit 'default'
+2025-11-01T20:12:26.209+07:00  INFO 15864 --- [erp] [SpringApplicationShutdownHook] com.zaxxer.hikari.HikariDataSource       : HikariPool-1 - Shutdown initiated...
+2025-11-01T20:12:26.211+07:00  INFO 15864 --- [erp] [SpringApplicationShutdownHook] com.zaxxer.hikari.HikariDataSource       : HikariPool-1 - Shutdown completed.
+2025-11-01T20:12:45.128+07:00  INFO 21180 --- [erp] [main] com.sambound.erp.ErpApplication          : Starting ErpApplication v0.0.1-SNAPSHOT using Java 25.0.1 with PID 21180 (C:\Users\LY\Code\erp\backend\target\erp-0.0.1-SNAPSHOT.jar started by LY in C:\Users\LY\Code\erp\backend)
+2025-11-01T20:12:45.132+07:00  INFO 21180 --- [erp] [main] com.sambound.erp.ErpApplication          : No active profile set, falling back to 1 default profile: "default"
+2025-11-01T20:12:46.042+07:00  INFO 21180 --- [erp] [main] .s.d.r.c.RepositoryConfigurationDelegate : Bootstrapping Spring Data JPA repositories in DEFAULT mode.
+2025-11-01T20:12:46.124+07:00  INFO 21180 --- [erp] [main] .s.d.r.c.RepositoryConfigurationDelegate : Finished Spring Data repository scanning in 71 ms. Found 6 JPA repository interfaces.
+2025-11-01T20:12:46.885+07:00  INFO 21180 --- [erp] [main] o.s.boot.tomcat.TomcatWebServer          : Tomcat initialized with port 8080 (http)
+2025-11-01T20:12:46.911+07:00  INFO 21180 --- [erp] [main] o.apache.catalina.core.StandardService   : Starting service [Tomcat]
+2025-11-01T20:12:46.912+07:00  INFO 21180 --- [erp] [main] o.apache.catalina.core.StandardEngine    : Starting Servlet engine: [Apache Tomcat/11.0.13]
+2025-11-01T20:12:46.955+07:00  INFO 21180 --- [erp] [main] b.w.c.s.WebApplicationContextInitializer : Root WebApplicationContext: initialization completed in 1755 ms
+2025-11-01T20:12:47.135+07:00  INFO 21180 --- [erp] [main] o.hibernate.jpa.internal.util.LogHelper  : HHH000204: Processing PersistenceUnitInfo [name: default]
+2025-11-01T20:12:47.386+07:00  INFO 21180 --- [erp] [main] org.hibernate.Version                    : HHH000412: Hibernate ORM core version 7.1.4.Final
+2025-11-01T20:12:47.825+07:00  INFO 21180 --- [erp] [main] o.s.o.j.p.SpringPersistenceUnitInfo      : No LoadTimeWeaver setup: ignoring JPA class transformer
+2025-11-01T20:12:47.858+07:00  INFO 21180 --- [erp] [main] com.zaxxer.hikari.HikariDataSource       : HikariPool-1 - Starting...
+2025-11-01T20:12:48.802+07:00  INFO 21180 --- [erp] [main] com.zaxxer.hikari.pool.HikariPool        : HikariPool-1 - Added connection org.postgresql.jdbc.PgConnection@7a71ebf1
+2025-11-01T20:12:48.805+07:00  INFO 21180 --- [erp] [main] com.zaxxer.hikari.HikariDataSource       : HikariPool-1 - Start completed.
+2025-11-01T20:12:48.930+07:00  WARN 21180 --- [erp] [main] org.hibernate.orm.deprecation            : HHH90000025: PostgreSQLDialect does not need to be specified explicitly using 'hibernate.dialect' (remove the property setting and it will be selected by default)
+2025-11-01T20:12:49.127+07:00  INFO 21180 --- [erp] [main] org.hibernate.orm.connections.pooling    : HHH10001005: Database info:
+	Database JDBC URL [jdbc:postgresql://43.161.248.212:5446/order_db]
+	Database driver: PostgreSQL JDBC Driver
+	Database dialect: PostgreSQLDialect
+	Database version: 17.6
+	Default catalog/schema: order_db/public
+	Autocommit mode: undefined/unknown
+	Isolation level: READ_COMMITTED [default READ_COMMITTED]
+	JDBC fetch size: none
+	Pool: DatasourceConnectionProviderImpl
+	Minimum pool size: undefined/unknown
+	Maximum pool size: undefined/unknown
+2025-11-01T20:12:50.116+07:00  INFO 21180 --- [erp] [main] o.h.e.t.j.p.i.JtaPlatformInitiator       : HHH000489: No JTA platform available (set 'hibernate.transaction.jta.platform' to enable JTA platform integration)
+2025-11-01T20:12:57.855+07:00  INFO 21180 --- [erp] [main] j.LocalContainerEntityManagerFactoryBean : Initialized JPA EntityManagerFactory for persistence unit 'default'
+2025-11-01T20:12:57.940+07:00  INFO 21180 --- [erp] [main] o.s.d.j.r.query.QueryEnhancerFactories   : Hibernate is in classpath; If applicable, HQL parser will be used.
+2025-11-01T20:12:58.876+07:00  INFO 21180 --- [erp] [main] eAuthenticationProviderManagerConfigurer : Global AuthenticationManager configured with AuthenticationProvider bean with name authenticationProvider
+2025-11-01T20:12:58.877+07:00  WARN 21180 --- [erp] [main] r$InitializeUserDetailsManagerConfigurer : Global AuthenticationManager configured with an AuthenticationProvider bean. UserDetailsService beans will not be used by Spring Security for automatically configuring username/password login. Consider removing the AuthenticationProvider bean. Alternatively, consider using the UserDetailsService in a manually instantiated DaoAuthenticationProvider. If the current configuration is intentional, to turn off this warning, increase the logging level of 'org.springframework.security.config.annotation.authentication.configuration.InitializeUserDetailsBeanManagerConfigurer' to ERROR
+2025-11-01T20:12:59.189+07:00  WARN 21180 --- [erp] [main] JpaBaseConfiguration$JpaWebConfiguration : spring.jpa.open-in-view is enabled by default. Therefore, database queries may be performed during view rendering. Explicitly configure spring.jpa.open-in-view to disable this warning
+2025-11-01T20:12:59.891+07:00  INFO 21180 --- [erp] [main] o.s.boot.tomcat.TomcatWebServer          : Tomcat started on port 8080 (http) with context path '/'
+2025-11-01T20:12:59.898+07:00  INFO 21180 --- [erp] [main] com.sambound.erp.ErpApplication          : Started ErpApplication in 15.297 seconds (process running for 15.924)
+2025-11-01T20:13:25.698+07:00  INFO 21180 --- [erp] [http-nio-8080-exec-5] o.a.c.c.C.[Tomcat].[localhost].[/]       : Initializing Spring DispatcherServlet 'dispatcherServlet'
+2025-11-01T20:13:25.698+07:00  INFO 21180 --- [erp] [http-nio-8080-exec-5] o.s.web.servlet.DispatcherServlet        : Initializing Servlet 'dispatcherServlet'
+2025-11-01T20:13:25.698+07:00  INFO 21180 --- [erp] [http-nio-8080-exec-5] o.s.web.servlet.DispatcherServlet        : Completed initialization in 0 ms

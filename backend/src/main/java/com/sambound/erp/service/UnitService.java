@@ -8,6 +8,8 @@ import com.sambound.erp.entity.UnitGroup;
 import com.sambound.erp.exception.BusinessException;
 import com.sambound.erp.repository.UnitGroupRepository;
 import com.sambound.erp.repository.UnitRepository;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -30,6 +32,11 @@ public class UnitService {
         return unitRepository.findAllWithUnitGroup().stream()
                 .map(this::toDTO)
                 .toList();
+    }
+
+    public Page<UnitDTO> getAllUnits(Pageable pageable) {
+        return unitRepository.findAllWithUnitGroupPaged(pageable)
+                .map(this::toDTO);
     }
 
     public List<UnitDTO> getUnitsByGroupId(Long groupId) {

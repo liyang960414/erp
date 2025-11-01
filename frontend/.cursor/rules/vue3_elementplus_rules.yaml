@@ -24,6 +24,7 @@ agent:
     2.  **图标**: 必须使用 `@element-plus/icons-vue` 中的组件，如 `<el-icon><Delete /></el-icon>`。
     3.  **消息提示**: 必须使用 `ElMessage` 或 `ElNotification` 进行用户反馈，并确保引入。
     4.  **表单验证**: `<el-form-item>` 的 `prop` 属性必须准确映射到表单数据，并使用 `rules` 属性进行类型化校验。
+    5.  **列表分页**: **强制要求** - 所有使用 `<el-table>` 展示数据的列表页面必须配合 `<el-pagination>` 实现分页功能，禁止一次性加载所有数据。详见"桌面端适配规范"中的"表格和数据展示"章节。
 
     ### III. 代码质量与格式化
     1.  **代码风格**: 遵循项目中 ESLint 和 Prettier 的配置。
@@ -152,7 +153,25 @@ agent:
         * 桌面端优先使用 `<el-table>` 展示数据，充分利用屏幕宽度。
         * 表格列可以根据需要固定宽度或自适应：`<el-table-column width="150">` 或 `min-width`。
         * 支持横向滚动，避免在小屏幕上强制压缩列宽。
-        * 使用 `<el-pagination>` 进行分页，桌面端每页显示数量可适当增加（如 20、50、100）。
+        * **分页规范（强制要求）**:
+          * **所有使用 `<el-table>` 的数据列表页面必须实现分页功能**。
+          * 必须使用 `<el-pagination>` 组件进行分页，不允许一次性加载所有数据。
+          * 分页组件必须包含以下配置：
+            ```vue
+            <el-pagination
+              v-model:current-page="pagination.page"
+              v-model:page-size="pagination.size"
+              :total="pagination.total"
+              :page-sizes="[10, 20, 50, 100]"
+              layout="total, sizes, prev, pager, next, jumper"
+              @size-change="loadData"
+              @current-change="loadData"
+            />
+            ```
+          * 分页状态管理：必须使用 `ref` 定义分页对象，包含 `page`、`size`、`total` 三个属性。
+          * API 调用：所有列表数据获取必须调用支持分页的后端接口，传递 `page`、`size`、`sortBy`、`sortDir` 参数。
+          * 桌面端每页显示数量可适当增加（推荐默认值：10、20、50、100）。
+          * 分页组件必须放在表格下方，右对齐显示，并添加合适的样式间距。
         * **数据量大时的表格滚动处理**:
           * 当表格数据量较大时，表格本身必须具备滚动能力，防止内容溢出。
           * 使用 `<el-table>` 的 `max-height` 属性限制表格最大高度，超出后自动显示滚动条：
@@ -224,6 +243,6 @@ paths:
 # 当 Agent 在相关文件上工作时，提醒它注意相关规范
 auto_attached:
   - path: src/**/*.vue
-    prompt_modifier: "Ensure the generated Vue component strictly utilizes Element Plus components according to best practices (e.g., <el-button>, <el-form>). All user-visible text MUST use $t() or t() function from vue-i18n. Never hardcode any text. The component should be optimized for desktop/PC devices (≥1024px width), with appropriate layout containers, responsive breakpoints, and desktop-friendly interactions. MUST use Flexbox layout for responsive design across multiple screen sizes. The overall interface MUST NOT allow scrolling (overflow: hidden on root and main layout containers), only the core content area (usually <el-main>) should have scrolling enabled (overflow-y: auto, overflow-x: hidden). When using <el-table> with large datasets, MUST implement table scrolling using max-height attribute or container-based scrolling to prevent content overflow."
+    prompt_modifier: "Ensure the generated Vue component strictly utilizes Element Plus components according to best practices (e.g., <el-button>, <el-form>). All user-visible text MUST use $t() or t() function from vue-i18n. Never hardcode any text. The component should be optimized for desktop/PC devices (≥1024px width), with appropriate layout containers, responsive breakpoints, and desktop-friendly interactions. MUST use Flexbox layout for responsive design across multiple screen sizes. The overall interface MUST NOT allow scrolling (overflow: hidden on root and main layout containers), only the core content area (usually <el-main>) should have scrolling enabled (overflow-y: auto, overflow-x: hidden). When using <el-table> with large datasets, MUST implement table scrolling using max-height attribute or container-based scrolling to prevent content overflow. CRITICAL: All <el-table> components MUST be accompanied by <el-pagination> component for server-side pagination. Never load all data at once."
   - path: src/locales/**/*.ts
     prompt_modifier: "Ensure translations are provided for all four supported languages: zh-CN (Chinese), vi (Vietnamese), en (English), and id (Indonesian). Maintain consistent key naming and structure across all language files."

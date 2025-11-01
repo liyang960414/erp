@@ -20,14 +20,49 @@ agent:
         * 使用 Java **Record** 作为投影 (Projection) 或 DTOs，而不是直接暴露 Entity。
     2.  **ID 策略**: 对于 PostgreSQL，使用 `GenerationType.SEQUENCE` 或 `GenerationType.IDENTITY`。
     3.  **Repository**: 必须使用 **Spring Data JPA** 的 `JpaRepository` 接口，并利用其方法命名规范 (`findBy...`)，避免手动编写大量的 SQL。
-    4.  **性能**: 警惕 N+1 查询问题。在必要时，使用 `@EntityGraph` 或 JPQL `FETCH JOIN` 来优化查询。
-    5.  **事务**: 在 Service 方法上使用 `@Transactional`，并明确指定事务属性（如 `readOnly = true`）。
+    4.  **列表查询分页**: 
+        * 所有列表查询方法必须支持 `Pageable` 参数，返回 `Page<T>` 类型。
+        * 对于需要加载关联实体的查询，使用 `@EntityGraph` 注解避免 N+1 问题：
+          ```java
+          @EntityGraph(attributePaths = {"relationField"})
+          @Query("SELECT e FROM Entity e JOIN e.relationField ORDER BY ...")
+          Page<Entity> findAllWithRelations(Pageable pageable);
+          ```
+        * 使用 `JOIN` 而非 `JOIN FETCH` 在分页查询中（`JOIN FETCH` 与分页结合可能导致问题）。
+    5.  **性能**: 警惕 N+1 查询问题。在必要时，使用 `@EntityGraph` 或 JPQL `FETCH JOIN` 来优化查询。对于分页查询，优先使用 `@EntityGraph`。
+    6.  **事务**: 在 Service 方法上使用 `@Transactional`，并明确指定事务属性（如 `readOnly = true`）。
 
     ### III. REST API, 错误处理与测试
     1.  **RESTful 设计**: Controller 必须使用 `@RestController`。遵循标准的 HTTP 动词 (GET, POST, PUT, DELETE) 和资源路径。
-    2.  **错误处理**: 使用 `@ControllerAdvice` 配合 `@ExceptionHandler` 实现全局的、一致的错误响应（返回 Problem Details 格式的 JSON，例如 RFC 7807 标准）。
-    3.  **数据验证**: 在 Controller 方法的 DTO 参数上使用 `@Valid` 或 `@Validated`，并利用 Bean Validation (Jakarta Validation) 注解。
-    4.  **测试**:
+    2.  **列表接口分页规范（强制要求）**:
+        * **所有返回列表数据的 GET 接口必须支持分页参数**，禁止返回完整列表。
+        * 分页参数标准：
+          * `page`: 页码，从 0 开始，默认值为 `0`
+          * `size`: 每页大小，默认值为 `10`，推荐选项：10、20、50、100
+          * `sortBy`: 排序字段，默认值根据业务需求设定（如 `id`）
+          * `sortDir`: 排序方向，`ASC` 或 `DESC`，默认值推荐 `DESC`
+        * Controller 方法签名示例：
+          ```java
+          @GetMapping
+          public ResponseEntity<ApiResponse<Page<EntityDTO>>> getAllEntities(
+              @RequestParam(defaultValue = "0") int page,
+              @RequestParam(defaultValue = "10") int size,
+              @RequestParam(defaultValue = "id") String sortBy,
+              @RequestParam(defaultValue = "DESC") String sortDir) {
+              Sort.Direction direction = sortDir.equalsIgnoreCase("ASC") 
+                  ? Sort.Direction.ASC : Sort.Direction.DESC;
+              Pageable pageable = PageRequest.of(page, size, Sort.by(direction, sortBy));
+              Page<EntityDTO> entities = entityService.getAllEntities(pageable);
+              return ResponseEntity.ok(ApiResponse.success(entities));
+          }
+          ```
+        * Service 层必须提供接受 `Pageable` 参数的方法，返回 `Page<DTO>` 类型。
+        * Repository 层使用 Spring Data JPA 的 `Page<T>` 和 `Pageable` 接口。
+        * 使用 `@EntityGraph` 优化关联查询，避免 N+1 问题。
+        * 响应格式：使用 Spring Data 的 `Page<T>` 类型，前端可获取 `content`、`totalElements`、`totalPages` 等分页信息。
+    3.  **错误处理**: 使用 `@ControllerAdvice` 配合 `@ExceptionHandler` 实现全局的、一致的错误响应（返回 Problem Details 格式的 JSON，例如 RFC 7807 标准）。
+    4.  **数据验证**: 在 Controller 方法的 DTO 参数上使用 `@Valid` 或 `@Validated`，并利用 Bean Validation (Jakarta Validation) 注解。
+    5.  **测试**:
         * 对于 Controller 层，使用 `@WebMvcTest` 和 MockMvc。
         * 对于 Repository 层，使用 `@DataJpaTest`。
         * 对于 Service 层，使用 JUnit 5 和 Mockito 进行单元测试。
@@ -67,7 +102,11 @@ paths:
 
 # 重点关注 JPA 实体和 Repository 层，确保数据访问正确
 auto_attached:
+  - path: src/main/java/**/*Controller.java
+    prompt_modifier: "All list endpoints (GET methods returning collections) MUST support pagination with page, size, sortBy, sortDir parameters. Return Page<T> type from Spring Data JPA. Never return complete lists without pagination."
+  - path: src/main/java/**/*Service.java
+    prompt_modifier: "Service methods for list operations MUST accept Pageable parameter and return Page<DTO> type. Use @Transactional(readOnly = true) for read operations."
   - path: src/main/java/**/*Repository.java
-    prompt_modifier: "Ensure the Spring Data JPA Repository correctly defines method names and uses optimal query practices for PostgreSQL."
+    prompt_modifier: "Repository methods for list queries MUST accept Pageable parameter and return Page<T> type. Use @EntityGraph to optimize queries and avoid N+1 problems. Use JOIN instead of JOIN FETCH in paginated queries."
   - path: src/main/java/**/*.java
     prompt_modifier: "Strictly adhere to modern Java 25 features (Records, Virtual Threads) and use Constructor Injection."
