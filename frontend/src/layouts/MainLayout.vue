@@ -79,6 +79,14 @@
             <span>{{ $t('menu.orderManagement') }}</span>
           </el-menu-item>
 
+          <el-sub-menu index="/basic-info">
+            <template #title>
+              <el-icon><Document /></el-icon>
+              <span>{{ $t('menu.basicInfoManagement') }}</span>
+            </template>
+            <el-menu-item index="/basic-info/units">{{ $t('menu.unitManagement') }}</el-menu-item>
+          </el-sub-menu>
+
           <el-sub-menu index="/system" v-if="authStore.hasRole('ADMIN')">
             <template #title>
               <el-icon><Setting /></el-icon>
@@ -94,7 +102,9 @@
 
       <!-- 主内容区 -->
       <el-main class="main-content">
-        <router-view />
+        <div class="main-content-wrapper">
+          <router-view />
+        </div>
       </el-main>
     </el-container>
   </el-container>
@@ -113,6 +123,7 @@ import {
   Setting,
   ArrowDown,
   SwitchButton,
+  Document,
 } from '@element-plus/icons-vue'
 import { useAuthStore } from '@/stores/auth'
 import { useLocaleStore } from '@/stores/locale'
@@ -150,7 +161,10 @@ const handleCommand = async (command: string) => {
 
 <style scoped>
 .layout-container {
+  display: flex;
+  flex-direction: column;
   height: 100vh;
+  overflow: hidden; /* 禁止主布局容器滚动 */
 }
 
 .header {
@@ -161,6 +175,7 @@ const handleCommand = async (command: string) => {
   border-bottom: 1px solid #e6e6e6;
   padding: 0 24px;
   height: 64px;
+  flex-shrink: 0; /* 防止头部被压缩 */
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
 }
 
@@ -208,15 +223,28 @@ const handleCommand = async (command: string) => {
   font-weight: 500;
 }
 
+/* 内部容器使用 flex 横向布局 */
+.layout-container :deep(.el-container) {
+  display: flex;
+  flex-direction: row;
+  flex: 1; /* 占据剩余空间 */
+  overflow: hidden; /* 禁止内部容器滚动 */
+  min-height: 0; /* 允许 flex 子元素缩小 */
+}
+
 .aside {
+  display: flex;
+  flex-direction: column;
   background-color: #304156;
-  min-height: calc(100vh - 64px);
-  overflow-y: auto;
+  overflow: hidden; /* 禁止侧边栏滚动 */
+  flex-shrink: 0; /* 防止侧边栏被压缩 */
 }
 
 .sidebar-menu {
   border-right: none;
   width: 100%;
+  height: 100%;
+  overflow-y: auto; /* 菜单内容可以滚动 */
 }
 
 /* 桌面端适配 - 侧边栏宽度优化 */
@@ -227,15 +255,28 @@ const handleCommand = async (command: string) => {
 }
 
 .main-content {
+  display: flex;
+  flex-direction: column;
+  flex: 1; /* 占据剩余空间 */
   background-color: #f0f2f5;
+  padding: 0; /* 移除 padding，让 wrapper 控制 */
+  overflow: hidden; /* 禁止主内容区直接滚动 */
+  min-height: 0; /* 允许 flex 子元素缩小 */
+}
+
+.main-content-wrapper {
+  display: flex;
+  flex-direction: column;
+  flex: 1; /* 填充整个主内容区 */
   padding: 24px;
-  overflow-y: auto;
-  min-height: calc(100vh - 64px);
+  overflow-y: auto; /* 仅 wrapper 允许垂直滚动 */
+  overflow-x: hidden; /* 禁止横向滚动 */
+  min-height: 0; /* 允许 flex 子元素缩小 */
 }
 
 /* 桌面端适配 - 主内容区优化 */
 @media (min-width: 1024px) {
-  .main-content {
+  .main-content-wrapper {
     padding: 24px 32px;
   }
 }

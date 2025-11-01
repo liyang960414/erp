@@ -6,6 +6,9 @@
 -- ============================================
 
 -- 删除外键约束（如果存在）
+DROP TABLE IF EXISTS unit_conversions CASCADE;
+DROP TABLE IF EXISTS units CASCADE;
+DROP TABLE IF EXISTS unit_groups CASCADE;
 DROP TABLE IF EXISTS audit_logs CASCADE;
 DROP TABLE IF EXISTS user_roles CASCADE;
 DROP TABLE IF EXISTS role_permissions CASCADE;
@@ -89,6 +92,46 @@ CREATE TABLE audit_logs (
 );
 
 -- ============================================
+-- 单位组表
+-- ============================================
+CREATE TABLE unit_groups (
+    id BIGSERIAL PRIMARY KEY,
+    code VARCHAR(50) NOT NULL UNIQUE,
+    name VARCHAR(100) NOT NULL,
+    description VARCHAR(200),
+    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
+
+-- ============================================
+-- 单位表
+-- ============================================
+CREATE TABLE units (
+    id BIGSERIAL PRIMARY KEY,
+    code VARCHAR(50) NOT NULL UNIQUE,
+    name VARCHAR(100) NOT NULL,
+    unit_group_id BIGINT NOT NULL REFERENCES unit_groups(id) ON DELETE CASCADE,
+    enabled BOOLEAN NOT NULL DEFAULT TRUE,
+    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
+
+-- ============================================
+-- 单位转换表
+-- ============================================
+CREATE TABLE unit_conversions (
+    id BIGSERIAL PRIMARY KEY,
+    from_unit_id BIGINT NOT NULL REFERENCES units(id) ON DELETE CASCADE,
+    to_unit_id BIGINT NOT NULL REFERENCES units(id) ON DELETE CASCADE,
+    convert_type VARCHAR(20) NOT NULL DEFAULT 'FIXED',
+    numerator DECIMAL(18, 6) NOT NULL,
+    denominator DECIMAL(18, 6) NOT NULL DEFAULT 1,
+    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    CONSTRAINT chk_unit_conversion_self CHECK (from_unit_id != to_unit_id),
+    CONSTRAINT chk_unit_conversion_denominator CHECK (denominator > 0)
+);
+
+-- ============================================
 -- 创建索引
 -- ============================================
 
@@ -112,6 +155,18 @@ CREATE INDEX idx_audit_logs_status ON audit_logs(status);
 CREATE INDEX idx_audit_logs_created_at ON audit_logs(created_at DESC);
 CREATE INDEX idx_audit_logs_resource ON audit_logs(resource_type, resource_id);
 
+-- 单位组表索引
+CREATE INDEX idx_unit_groups_code ON unit_groups(code);
+
+-- 单位表索引
+CREATE INDEX idx_units_code ON units(code);
+CREATE INDEX idx_units_unit_group_id ON units(unit_group_id);
+CREATE INDEX idx_units_enabled ON units(enabled);
+
+-- 单位转换表索引
+CREATE INDEX idx_unit_conversions_from_unit_id ON unit_conversions(from_unit_id);
+CREATE INDEX idx_unit_conversions_to_unit_id ON unit_conversions(to_unit_id);
+
 -- ============================================
 -- 添加注释
 -- ============================================
@@ -121,6 +176,9 @@ COMMENT ON TABLE permissions IS '权限表';
 COMMENT ON TABLE user_roles IS '用户角色关联表';
 COMMENT ON TABLE role_permissions IS '角色权限关联表';
 COMMENT ON TABLE audit_logs IS '审计日志表';
+COMMENT ON TABLE unit_groups IS '单位组表';
+COMMENT ON TABLE units IS '单位表';
+COMMENT ON TABLE unit_conversions IS '单位转换表';
 
 COMMENT ON COLUMN users.id IS '用户ID';
 COMMENT ON COLUMN users.username IS '用户名（唯一）';
@@ -156,4 +214,27 @@ COMMENT ON COLUMN audit_logs.ip_address IS '请求IP地址';
 COMMENT ON COLUMN audit_logs.status IS '操作状态（SUCCESS, FAILURE）';
 COMMENT ON COLUMN audit_logs.error_message IS '错误信息（如果操作失败）';
 COMMENT ON COLUMN audit_logs.created_at IS '操作时间';
+
+COMMENT ON COLUMN unit_groups.id IS '单位组ID';
+COMMENT ON COLUMN unit_groups.code IS '单位组编码（唯一）';
+COMMENT ON COLUMN unit_groups.name IS '单位组名称';
+COMMENT ON COLUMN unit_groups.description IS '单位组描述';
+COMMENT ON COLUMN unit_groups.created_at IS '创建时间';
+COMMENT ON COLUMN unit_groups.updated_at IS '更新时间';
+
+COMMENT ON COLUMN units.id IS '单位ID';
+COMMENT ON COLUMN units.code IS '单位编码（唯一）';
+COMMENT ON COLUMN units.name IS '单位名称';
+COMMENT ON COLUMN units.unit_group_id IS '所属单位组ID';
+COMMENT ON COLUMN units.enabled IS '是否启用';
+COMMENT ON COLUMN units.created_at IS '创建时间';
+COMMENT ON COLUMN units.updated_at IS '更新时间';
+
+COMMENT ON COLUMN unit_conversions.id IS '单位转换ID';
+COMMENT ON COLUMN unit_conversions.from_unit_id IS '源单位ID';
+COMMENT ON COLUMN unit_conversions.to_unit_id IS '目标单位ID';
+COMMENT ON COLUMN unit_conversions.convert_type IS '换算类型（FIXED-固定, FLOAT-浮动）';
+COMMENT ON COLUMN unit_conversions.numerator IS '换算分子';
+COMMENT ON COLUMN unit_conversions.denominator IS '换算分母';
+COMMENT ON COLUMN unit_conversions.created_at IS '创建时间';
 

@@ -14,8 +14,17 @@
 
 <style scoped>
 .product-container {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
   max-width: 1400px;
   margin: 0 auto;
+}
+
+.product-container :deep(.el-card) {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
 }
 
 /* 桌面端适配 */

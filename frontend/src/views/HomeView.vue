@@ -55,13 +55,25 @@ onMounted(async () => {
 
 <style scoped>
 .home-container {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
   max-width: 1400px;
   margin: 0 auto;
 }
 
 .welcome-card {
+  flex: 1;
   max-width: 1000px;
   margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+}
+
+:deep(.el-card__body) {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
 }
 
 /* 桌面端适配 */

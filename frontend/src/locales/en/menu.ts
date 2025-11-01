@@ -4,8 +4,11 @@ export default {
   userList: 'User List',
   productManagement: 'Product Management',
   orderManagement: 'Order Management',
+  basicInfoManagement: 'Basic Information Management',
+  unitManagement: 'Unit Management',
   systemSettings: 'System Settings',
   basicSettings: 'Basic Settings',
   roleManagement: 'Role Management',
   permissionManagement: 'Permission Management',
+  auditLogs: 'Audit Logs',
 }

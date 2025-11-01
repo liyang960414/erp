@@ -99,43 +99,113 @@ agent:
         * 主要内容区域应使用固定最大宽度或响应式容器，推荐使用 `max-width: 1200px` 或 `1400px`。
         * 使用 `<el-container>`、`<el-header>`、`<el-main>`、`<el-aside>`、`<el-footer>` 构建页面布局。
         * 容器应居中显示：`margin: 0 auto` 或使用 Flexbox/Grid 居中。
-    3.  **响应式断点**:
+    3.  **弹性布局（Flexbox）规范**:
+        * **必须使用弹性布局（Flexbox）**来适配多种屏幕尺寸，确保布局的灵活性和响应式特性。
+        * 根容器（通常是 `#app` 或主布局组件）必须使用 Flexbox 布局：
+          ```css
+          #app {
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+            width: 100vw;
+            overflow: hidden; /* 禁止整体界面滚动 */
+          }
+          ```
+        * 主布局容器（如 `<el-container>`）应设置为 `flex: 1`，使其占据剩余空间。
+        * 使用 `flex-direction: column` 实现垂直布局，使用 `flex-direction: row` 实现水平布局。
+        * 使用 `flex-wrap: wrap` 允许内容换行，适配小屏幕设备。
+        * 使用 `justify-content` 和 `align-items` 控制子元素的对齐方式。
+        * 响应式适配：使用 `@media` 查询结合 Flexbox 属性，在不同屏幕尺寸下调整 `flex-direction`、`flex-basis` 等属性。
+    4.  **滚动控制规范**:
+        * **整体界面禁止滚动**：根容器和主布局容器必须设置 `overflow: hidden`，防止整个页面出现滚动条。
+          ```css
+          /* 根容器 */
+          #app {
+            overflow: hidden;
+          }
+          
+          /* 主布局容器 */
+          .main-layout {
+            overflow: hidden;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+          }
+          ```
+        * **仅核心内容区域可滚动**：只有中间的核心内容区域（通常是 `<el-main>` 或主要内容 `<main>` 标签）允许出现滚动条。
+          ```css
+          .main-content {
+            flex: 1;
+            overflow-y: auto;
+            overflow-x: hidden; /* 禁止横向滚动 */
+          }
+          ```
+        * 头部（`<el-header>`）、侧边栏（`<el-aside>`）、底部（`<el-footer>`）等固定区域**严禁**设置滚动属性。
+        * 核心内容区域使用 `overflow-y: auto` 实现垂直滚动，内容超出时自动显示滚动条。
+        * 核心内容区域使用 `overflow-x: hidden` 禁止横向滚动，避免界面横向拖动。
+        * 确保滚动条样式美观，可使用 Element Plus 的滚动条样式或自定义滚动条样式。
+    5.  **响应式断点**:
         * 主要断点参考：`≥ 1024px`（桌面端）、`≥ 768px`（平板，可选支持）、`< 768px`（移动端，可选支持）。
         * 使用 Element Plus 的响应式工具或 CSS 媒体查询：`@media (min-width: 1024px)`。
         * 优先保证桌面端体验，移动端可做降级处理。
-    4.  **表格和数据展示**:
+    6.  **表格和数据展示**:
         * 桌面端优先使用 `<el-table>` 展示数据，充分利用屏幕宽度。
         * 表格列可以根据需要固定宽度或自适应：`<el-table-column width="150">` 或 `min-width`。
         * 支持横向滚动，避免在小屏幕上强制压缩列宽。
         * 使用 `<el-pagination>` 进行分页，桌面端每页显示数量可适当增加（如 20、50、100）。
-    5.  **表单布局**:
+        * **数据量大时的表格滚动处理**:
+          * 当表格数据量较大时，表格本身必须具备滚动能力，防止内容溢出。
+          * 使用 `<el-table>` 的 `max-height` 属性限制表格最大高度，超出后自动显示滚动条：
+            ```vue
+            <el-table :data="tableData" max-height="600">
+              <!-- 表格列 -->
+            </el-table>
+            ```
+          * 或者通过外层容器控制表格高度，使用 Flexbox 布局：
+            ```css
+            .table-container {
+              flex: 1;
+              display: flex;
+              flex-direction: column;
+              overflow: hidden;
+            }
+            
+            .table-wrapper {
+              flex: 1;
+              overflow: auto; /* 表格容器可滚动 */
+            }
+            ```
+          * 表格滚动时，表头应固定显示（`<el-table>` 默认支持固定表头）。
+          * 对于超大数据量（如数千行），考虑使用虚拟滚动（`<el-table-v2>`）或分页处理。
+          * 确保表格滚动条样式美观，与整体界面风格一致。
+    7.  **表单布局**:
         * 使用 `<el-form>` 的 `inline` 或 `label-position` 属性，充分利用桌面端横向空间。
         * 多列表单布局：使用 `<el-row>` 和 `<el-col :span="12">` 实现多列布局。
         * 表单标签宽度：桌面端可设置固定宽度，如 `label-width="120px"`。
-    6.  **对话框和抽屉**:
+    8.  **对话框和抽屉**:
         * 使用 `<el-dialog>` 时，桌面端可设置合适的宽度：`width="600px"` 或 `width="800px"`。
         * 使用 `<el-drawer>` 时，桌面端可设置 `size="400px"` 或 `50%`。
         * 确保对话框和抽屉在桌面端居中显示且易于操作。
-    7.  **交互方式优化**:
+    9.  **交互方式优化**:
         * 优化鼠标悬停效果：使用 `hover` 状态提供视觉反馈。
         * 支持键盘快捷键操作，提升桌面端操作效率。
         * 使用 `<el-tooltip>` 提供额外的信息提示。
         * 按钮间距和点击区域：桌面端按钮间距可适当增大，确保易点击。
-    8.  **导航和菜单**:
+    10. **导航和菜单**:
         * 桌面端优先使用水平导航菜单：`<el-menu mode="horizontal">`。
         * 侧边栏菜单：使用 `<el-menu>` 配合 `<el-aside>`，可设置 `width="200px"` 或更宽。
         * 面包屑导航：使用 `<el-breadcrumb>` 显示页面路径。
-    9.  **字体和间距**:
+    11. **字体和间距**:
         * 桌面端可适当增大字体大小，提升可读性。
         * 使用合适的行高和间距：`line-height: 1.6`，`padding`、`margin` 使用 `8px` 的倍数。
         * 使用 Element Plus 的间距工具类或 CSS 变量。
-    10. **栅格系统**:
+    12. **栅格系统**:
         * 使用 `<el-row>` 和 `<el-col>` 进行布局，桌面端可使用 24 列栅格系统。
         * 推荐使用 `:span` 属性控制列宽，如 `<el-col :span="6">`（占 1/4 宽度）。
-    11. **组件尺寸**:
+    13. **组件尺寸**:
         * 桌面端优先使用默认尺寸或 `large` 尺寸的组件。
         * 使用 `size="large"` 或 `size="default"` 确保桌面端良好的视觉效果。
-    12. **性能优化**:
+    14. **性能优化**:
         * 桌面端可加载更多数据，但需注意性能。
         * 使用虚拟滚动（如 `<el-table>` 的虚拟滚动）处理大量数据。
         * 图片和资源优化，确保桌面端加载速度。
@@ -154,6 +224,6 @@ paths:
 # 当 Agent 在相关文件上工作时，提醒它注意相关规范
 auto_attached:
   - path: src/**/*.vue
-    prompt_modifier: "Ensure the generated Vue component strictly utilizes Element Plus components according to best practices (e.g., <el-button>, <el-form>). All user-visible text MUST use $t() or t() function from vue-i18n. Never hardcode any text. The component should be optimized for desktop/PC devices (≥1024px width), with appropriate layout containers, responsive breakpoints, and desktop-friendly interactions."
+    prompt_modifier: "Ensure the generated Vue component strictly utilizes Element Plus components according to best practices (e.g., <el-button>, <el-form>). All user-visible text MUST use $t() or t() function from vue-i18n. Never hardcode any text. The component should be optimized for desktop/PC devices (≥1024px width), with appropriate layout containers, responsive breakpoints, and desktop-friendly interactions. MUST use Flexbox layout for responsive design across multiple screen sizes. The overall interface MUST NOT allow scrolling (overflow: hidden on root and main layout containers), only the core content area (usually <el-main>) should have scrolling enabled (overflow-y: auto, overflow-x: hidden). When using <el-table> with large datasets, MUST implement table scrolling using max-height attribute or container-based scrolling to prevent content overflow."
   - path: src/locales/**/*.ts
     prompt_modifier: "Ensure translations are provided for all four supported languages: zh-CN (Chinese), vi (Vietnamese), en (English), and id (Indonesian). Maintain consistent key naming and structure across all language files."

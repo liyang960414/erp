@@ -31,12 +31,13 @@
       </div>
 
       <!-- 用户表格 -->
-      <el-table
-        v-loading="loading"
-        :data="users"
-        style="width: 100%"
-        border
-      >
+      <div class="table-container">
+        <el-table
+          v-loading="loading"
+          :data="users"
+          style="width: 100%"
+          border
+        >
         <el-table-column prop="id" label="ID" width="80" />
         <el-table-column :label="$t('user.username')" prop="username" width="150" />
         <el-table-column :label="$t('user.email')" prop="email" width="200" />
@@ -74,7 +75,8 @@
             </el-button>
           </template>
         </el-table-column>
-      </el-table>
+        </el-table>
+      </div>
 
       <!-- 分页 -->
       <div class="pagination">
@@ -195,8 +197,26 @@ const handleDelete = async (user: User) => {
 
 <style scoped>
 .user-list-container {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
   max-width: 1400px;
   margin: 0 auto;
+}
+
+.user-list-container :deep(.el-card) {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.user-list-container :deep(.el-card__body) {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  min-height: 0;
 }
 
 .card-header {
@@ -213,10 +233,17 @@ const handleDelete = async (user: User) => {
   align-items: center;
 }
 
+.table-container {
+  flex: 1;
+  overflow: auto;
+  min-height: 0;
+}
+
 .pagination {
   margin-top: 24px;
   display: flex;
   justify-content: flex-end;
+  flex-shrink: 0;
 }
 
 /* 桌面端适配 */
