@@ -1,7 +1,7 @@
 <template>
   <el-dialog
     v-model="visible"
-    :title="isEdit ? '编辑用户' : '添加用户'"
+    :title="isEdit ? $t('user.editUser') : $t('user.addUser')"
     width="600px"
     @close="handleClose"
   >
@@ -11,40 +11,40 @@
       :rules="rules"
       label-width="100px"
     >
-      <el-form-item label="用户名" prop="username">
+      <el-form-item :label="$t('user.username')" prop="username">
         <el-input
           v-model="form.username"
           :disabled="isEdit"
-          placeholder="请输入用户名"
+          :placeholder="$t('user.enterUsername')"
         />
       </el-form-item>
 
-      <el-form-item v-if="!isEdit" label="密码" prop="password">
+      <el-form-item v-if="!isEdit" :label="$t('user.password')" prop="password">
         <el-input
           v-model="form.password"
           type="password"
-          placeholder="请输入密码"
+          :placeholder="$t('user.enterPassword')"
           show-password
         />
       </el-form-item>
 
-      <el-form-item label="邮箱" prop="email">
-        <el-input v-model="form.email" placeholder="请输入邮箱" />
+      <el-form-item :label="$t('user.email')" prop="email">
+        <el-input v-model="form.email" :placeholder="$t('user.enterEmail')" />
       </el-form-item>
 
-      <el-form-item label="全名" prop="fullName">
-        <el-input v-model="form.fullName" placeholder="请输入全名" />
+      <el-form-item :label="$t('user.fullName')" prop="fullName">
+        <el-input v-model="form.fullName" :placeholder="$t('user.enterFullName')" />
       </el-form-item>
 
-      <el-form-item label="状态" prop="enabled">
+      <el-form-item :label="$t('user.status')" prop="enabled">
         <el-switch v-model="form.enabled" />
       </el-form-item>
 
-      <el-form-item label="角色" prop="roleNames">
+      <el-form-item :label="$t('user.roles')" prop="roleNames">
         <el-select
           v-model="form.roleNames"
           multiple
-          placeholder="请选择角色"
+          :placeholder="$t('user.selectRoles')"
           style="width: 100%"
         >
           <el-option
@@ -63,9 +63,9 @@
     </el-form>
 
     <template #footer>
-      <el-button @click="handleClose">取消</el-button>
+      <el-button @click="handleClose">{{ $t('common.cancel') }}</el-button>
       <el-button type="primary" :loading="saving" @click="handleSubmit">
-        确定
+        {{ $t('common.confirm') }}
       </el-button>
     </template>
   </el-dialog>
