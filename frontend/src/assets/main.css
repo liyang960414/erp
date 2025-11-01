@@ -1,9 +1,12 @@
 @import './base.css';
 
-/* 桌面端适配 - 移除移动端居中的grid布局，保持全宽布局 */
+/* 桌面端适配 - 使用 Flexbox 布局，禁止整体滚动 */
 #app {
-  width: 100%;
+  display: flex;
+  flex-direction: column;
+  width: 100vw;
   height: 100vh;
+  overflow: hidden; /* 禁止整体界面滚动 */
   font-weight: normal;
 }
 

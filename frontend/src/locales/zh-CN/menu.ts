@@ -4,6 +4,8 @@ export default {
   userList: '用户列表',
   productManagement: '商品管理',
   orderManagement: '订单管理',
+  basicInfoManagement: '基础信息管理',
+  unitManagement: '单位管理',
   systemSettings: '系统设置',
   basicSettings: '基本设置',
   roleManagement: '角色管理',

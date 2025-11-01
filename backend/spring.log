@@ -1,0 +1,932 @@
+2025-11-01T16:54:21.861+07:00  INFO 6900 --- [erp] [main] com.sambound.erp.ErpApplication          : Starting ErpApplication v0.0.1-SNAPSHOT using Java 25 with PID 6900 (E:\Projects\erp\backend\target\erp-0.0.1-SNAPSHOT.jar started by 98310 in E:\Projects\erp\backend)
+2025-11-01T16:54:21.864+07:00  INFO 6900 --- [erp] [main] com.sambound.erp.ErpApplication          : No active profile set, falling back to 1 default profile: "default"
+2025-11-01T16:54:22.523+07:00  INFO 6900 --- [erp] [main] .s.d.r.c.RepositoryConfigurationDelegate : Bootstrapping Spring Data JPA repositories in DEFAULT mode.
+2025-11-01T16:54:22.572+07:00  INFO 6900 --- [erp] [main] .s.d.r.c.RepositoryConfigurationDelegate : Finished Spring Data repository scanning in 42 ms. Found 6 JPA repository interfaces.
+2025-11-01T16:54:23.117+07:00  INFO 6900 --- [erp] [main] o.s.boot.tomcat.TomcatWebServer          : Tomcat initialized with port 8080 (http)
+2025-11-01T16:54:23.142+07:00  INFO 6900 --- [erp] [main] o.apache.catalina.core.StandardService   : Starting service [Tomcat]
+2025-11-01T16:54:23.143+07:00  INFO 6900 --- [erp] [main] o.apache.catalina.core.StandardEngine    : Starting Servlet engine: [Apache Tomcat/11.0.13]
+2025-11-01T16:54:23.176+07:00  INFO 6900 --- [erp] [main] b.w.c.s.WebApplicationContextInitializer : Root WebApplicationContext: initialization completed in 1265 ms
+2025-11-01T16:54:23.311+07:00  INFO 6900 --- [erp] [main] o.hibernate.jpa.internal.util.LogHelper  : HHH000204: Processing PersistenceUnitInfo [name: default]
+2025-11-01T16:54:23.456+07:00  INFO 6900 --- [erp] [main] org.hibernate.Version                    : HHH000412: Hibernate ORM core version 7.1.4.Final
+2025-11-01T16:54:23.874+07:00  INFO 6900 --- [erp] [main] o.s.o.j.p.SpringPersistenceUnitInfo      : No LoadTimeWeaver setup: ignoring JPA class transformer
+2025-11-01T16:54:23.897+07:00  INFO 6900 --- [erp] [main] com.zaxxer.hikari.HikariDataSource       : HikariPool-1 - Starting...
+2025-11-01T16:54:24.265+07:00  INFO 6900 --- [erp] [main] com.zaxxer.hikari.pool.HikariPool        : HikariPool-1 - Added connection org.postgresql.jdbc.PgConnection@73b3ce31
+2025-11-01T16:54:24.266+07:00  INFO 6900 --- [erp] [main] com.zaxxer.hikari.HikariDataSource       : HikariPool-1 - Start completed.
+2025-11-01T16:54:24.333+07:00  WARN 6900 --- [erp] [main] org.hibernate.orm.deprecation            : HHH90000025: PostgreSQLDialect does not need to be specified explicitly using 'hibernate.dialect' (remove the property setting and it will be selected by default)
+2025-11-01T16:54:24.474+07:00  INFO 6900 --- [erp] [main] org.hibernate.orm.connections.pooling    : HHH10001005: Database info:
+	Database JDBC URL [jdbc:postgresql://43.161.248.212:5446/order_db]
+	Database driver: PostgreSQL JDBC Driver
+	Database dialect: PostgreSQLDialect
+	Database version: 17.6
+	Default catalog/schema: order_db/public
+	Autocommit mode: undefined/unknown
+	Isolation level: READ_COMMITTED [default READ_COMMITTED]
+	JDBC fetch size: none
+	Pool: DatasourceConnectionProviderImpl
+	Minimum pool size: undefined/unknown
+	Maximum pool size: undefined/unknown
+2025-11-01T16:54:25.233+07:00  INFO 6900 --- [erp] [main] o.h.e.t.j.p.i.JtaPlatformInitiator       : HHH000489: No JTA platform available (set 'hibernate.transaction.jta.platform' to enable JTA platform integration)
+2025-11-01T16:54:26.055+07:00  INFO 6900 --- [erp] [main] j.LocalContainerEntityManagerFactoryBean : Initialized JPA EntityManagerFactory for persistence unit 'default'
+2025-11-01T16:54:26.134+07:00  INFO 6900 --- [erp] [main] o.s.d.j.r.query.QueryEnhancerFactories   : Hibernate is in classpath; If applicable, HQL parser will be used.
+2025-11-01T16:54:26.787+07:00  INFO 6900 --- [erp] [main] eAuthenticationProviderManagerConfigurer : Global AuthenticationManager configured with AuthenticationProvider bean with name authenticationProvider
+2025-11-01T16:54:26.788+07:00  WARN 6900 --- [erp] [main] r$InitializeUserDetailsManagerConfigurer : Global AuthenticationManager configured with an AuthenticationProvider bean. UserDetailsService beans will not be used by Spring Security for automatically configuring username/password login. Consider removing the AuthenticationProvider bean. Alternatively, consider using the UserDetailsService in a manually instantiated DaoAuthenticationProvider. If the current configuration is intentional, to turn off this warning, increase the logging level of 'org.springframework.security.config.annotation.authentication.configuration.InitializeUserDetailsBeanManagerConfigurer' to ERROR
+2025-11-01T16:54:27.102+07:00  WARN 6900 --- [erp] [main] JpaBaseConfiguration$JpaWebConfiguration : spring.jpa.open-in-view is enabled by default. Therefore, database queries may be performed during view rendering. Explicitly configure spring.jpa.open-in-view to disable this warning
+2025-11-01T16:54:27.692+07:00  INFO 6900 --- [erp] [main] o.s.boot.tomcat.TomcatWebServer          : Tomcat started on port 8080 (http) with context path '/'
+2025-11-01T16:54:27.698+07:00  INFO 6900 --- [erp] [main] com.sambound.erp.ErpApplication          : Started ErpApplication in 6.221 seconds (process running for 6.626)
+2025-11-01T16:54:34.273+07:00  INFO 6900 --- [erp] [http-nio-8080-exec-1] o.a.c.c.C.[Tomcat].[localhost].[/]       : Initializing Spring DispatcherServlet 'dispatcherServlet'
+2025-11-01T16:54:34.274+07:00  INFO 6900 --- [erp] [http-nio-8080-exec-1] o.s.web.servlet.DispatcherServlet        : Initializing Servlet 'dispatcherServlet'
+2025-11-01T16:54:34.276+07:00  INFO 6900 --- [erp] [http-nio-8080-exec-1] o.s.web.servlet.DispatcherServlet        : Completed initialization in 2 ms
+2025-11-01T16:54:38.723+07:00  INFO 6900 --- [erp] [http-nio-8080-exec-6] c.s.erp.service.UnitImportService        : 检测到CSV文件编码: GBK
+2025-11-01T16:54:38.742+07:00  INFO 6900 --- [erp] [http-nio-8080-exec-6] c.s.erp.service.UnitImportService        : 开始导入 246 条数据
+2025-11-01T16:54:39.528+07:00  INFO 6900 --- [erp] [http-nio-8080-exec-6] c.s.erp.service.UnitImportService        : 预加载了 13 个单位组
+2025-11-01T16:54:39.529+07:00  INFO 6900 --- [erp] [http-nio-8080-exec-6] c.s.erp.service.UnitImportService        : 数据量较大，使用多线程并行导入
+2025-11-01T16:54:39.530+07:00  INFO 6900 --- [erp] [http-nio-8080-exec-6] c.s.erp.service.UnitImportService        : 数据分为 3 个批次，每批 100 条记录
+2025-11-01T16:54:39.599+07:00  WARN 6900 --- [erp] [virtual-65] org.hibernate.orm.jdbc.error             : HHH000247: ErrorCode: 0, SQLState: 23503
+2025-11-01T16:54:39.600+07:00  WARN 6900 --- [erp] [virtual-65] org.hibernate.orm.jdbc.error             : ERROR: insert or update on table "units" violates foreign key constraint "units_unit_group_id_fkey"
+  详细：Key (unit_group_id)=(3) is not present in table "unit_groups".
+2025-11-01T16:54:39.612+07:00  WARN 6900 --- [erp] [virtual-63] org.hibernate.orm.jdbc.error             : HHH000247: ErrorCode: 0, SQLState: 23503
+2025-11-01T16:54:39.612+07:00  WARN 6900 --- [erp] [virtual-63] org.hibernate.orm.jdbc.error             : ERROR: insert or update on table "units" violates foreign key constraint "units_unit_group_id_fkey"
+  详细：Key (unit_group_id)=(7) is not present in table "unit_groups".
+2025-11-01T16:54:39.613+07:00  WARN 6900 --- [erp] [virtual-61] org.hibernate.orm.jdbc.error             : HHH000247: ErrorCode: 0, SQLState: 23503
+2025-11-01T16:54:39.615+07:00  WARN 6900 --- [erp] [virtual-61] org.hibernate.orm.jdbc.error             : ERROR: insert or update on table "units" violates foreign key constraint "units_unit_group_id_fkey"
+  详细：Key (unit_group_id)=(3) is not present in table "unit_groups".
+2025-11-01T16:54:39.635+07:00  WARN 6900 --- [erp] [virtual-65] org.hibernate.orm.jdbc.error             : HHH000247: ErrorCode: 0, SQLState: 25P02
+2025-11-01T16:54:39.635+07:00  WARN 6900 --- [erp] [virtual-65] org.hibernate.orm.jdbc.error             : ERROR: current transaction is aborted, commands ignored until end of transaction block
+2025-11-01T16:54:39.637+07:00  WARN 6900 --- [erp] [virtual-65] c.s.erp.service.UnitImportService        : 导入第203行数据失败: JDBC exception executing SQL [ERROR: current transaction is aborted, commands ignored until end of transaction block] [select u1_0.id,u1_0.code,u1_0.created_at,u1_0.conversion_denominator,u1_0.enabled,u1_0.name,u1_0.conversion_numerator,u1_0.unit_group_id,u1_0.updated_at from units u1_0 where u1_0.code=?]
+2025-11-01T16:54:39.648+07:00  WARN 6900 --- [erp] [virtual-63] org.hibernate.orm.jdbc.error             : HHH000247: ErrorCode: 0, SQLState: 25P02
+2025-11-01T16:54:39.649+07:00  WARN 6900 --- [erp] [virtual-63] org.hibernate.orm.jdbc.error             : ERROR: current transaction is aborted, commands ignored until end of transaction block
+2025-11-01T16:54:39.651+07:00  WARN 6900 --- [erp] [virtual-63] c.s.erp.service.UnitImportService        : 导入第103行数据失败: JDBC exception executing SQL [ERROR: current transaction is aborted, commands ignored until end of transaction block] [select u1_0.id,u1_0.code,u1_0.created_at,u1_0.conversion_denominator,u1_0.enabled,u1_0.name,u1_0.conversion_numerator,u1_0.unit_group_id,u1_0.updated_at from units u1_0 where u1_0.code=?]
+2025-11-01T16:54:39.653+07:00  WARN 6900 --- [erp] [virtual-61] org.hibernate.orm.jdbc.error             : HHH000247: ErrorCode: 0, SQLState: 25P02
+2025-11-01T16:54:39.655+07:00  WARN 6900 --- [erp] [virtual-61] org.hibernate.orm.jdbc.error             : ERROR: current transaction is aborted, commands ignored until end of transaction block
+2025-11-01T16:54:39.657+07:00  WARN 6900 --- [erp] [virtual-61] c.s.erp.service.UnitImportService        : 导入第3行数据失败: JDBC exception executing SQL [ERROR: current transaction is aborted, commands ignored until end of transaction block] [select u1_0.id,u1_0.code,u1_0.created_at,u1_0.conversion_denominator,u1_0.enabled,u1_0.name,u1_0.conversion_numerator,u1_0.unit_group_id,u1_0.updated_at from units u1_0 where u1_0.code=?]
+2025-11-01T16:54:39.666+07:00  WARN 6900 --- [erp] [virtual-65] org.hibernate.orm.jdbc.error             : HHH000247: ErrorCode: 0, SQLState: 25P02
+2025-11-01T16:54:39.667+07:00  WARN 6900 --- [erp] [virtual-65] org.hibernate.orm.jdbc.error             : ERROR: current transaction is aborted, commands ignored until end of transaction block
+2025-11-01T16:54:39.668+07:00  WARN 6900 --- [erp] [virtual-65] c.s.erp.service.UnitImportService        : 导入第204行数据失败: 无法创建或获取单位: P008
+2025-11-01T16:54:39.690+07:00  WARN 6900 --- [erp] [virtual-63] org.hibernate.orm.jdbc.error             : HHH000247: ErrorCode: 0, SQLState: 25P02
+2025-11-01T16:54:39.691+07:00  WARN 6900 --- [erp] [virtual-63] org.hibernate.orm.jdbc.error             : ERROR: current transaction is aborted, commands ignored until end of transaction block
+2025-11-01T16:54:39.693+07:00  WARN 6900 --- [erp] [virtual-63] c.s.erp.service.UnitImportService        : 导入第104行数据失败: 无法创建或获取单位: K420
+2025-11-01T16:54:39.696+07:00  WARN 6900 --- [erp] [virtual-65] org.hibernate.orm.jdbc.error             : HHH000247: ErrorCode: 0, SQLState: 25P02
+2025-11-01T16:54:39.697+07:00  WARN 6900 --- [erp] [virtual-61] org.hibernate.orm.jdbc.error             : HHH000247: ErrorCode: 0, SQLState: 25P02
+2025-11-01T16:54:39.697+07:00  WARN 6900 --- [erp] [virtual-65] org.hibernate.orm.jdbc.error             : ERROR: current transaction is aborted, commands ignored until end of transaction block
+2025-11-01T16:54:39.698+07:00  WARN 6900 --- [erp] [virtual-61] org.hibernate.orm.jdbc.error             : ERROR: current transaction is aborted, commands ignored until end of transaction block
+2025-11-01T16:54:39.698+07:00  WARN 6900 --- [erp] [virtual-65] c.s.erp.service.UnitImportService        : 导入第205行数据失败: 无法创建或获取单位: P017
+2025-11-01T16:54:39.699+07:00  WARN 6900 --- [erp] [virtual-61] c.s.erp.service.UnitImportService        : 导入第4行数据失败: 无法创建或获取单位: ben1
+2025-11-01T16:54:39.726+07:00  WARN 6900 --- [erp] [virtual-65] org.hibernate.orm.jdbc.error             : HHH000247: ErrorCode: 0, SQLState: 25P02
+2025-11-01T16:54:39.726+07:00  WARN 6900 --- [erp] [virtual-65] org.hibernate.orm.jdbc.error             : ERROR: current transaction is aborted, commands ignored until end of transaction block
+2025-11-01T16:54:39.727+07:00  WARN 6900 --- [erp] [virtual-65] c.s.erp.service.UnitImportService        : 导入第206行数据失败: 无法创建或获取单位: pay
+2025-11-01T16:54:39.730+07:00  WARN 6900 --- [erp] [virtual-63] org.hibernate.orm.jdbc.error             : HHH000247: ErrorCode: 0, SQLState: 25P02
+2025-11-01T16:54:39.730+07:00  WARN 6900 --- [erp] [virtual-63] org.hibernate.orm.jdbc.error             : ERROR: current transaction is aborted, commands ignored until end of transaction block
+2025-11-01T16:54:39.731+07:00  WARN 6900 --- [erp] [virtual-63] c.s.erp.service.UnitImportService        : 导入第105行数据失败: 无法创建或获取单位: K450
+2025-11-01T16:54:39.739+07:00  WARN 6900 --- [erp] [virtual-61] org.hibernate.orm.jdbc.error             : HHH000247: ErrorCode: 0, SQLState: 25P02
+2025-11-01T16:54:39.740+07:00  WARN 6900 --- [erp] [virtual-61] org.hibernate.orm.jdbc.error             : ERROR: current transaction is aborted, commands ignored until end of transaction block
+2025-11-01T16:54:39.740+07:00  WARN 6900 --- [erp] [virtual-61] c.s.erp.service.UnitImportService        : 导入第5行数据失败: 无法创建或获取单位: box
+2025-11-01T16:54:39.753+07:00  WARN 6900 --- [erp] [virtual-65] org.hibernate.orm.jdbc.error             : HHH000247: ErrorCode: 0, SQLState: 25P02
+2025-11-01T16:54:39.755+07:00  WARN 6900 --- [erp] [virtual-65] org.hibernate.orm.jdbc.error             : ERROR: current transaction is aborted, commands ignored until end of transaction block
+2025-11-01T16:54:39.756+07:00  WARN 6900 --- [erp] [virtual-65] c.s.erp.service.UnitImportService        : 导入第207行数据失败: 无法创建或获取单位: Pcs
+2025-11-01T16:54:39.767+07:00  WARN 6900 --- [erp] [virtual-63] org.hibernate.orm.jdbc.error             : HHH000247: ErrorCode: 0, SQLState: 25P02
+2025-11-01T16:54:39.768+07:00  WARN 6900 --- [erp] [virtual-63] org.hibernate.orm.jdbc.error             : ERROR: current transaction is aborted, commands ignored until end of transaction block
+2025-11-01T16:54:39.769+07:00  WARN 6900 --- [erp] [virtual-63] c.s.erp.service.UnitImportService        : 导入第106行数据失败: 无法创建或获取单位: K4536
+2025-11-01T16:54:39.777+07:00  WARN 6900 --- [erp] [virtual-61] org.hibernate.orm.jdbc.error             : HHH000247: ErrorCode: 0, SQLState: 25P02
+2025-11-01T16:54:39.779+07:00  WARN 6900 --- [erp] [virtual-61] org.hibernate.orm.jdbc.error             : ERROR: current transaction is aborted, commands ignored until end of transaction block
+2025-11-01T16:54:39.780+07:00  WARN 6900 --- [erp] [virtual-61] c.s.erp.service.UnitImportService        : 导入第6行数据失败: 无法创建或获取单位: cm
+2025-11-01T16:54:39.783+07:00  WARN 6900 --- [erp] [virtual-65] org.hibernate.orm.jdbc.error             : HHH000247: ErrorCode: 0, SQLState: 25P02
+2025-11-01T16:54:39.784+07:00  WARN 6900 --- [erp] [virtual-65] org.hibernate.orm.jdbc.error             : ERROR: current transaction is aborted, commands ignored until end of transaction block
+2025-11-01T16:54:39.785+07:00  WARN 6900 --- [erp] [virtual-65] c.s.erp.service.UnitImportService        : 导入第208行数据失败: 无法创建或获取单位: piece
+2025-11-01T16:54:39.808+07:00  WARN 6900 --- [erp] [virtual-63] org.hibernate.orm.jdbc.error             : HHH000247: ErrorCode: 0, SQLState: 25P02
+2025-11-01T16:54:39.809+07:00  WARN 6900 --- [erp] [virtual-63] org.hibernate.orm.jdbc.error             : ERROR: current transaction is aborted, commands ignored until end of transaction block
+2025-11-01T16:54:39.810+07:00  WARN 6900 --- [erp] [virtual-63] c.s.erp.service.UnitImportService        : 导入第107行数据失败: 无法创建或获取单位: K455
+2025-11-01T16:54:39.816+07:00  WARN 6900 --- [erp] [virtual-65] org.hibernate.orm.jdbc.error             : HHH000247: ErrorCode: 0, SQLState: 25P02
+2025-11-01T16:54:39.817+07:00  WARN 6900 --- [erp] [virtual-65] org.hibernate.orm.jdbc.error             : ERROR: current transaction is aborted, commands ignored until end of transaction block
+2025-11-01T16:54:39.818+07:00  WARN 6900 --- [erp] [virtual-65] c.s.erp.service.UnitImportService        : 导入第209行数据失败: 无法创建或获取单位: ping
+2025-11-01T16:54:39.823+07:00  WARN 6900 --- [erp] [virtual-61] org.hibernate.orm.jdbc.error             : HHH000247: ErrorCode: 0, SQLState: 25P02
+2025-11-01T16:54:39.824+07:00  WARN 6900 --- [erp] [virtual-61] org.hibernate.orm.jdbc.error             : ERROR: current transaction is aborted, commands ignored until end of transaction block
+2025-11-01T16:54:39.826+07:00  WARN 6900 --- [erp] [virtual-61] c.s.erp.service.UnitImportService        : 导入第7行数据失败: 无法创建或获取单位: CTN
+2025-11-01T16:54:39.847+07:00  WARN 6900 --- [erp] [virtual-65] org.hibernate.orm.jdbc.error             : HHH000247: ErrorCode: 0, SQLState: 25P02
+2025-11-01T16:54:39.848+07:00  WARN 6900 --- [erp] [virtual-65] org.hibernate.orm.jdbc.error             : ERROR: current transaction is aborted, commands ignored until end of transaction block
+2025-11-01T16:54:39.848+07:00  WARN 6900 --- [erp] [virtual-63] org.hibernate.orm.jdbc.error             : HHH000247: ErrorCode: 0, SQLState: 25P02
+2025-11-01T16:54:39.849+07:00  WARN 6900 --- [erp] [virtual-63] org.hibernate.orm.jdbc.error             : ERROR: current transaction is aborted, commands ignored until end of transaction block
+2025-11-01T16:54:39.849+07:00  WARN 6900 --- [erp] [virtual-65] c.s.erp.service.UnitImportService        : 导入第210行数据失败: 无法创建或获取单位: prick
+2025-11-01T16:54:39.850+07:00  WARN 6900 --- [erp] [virtual-63] c.s.erp.service.UnitImportService        : 导入第108行数据失败: 无法创建或获取单位: K460
+2025-11-01T16:54:39.865+07:00  WARN 6900 --- [erp] [virtual-61] org.hibernate.orm.jdbc.error             : HHH000247: ErrorCode: 0, SQLState: 25P02
+2025-11-01T16:54:39.866+07:00  WARN 6900 --- [erp] [virtual-61] org.hibernate.orm.jdbc.error             : ERROR: current transaction is aborted, commands ignored until end of transaction block
+2025-11-01T16:54:39.868+07:00  WARN 6900 --- [erp] [virtual-61] c.s.erp.service.UnitImportService        : 导入第8行数据失败: 无法创建或获取单位: CTN1
+2025-11-01T16:54:39.878+07:00  WARN 6900 --- [erp] [virtual-65] org.hibernate.orm.jdbc.error             : HHH000247: ErrorCode: 0, SQLState: 25P02
+2025-11-01T16:54:39.879+07:00  WARN 6900 --- [erp] [virtual-65] org.hibernate.orm.jdbc.error             : ERROR: current transaction is aborted, commands ignored until end of transaction block
+2025-11-01T16:54:39.881+07:00  WARN 6900 --- [erp] [virtual-65] c.s.erp.service.UnitImportService        : 导入第211行数据失败: 无法创建或获取单位: second
+2025-11-01T16:54:39.889+07:00  WARN 6900 --- [erp] [virtual-63] org.hibernate.orm.jdbc.error             : HHH000247: ErrorCode: 0, SQLState: 25P02
+2025-11-01T16:54:39.890+07:00  WARN 6900 --- [erp] [virtual-63] org.hibernate.orm.jdbc.error             : ERROR: current transaction is aborted, commands ignored until end of transaction block
+2025-11-01T16:54:39.891+07:00  WARN 6900 --- [erp] [virtual-63] c.s.erp.service.UnitImportService        : 导入第109行数据失败: 无法创建或获取单位: K50
+2025-11-01T16:54:39.914+07:00  WARN 6900 --- [erp] [virtual-61] org.hibernate.orm.jdbc.error             : HHH000247: ErrorCode: 0, SQLState: 25P02
+2025-11-01T16:54:39.914+07:00  WARN 6900 --- [erp] [virtual-65] org.hibernate.orm.jdbc.error             : HHH000247: ErrorCode: 0, SQLState: 25P02
+2025-11-01T16:54:39.915+07:00  WARN 6900 --- [erp] [virtual-61] org.hibernate.orm.jdbc.error             : ERROR: current transaction is aborted, commands ignored until end of transaction block
+2025-11-01T16:54:39.915+07:00  WARN 6900 --- [erp] [virtual-65] org.hibernate.orm.jdbc.error             : ERROR: current transaction is aborted, commands ignored until end of transaction block
+2025-11-01T16:54:39.916+07:00  WARN 6900 --- [erp] [virtual-61] c.s.erp.service.UnitImportService        : 导入第9行数据失败: 无法创建或获取单位: CTN2
+2025-11-01T16:54:39.916+07:00  WARN 6900 --- [erp] [virtual-65] c.s.erp.service.UnitImportService        : 导入第212行数据失败: 无法创建或获取单位: shu
+2025-11-01T16:54:39.934+07:00  WARN 6900 --- [erp] [virtual-63] org.hibernate.orm.jdbc.error             : HHH000247: ErrorCode: 0, SQLState: 25P02
+2025-11-01T16:54:39.935+07:00  WARN 6900 --- [erp] [virtual-63] org.hibernate.orm.jdbc.error             : ERROR: current transaction is aborted, commands ignored until end of transaction block
+2025-11-01T16:54:39.936+07:00  WARN 6900 --- [erp] [virtual-63] c.s.erp.service.UnitImportService        : 导入第110行数据失败: 无法创建或获取单位: K500
+2025-11-01T16:54:39.958+07:00  WARN 6900 --- [erp] [virtual-65] org.hibernate.orm.jdbc.error             : HHH000247: ErrorCode: 0, SQLState: 25P02
+2025-11-01T16:54:39.959+07:00  WARN 6900 --- [erp] [virtual-65] org.hibernate.orm.jdbc.error             : ERROR: current transaction is aborted, commands ignored until end of transaction block
+2025-11-01T16:54:39.960+07:00  WARN 6900 --- [erp] [virtual-65] c.s.erp.service.UnitImportService        : 导入第213行数据失败: 无法创建或获取单位: SHU10
+2025-11-01T16:54:39.991+07:00  WARN 6900 --- [erp] [virtual-63] org.hibernate.orm.jdbc.error             : HHH000247: ErrorCode: 0, SQLState: 25P02
+2025-11-01T16:54:39.992+07:00  WARN 6900 --- [erp] [virtual-63] org.hibernate.orm.jdbc.error             : ERROR: current transaction is aborted, commands ignored until end of transaction block
+2025-11-01T16:54:39.994+07:00  WARN 6900 --- [erp] [virtual-63] c.s.erp.service.UnitImportService        : 导入第111行数据失败: 无法创建或获取单位: K520
+2025-11-01T16:54:40.004+07:00  WARN 6900 --- [erp] [virtual-65] org.hibernate.orm.jdbc.error             : HHH000247: ErrorCode: 0, SQLState: 25P02
+2025-11-01T16:54:40.005+07:00  WARN 6900 --- [erp] [virtual-65] org.hibernate.orm.jdbc.error             : ERROR: current transaction is aborted, commands ignored until end of transaction block
+2025-11-01T16:54:40.006+07:00  WARN 6900 --- [erp] [virtual-65] c.s.erp.service.UnitImportService        : 导入第214行数据失败: 无法创建或获取单位: SHU200
+2025-11-01T16:54:40.044+07:00  WARN 6900 --- [erp] [virtual-63] org.hibernate.orm.jdbc.error             : HHH000247: ErrorCode: 0, SQLState: 25P02
+2025-11-01T16:54:40.044+07:00  WARN 6900 --- [erp] [virtual-65] org.hibernate.orm.jdbc.error             : HHH000247: ErrorCode: 0, SQLState: 25P02
+2025-11-01T16:54:40.045+07:00  WARN 6900 --- [erp] [virtual-63] org.hibernate.orm.jdbc.error             : ERROR: current transaction is aborted, commands ignored until end of transaction block
+2025-11-01T16:54:40.045+07:00  WARN 6900 --- [erp] [virtual-65] org.hibernate.orm.jdbc.error             : ERROR: current transaction is aborted, commands ignored until end of transaction block
+2025-11-01T16:54:40.047+07:00  WARN 6900 --- [erp] [virtual-63] c.s.erp.service.UnitImportService        : 导入第112行数据失败: 无法创建或获取单位: K600
+2025-11-01T16:54:40.047+07:00  WARN 6900 --- [erp] [virtual-65] c.s.erp.service.UnitImportService        : 导入第215行数据失败: 无法创建或获取单位: ST
+2025-11-01T16:54:40.086+07:00  WARN 6900 --- [erp] [virtual-65] org.hibernate.orm.jdbc.error             : HHH000247: ErrorCode: 0, SQLState: 25P02
+2025-11-01T16:54:40.088+07:00  WARN 6900 --- [erp] [virtual-65] org.hibernate.orm.jdbc.error             : ERROR: current transaction is aborted, commands ignored until end of transaction block
+2025-11-01T16:54:40.090+07:00  WARN 6900 --- [erp] [virtual-65] c.s.erp.service.UnitImportService        : 导入第216行数据失败: 无法创建或获取单位: tai
+2025-11-01T16:54:40.101+07:00  WARN 6900 --- [erp] [virtual-63] org.hibernate.orm.jdbc.error             : HHH000247: ErrorCode: 0, SQLState: 25P02
+2025-11-01T16:54:40.102+07:00  WARN 6900 --- [erp] [virtual-63] org.hibernate.orm.jdbc.error             : ERROR: current transaction is aborted, commands ignored until end of transaction block
+2025-11-01T16:54:40.104+07:00  WARN 6900 --- [erp] [virtual-63] c.s.erp.service.UnitImportService        : 导入第113行数据失败: 无法创建或获取单位: K700
+2025-11-01T16:54:40.133+07:00  WARN 6900 --- [erp] [virtual-65] org.hibernate.orm.jdbc.error             : HHH000247: ErrorCode: 0, SQLState: 25P02
+2025-11-01T16:54:40.134+07:00  WARN 6900 --- [erp] [virtual-65] org.hibernate.orm.jdbc.error             : ERROR: current transaction is aborted, commands ignored until end of transaction block
+2025-11-01T16:54:40.136+07:00  WARN 6900 --- [erp] [virtual-65] c.s.erp.service.UnitImportService        : 导入第217行数据失败: 无法创建或获取单位: tao
+2025-11-01T16:54:40.159+07:00  WARN 6900 --- [erp] [virtual-63] org.hibernate.orm.jdbc.error             : HHH000247: ErrorCode: 0, SQLState: 25P02
+2025-11-01T16:54:40.160+07:00  WARN 6900 --- [erp] [virtual-63] org.hibernate.orm.jdbc.error             : ERROR: current transaction is aborted, commands ignored until end of transaction block
+2025-11-01T16:54:40.161+07:00  WARN 6900 --- [erp] [virtual-63] c.s.erp.service.UnitImportService        : 导入第114行数据失败: 无法创建或获取单位: K820
+2025-11-01T16:54:40.179+07:00  WARN 6900 --- [erp] [virtual-65] org.hibernate.orm.jdbc.error             : HHH000247: ErrorCode: 0, SQLState: 25P02
+2025-11-01T16:54:40.180+07:00  WARN 6900 --- [erp] [virtual-65] org.hibernate.orm.jdbc.error             : ERROR: current transaction is aborted, commands ignored until end of transaction block
+2025-11-01T16:54:40.182+07:00  WARN 6900 --- [erp] [virtual-65] c.s.erp.service.UnitImportService        : 导入第218行数据失败: 无法创建或获取单位: tense
+2025-11-01T16:54:40.212+07:00  WARN 6900 --- [erp] [virtual-63] org.hibernate.orm.jdbc.error             : HHH000247: ErrorCode: 0, SQLState: 25P02
+2025-11-01T16:54:40.213+07:00  WARN 6900 --- [erp] [virtual-63] org.hibernate.orm.jdbc.error             : ERROR: current transaction is aborted, commands ignored until end of transaction block
+2025-11-01T16:54:40.215+07:00  WARN 6900 --- [erp] [virtual-63] c.s.erp.service.UnitImportService        : 导入第115行数据失败: 无法创建或获取单位: K920
+2025-11-01T16:54:40.223+07:00  WARN 6900 --- [erp] [virtual-65] org.hibernate.orm.jdbc.error             : HHH000247: ErrorCode: 0, SQLState: 25P02
+2025-11-01T16:54:40.224+07:00  WARN 6900 --- [erp] [virtual-65] org.hibernate.orm.jdbc.error             : ERROR: current transaction is aborted, commands ignored until end of transaction block
+2025-11-01T16:54:40.226+07:00  WARN 6900 --- [erp] [virtual-65] c.s.erp.service.UnitImportService        : 导入第219行数据失败: 无法创建或获取单位: ton
+2025-11-01T16:54:40.268+07:00  WARN 6900 --- [erp] [virtual-63] org.hibernate.orm.jdbc.error             : HHH000247: ErrorCode: 0, SQLState: 25P02
+2025-11-01T16:54:40.269+07:00  WARN 6900 --- [erp] [virtual-63] org.hibernate.orm.jdbc.error             : ERROR: current transaction is aborted, commands ignored until end of transaction block
+2025-11-01T16:54:40.269+07:00  WARN 6900 --- [erp] [virtual-65] org.hibernate.orm.jdbc.error             : HHH000247: ErrorCode: 0, SQLState: 25P02
+2025-11-01T16:54:40.271+07:00  WARN 6900 --- [erp] [virtual-65] org.hibernate.orm.jdbc.error             : ERROR: current transaction is aborted, commands ignored until end of transaction block
+2025-11-01T16:54:40.271+07:00  WARN 6900 --- [erp] [virtual-63] c.s.erp.service.UnitImportService        : 导入第116行数据失败: 无法创建或获取单位: kg
+2025-11-01T16:54:40.273+07:00  WARN 6900 --- [erp] [virtual-65] c.s.erp.service.UnitImportService        : 导入第220行数据失败: 无法创建或获取单位: tong
+2025-11-01T16:54:40.317+07:00  WARN 6900 --- [erp] [virtual-65] org.hibernate.orm.jdbc.error             : HHH000247: ErrorCode: 0, SQLState: 25P02
+2025-11-01T16:54:40.318+07:00  WARN 6900 --- [erp] [virtual-65] org.hibernate.orm.jdbc.error             : ERROR: current transaction is aborted, commands ignored until end of transaction block
+2025-11-01T16:54:40.319+07:00  WARN 6900 --- [erp] [virtual-65] c.s.erp.service.UnitImportService        : 导入第221行数据失败: 无法创建或获取单位: UOM
+2025-11-01T16:54:40.325+07:00  WARN 6900 --- [erp] [virtual-63] org.hibernate.orm.jdbc.error             : HHH000247: ErrorCode: 0, SQLState: 25P02
+2025-11-01T16:54:40.326+07:00  WARN 6900 --- [erp] [virtual-63] org.hibernate.orm.jdbc.error             : ERROR: current transaction is aborted, commands ignored until end of transaction block
+2025-11-01T16:54:40.328+07:00  WARN 6900 --- [erp] [virtual-63] c.s.erp.service.UnitImportService        : 导入第117行数据失败: 无法创建或获取单位: km
+2025-11-01T16:54:40.342+07:00  WARN 6900 --- [erp] [virtual-61] org.hibernate.orm.jdbc.error             : HHH000247: ErrorCode: 0, SQLState: 25P02
+2025-11-01T16:54:40.343+07:00  WARN 6900 --- [erp] [virtual-61] org.hibernate.orm.jdbc.error             : ERROR: current transaction is aborted, commands ignored until end of transaction block
+2025-11-01T16:54:40.344+07:00  WARN 6900 --- [erp] [virtual-61] c.s.erp.service.UnitImportService        : 导入第10行数据失败: 无法创建或获取单位: dong
+2025-11-01T16:54:40.362+07:00  WARN 6900 --- [erp] [virtual-65] org.hibernate.orm.jdbc.error             : HHH000247: ErrorCode: 0, SQLState: 25P02
+2025-11-01T16:54:40.363+07:00  WARN 6900 --- [erp] [virtual-65] org.hibernate.orm.jdbc.error             : ERROR: current transaction is aborted, commands ignored until end of transaction block
+2025-11-01T16:54:40.364+07:00  WARN 6900 --- [erp] [virtual-65] c.s.erp.service.UnitImportService        : 导入第222行数据失败: 无法创建或获取单位: UOM008
+2025-11-01T16:54:40.381+07:00  WARN 6900 --- [erp] [virtual-63] org.hibernate.orm.jdbc.error             : HHH000247: ErrorCode: 0, SQLState: 25P02
+2025-11-01T16:54:40.383+07:00  WARN 6900 --- [erp] [virtual-63] org.hibernate.orm.jdbc.error             : ERROR: current transaction is aborted, commands ignored until end of transaction block
+2025-11-01T16:54:40.385+07:00  WARN 6900 --- [erp] [virtual-63] c.s.erp.service.UnitImportService        : 导入第118行数据失败: 无法创建或获取单位: L
+2025-11-01T16:54:40.399+07:00  WARN 6900 --- [erp] [virtual-61] org.hibernate.orm.jdbc.error             : HHH000247: ErrorCode: 0, SQLState: 25P02
+2025-11-01T16:54:40.400+07:00  WARN 6900 --- [erp] [virtual-61] org.hibernate.orm.jdbc.error             : ERROR: current transaction is aborted, commands ignored until end of transaction block
+2025-11-01T16:54:40.401+07:00  WARN 6900 --- [erp] [virtual-61] c.s.erp.service.UnitImportService        : 导入第11行数据失败: 无法创建或获取单位: double
+2025-11-01T16:54:40.409+07:00  WARN 6900 --- [erp] [virtual-65] org.hibernate.orm.jdbc.error             : HHH000247: ErrorCode: 0, SQLState: 25P02
+2025-11-01T16:54:40.409+07:00  WARN 6900 --- [erp] [virtual-65] org.hibernate.orm.jdbc.error             : ERROR: current transaction is aborted, commands ignored until end of transaction block
+2025-11-01T16:54:40.410+07:00  WARN 6900 --- [erp] [virtual-65] c.s.erp.service.UnitImportService        : 导入第223行数据失败: 无法创建或获取单位: UOM009
+2025-11-01T16:54:40.439+07:00  WARN 6900 --- [erp] [virtual-63] org.hibernate.orm.jdbc.error             : HHH000247: ErrorCode: 0, SQLState: 25P02
+2025-11-01T16:54:40.440+07:00  WARN 6900 --- [erp] [virtual-63] org.hibernate.orm.jdbc.error             : ERROR: current transaction is aborted, commands ignored until end of transaction block
+2025-11-01T16:54:40.441+07:00  WARN 6900 --- [erp] [virtual-63] c.s.erp.service.UnitImportService        : 导入第119行数据失败: 无法创建或获取单位: L001
+2025-11-01T16:54:40.454+07:00  WARN 6900 --- [erp] [virtual-65] org.hibernate.orm.jdbc.error             : HHH000247: ErrorCode: 0, SQLState: 25P02
+2025-11-01T16:54:40.455+07:00  WARN 6900 --- [erp] [virtual-65] org.hibernate.orm.jdbc.error             : ERROR: current transaction is aborted, commands ignored until end of transaction block
+2025-11-01T16:54:40.456+07:00  WARN 6900 --- [erp] [virtual-61] org.hibernate.orm.jdbc.error             : HHH000247: ErrorCode: 0, SQLState: 25P02
+2025-11-01T16:54:40.456+07:00  WARN 6900 --- [erp] [virtual-65] c.s.erp.service.UnitImportService        : 导入第224行数据失败: 无法创建或获取单位: UOM02
+2025-11-01T16:54:40.457+07:00  WARN 6900 --- [erp] [virtual-61] org.hibernate.orm.jdbc.error             : ERROR: current transaction is aborted, commands ignored until end of transaction block
+2025-11-01T16:54:40.458+07:00  WARN 6900 --- [erp] [virtual-61] c.s.erp.service.UnitImportService        : 导入第12行数据失败: 无法创建或获取单位: dozen
+2025-11-01T16:54:40.492+07:00  WARN 6900 --- [erp] [virtual-63] org.hibernate.orm.jdbc.error             : HHH000247: ErrorCode: 0, SQLState: 25P02
+2025-11-01T16:54:40.493+07:00  WARN 6900 --- [erp] [virtual-63] org.hibernate.orm.jdbc.error             : ERROR: current transaction is aborted, commands ignored until end of transaction block
+2025-11-01T16:54:40.494+07:00  WARN 6900 --- [erp] [virtual-63] c.s.erp.service.UnitImportService        : 导入第120行数据失败: 无法创建或获取单位: L002
+2025-11-01T16:54:40.498+07:00  WARN 6900 --- [erp] [virtual-65] org.hibernate.orm.jdbc.error             : HHH000247: ErrorCode: 0, SQLState: 25P02
+2025-11-01T16:54:40.499+07:00  WARN 6900 --- [erp] [virtual-65] org.hibernate.orm.jdbc.error             : ERROR: current transaction is aborted, commands ignored until end of transaction block
+2025-11-01T16:54:40.500+07:00  WARN 6900 --- [erp] [virtual-65] c.s.erp.service.UnitImportService        : 导入第225行数据失败: 无法创建或获取单位: UOM03
+2025-11-01T16:54:40.510+07:00  WARN 6900 --- [erp] [virtual-61] org.hibernate.orm.jdbc.error             : HHH000247: ErrorCode: 0, SQLState: 25P02
+2025-11-01T16:54:40.511+07:00  WARN 6900 --- [erp] [virtual-61] org.hibernate.orm.jdbc.error             : ERROR: current transaction is aborted, commands ignored until end of transaction block
+2025-11-01T16:54:40.512+07:00  WARN 6900 --- [erp] [virtual-61] c.s.erp.service.UnitImportService        : 导入第13行数据失败: 无法创建或获取单位: FEN1
+2025-11-01T16:54:40.543+07:00  WARN 6900 --- [erp] [virtual-65] org.hibernate.orm.jdbc.error             : HHH000247: ErrorCode: 0, SQLState: 25P02
+2025-11-01T16:54:40.544+07:00  WARN 6900 --- [erp] [virtual-65] org.hibernate.orm.jdbc.error             : ERROR: current transaction is aborted, commands ignored until end of transaction block
+2025-11-01T16:54:40.546+07:00  WARN 6900 --- [erp] [virtual-65] c.s.erp.service.UnitImportService        : 导入第226行数据失败: 无法创建或获取单位: UOM04
+2025-11-01T16:54:40.567+07:00  WARN 6900 --- [erp] [virtual-61] org.hibernate.orm.jdbc.error             : HHH000247: ErrorCode: 0, SQLState: 25P02
+2025-11-01T16:54:40.568+07:00  WARN 6900 --- [erp] [virtual-61] org.hibernate.orm.jdbc.error             : ERROR: current transaction is aborted, commands ignored until end of transaction block
+2025-11-01T16:54:40.569+07:00  WARN 6900 --- [erp] [virtual-61] c.s.erp.service.UnitImportService        : 导入第14行数据失败: 无法创建或获取单位: g
+2025-11-01T16:54:40.590+07:00  WARN 6900 --- [erp] [virtual-65] org.hibernate.orm.jdbc.error             : HHH000247: ErrorCode: 0, SQLState: 25P02
+2025-11-01T16:54:40.591+07:00  WARN 6900 --- [erp] [virtual-65] org.hibernate.orm.jdbc.error             : ERROR: current transaction is aborted, commands ignored until end of transaction block
+2025-11-01T16:54:40.593+07:00  WARN 6900 --- [erp] [virtual-65] c.s.erp.service.UnitImportService        : 导入第227行数据失败: 无法创建或获取单位: UOM05
+2025-11-01T16:54:40.613+07:00  WARN 6900 --- [erp] [virtual-61] org.hibernate.orm.jdbc.error             : HHH000247: ErrorCode: 0, SQLState: 25P02
+2025-11-01T16:54:40.614+07:00  WARN 6900 --- [erp] [virtual-61] org.hibernate.orm.jdbc.error             : ERROR: current transaction is aborted, commands ignored until end of transaction block
+2025-11-01T16:54:40.615+07:00  WARN 6900 --- [erp] [virtual-61] c.s.erp.service.UnitImportService        : 导入第15行数据失败: 无法创建或获取单位: hour
+2025-11-01T16:54:40.621+07:00  WARN 6900 --- [erp] [virtual-65] org.hibernate.orm.jdbc.error             : HHH000247: ErrorCode: 0, SQLState: 25P02
+2025-11-01T16:54:40.622+07:00  WARN 6900 --- [erp] [virtual-65] org.hibernate.orm.jdbc.error             : ERROR: current transaction is aborted, commands ignored until end of transaction block
+2025-11-01T16:54:40.623+07:00  WARN 6900 --- [erp] [virtual-65] c.s.erp.service.UnitImportService        : 导入第228行数据失败: 无法创建或获取单位: UOM06
+2025-11-01T16:54:40.652+07:00  WARN 6900 --- [erp] [virtual-65] org.hibernate.orm.jdbc.error             : HHH000247: ErrorCode: 0, SQLState: 25P02
+2025-11-01T16:54:40.653+07:00  WARN 6900 --- [erp] [virtual-65] org.hibernate.orm.jdbc.error             : ERROR: current transaction is aborted, commands ignored until end of transaction block
+2025-11-01T16:54:40.655+07:00  WARN 6900 --- [erp] [virtual-65] c.s.erp.service.UnitImportService        : 导入第229行数据失败: 无法创建或获取单位: UOM07
+2025-11-01T16:54:40.657+07:00  WARN 6900 --- [erp] [virtual-61] org.hibernate.orm.jdbc.error             : HHH000247: ErrorCode: 0, SQLState: 25P02
+2025-11-01T16:54:40.658+07:00  WARN 6900 --- [erp] [virtual-61] org.hibernate.orm.jdbc.error             : ERROR: current transaction is aborted, commands ignored until end of transaction block
+2025-11-01T16:54:40.659+07:00  WARN 6900 --- [erp] [virtual-61] c.s.erp.service.UnitImportService        : 导入第16行数据失败: 无法创建或获取单位: JUAN
+2025-11-01T16:54:40.662+07:00  WARN 6900 --- [erp] [virtual-63] org.hibernate.orm.jdbc.error             : HHH000247: ErrorCode: 0, SQLState: 25P02
+2025-11-01T16:54:40.663+07:00  WARN 6900 --- [erp] [virtual-63] org.hibernate.orm.jdbc.error             : ERROR: current transaction is aborted, commands ignored until end of transaction block
+2025-11-01T16:54:40.664+07:00  WARN 6900 --- [erp] [virtual-63] c.s.erp.service.UnitImportService        : 导入第121行数据失败: 无法创建或获取单位: L003
+2025-11-01T16:54:40.686+07:00  WARN 6900 --- [erp] [virtual-65] org.hibernate.orm.jdbc.error             : HHH000247: ErrorCode: 0, SQLState: 25P02
+2025-11-01T16:54:40.687+07:00  WARN 6900 --- [erp] [virtual-65] org.hibernate.orm.jdbc.error             : ERROR: current transaction is aborted, commands ignored until end of transaction block
+2025-11-01T16:54:40.689+07:00  WARN 6900 --- [erp] [virtual-65] c.s.erp.service.UnitImportService        : 导入第230行数据失败: 无法创建或获取单位: UOM08
+2025-11-01T16:54:40.697+07:00  WARN 6900 --- [erp] [virtual-61] org.hibernate.orm.jdbc.error             : HHH000247: ErrorCode: 0, SQLState: 25P02
+2025-11-01T16:54:40.698+07:00  WARN 6900 --- [erp] [virtual-61] org.hibernate.orm.jdbc.error             : ERROR: current transaction is aborted, commands ignored until end of transaction block
+2025-11-01T16:54:40.699+07:00  WARN 6900 --- [erp] [virtual-61] c.s.erp.service.UnitImportService        : 导入第17行数据失败: 无法创建或获取单位: K001
+2025-11-01T16:54:40.702+07:00  WARN 6900 --- [erp] [virtual-63] org.hibernate.orm.jdbc.error             : HHH000247: ErrorCode: 0, SQLState: 25P02
+2025-11-01T16:54:40.702+07:00  WARN 6900 --- [erp] [virtual-63] org.hibernate.orm.jdbc.error             : ERROR: current transaction is aborted, commands ignored until end of transaction block
+2025-11-01T16:54:40.704+07:00  WARN 6900 --- [erp] [virtual-63] c.s.erp.service.UnitImportService        : 导入第122行数据失败: 无法创建或获取单位: L004
+2025-11-01T16:54:40.716+07:00  WARN 6900 --- [erp] [virtual-65] org.hibernate.orm.jdbc.error             : HHH000247: ErrorCode: 0, SQLState: 25P02
+2025-11-01T16:54:40.716+07:00  WARN 6900 --- [erp] [virtual-65] org.hibernate.orm.jdbc.error             : ERROR: current transaction is aborted, commands ignored until end of transaction block
+2025-11-01T16:54:40.717+07:00  WARN 6900 --- [erp] [virtual-65] c.s.erp.service.UnitImportService        : 导入第231行数据失败: 无法创建或获取单位: UOM09
+2025-11-01T16:54:40.739+07:00  WARN 6900 --- [erp] [virtual-61] org.hibernate.orm.jdbc.error             : HHH000247: ErrorCode: 0, SQLState: 25P02
+2025-11-01T16:54:40.740+07:00  WARN 6900 --- [erp] [virtual-61] org.hibernate.orm.jdbc.error             : ERROR: current transaction is aborted, commands ignored until end of transaction block
+2025-11-01T16:54:40.741+07:00  WARN 6900 --- [erp] [virtual-61] c.s.erp.service.UnitImportService        : 导入第18行数据失败: 无法创建或获取单位: K002
+2025-11-01T16:54:40.743+07:00  WARN 6900 --- [erp] [virtual-63] org.hibernate.orm.jdbc.error             : HHH000247: ErrorCode: 0, SQLState: 25P02
+2025-11-01T16:54:40.743+07:00  WARN 6900 --- [erp] [virtual-65] org.hibernate.orm.jdbc.error             : HHH000247: ErrorCode: 0, SQLState: 25P02
+2025-11-01T16:54:40.744+07:00  WARN 6900 --- [erp] [virtual-63] org.hibernate.orm.jdbc.error             : ERROR: current transaction is aborted, commands ignored until end of transaction block
+2025-11-01T16:54:40.744+07:00  WARN 6900 --- [erp] [virtual-65] org.hibernate.orm.jdbc.error             : ERROR: current transaction is aborted, commands ignored until end of transaction block
+2025-11-01T16:54:40.745+07:00  WARN 6900 --- [erp] [virtual-63] c.s.erp.service.UnitImportService        : 导入第123行数据失败: 无法创建或获取单位: L005
+2025-11-01T16:54:40.745+07:00  WARN 6900 --- [erp] [virtual-65] c.s.erp.service.UnitImportService        : 导入第232行数据失败: 无法创建或获取单位: UOM10
+2025-11-01T16:54:40.772+07:00  WARN 6900 --- [erp] [virtual-65] org.hibernate.orm.jdbc.error             : HHH000247: ErrorCode: 0, SQLState: 25P02
+2025-11-01T16:54:40.773+07:00  WARN 6900 --- [erp] [virtual-65] org.hibernate.orm.jdbc.error             : ERROR: current transaction is aborted, commands ignored until end of transaction block
+2025-11-01T16:54:40.774+07:00  WARN 6900 --- [erp] [virtual-65] c.s.erp.service.UnitImportService        : 导入第233行数据失败: 无法创建或获取单位: UOM200
+2025-11-01T16:54:40.780+07:00  WARN 6900 --- [erp] [virtual-61] org.hibernate.orm.jdbc.error             : HHH000247: ErrorCode: 0, SQLState: 25P02
+2025-11-01T16:54:40.781+07:00  WARN 6900 --- [erp] [virtual-61] org.hibernate.orm.jdbc.error             : ERROR: current transaction is aborted, commands ignored until end of transaction block
+2025-11-01T16:54:40.782+07:00  WARN 6900 --- [erp] [virtual-63] org.hibernate.orm.jdbc.error             : HHH000247: ErrorCode: 0, SQLState: 25P02
+2025-11-01T16:54:40.782+07:00  WARN 6900 --- [erp] [virtual-61] c.s.erp.service.UnitImportService        : 导入第19行数据失败: 无法创建或获取单位: K003
+2025-11-01T16:54:40.783+07:00  WARN 6900 --- [erp] [virtual-63] org.hibernate.orm.jdbc.error             : ERROR: current transaction is aborted, commands ignored until end of transaction block
+2025-11-01T16:54:40.784+07:00  WARN 6900 --- [erp] [virtual-63] c.s.erp.service.UnitImportService        : 导入第124行数据失败: 无法创建或获取单位: L006
+2025-11-01T16:54:40.803+07:00  WARN 6900 --- [erp] [virtual-65] org.hibernate.orm.jdbc.error             : HHH000247: ErrorCode: 0, SQLState: 25P02
+2025-11-01T16:54:40.804+07:00  WARN 6900 --- [erp] [virtual-65] org.hibernate.orm.jdbc.error             : ERROR: current transaction is aborted, commands ignored until end of transaction block
+2025-11-01T16:54:40.806+07:00  WARN 6900 --- [erp] [virtual-65] c.s.erp.service.UnitImportService        : 导入第234行数据失败: 无法创建或获取单位: Y
+2025-11-01T16:54:40.821+07:00  WARN 6900 --- [erp] [virtual-61] org.hibernate.orm.jdbc.error             : HHH000247: ErrorCode: 0, SQLState: 25P02
+2025-11-01T16:54:40.821+07:00  WARN 6900 --- [erp] [virtual-63] org.hibernate.orm.jdbc.error             : HHH000247: ErrorCode: 0, SQLState: 25P02
+2025-11-01T16:54:40.822+07:00  WARN 6900 --- [erp] [virtual-61] org.hibernate.orm.jdbc.error             : ERROR: current transaction is aborted, commands ignored until end of transaction block
+2025-11-01T16:54:40.823+07:00  WARN 6900 --- [erp] [virtual-63] org.hibernate.orm.jdbc.error             : ERROR: current transaction is aborted, commands ignored until end of transaction block
+2025-11-01T16:54:40.824+07:00  WARN 6900 --- [erp] [virtual-61] c.s.erp.service.UnitImportService        : 导入第20行数据失败: 无法创建或获取单位: K004
+2025-11-01T16:54:40.824+07:00  WARN 6900 --- [erp] [virtual-63] c.s.erp.service.UnitImportService        : 导入第125行数据失败: 无法创建或获取单位: L007
+2025-11-01T16:54:40.833+07:00  WARN 6900 --- [erp] [virtual-65] org.hibernate.orm.jdbc.error             : HHH000247: ErrorCode: 0, SQLState: 25P02
+2025-11-01T16:54:40.834+07:00  WARN 6900 --- [erp] [virtual-65] org.hibernate.orm.jdbc.error             : ERROR: current transaction is aborted, commands ignored until end of transaction block
+2025-11-01T16:54:40.835+07:00  WARN 6900 --- [erp] [virtual-65] c.s.erp.service.UnitImportService        : 导入第235行数据失败: 无法创建或获取单位: Y001
+2025-11-01T16:54:40.862+07:00  WARN 6900 --- [erp] [virtual-63] org.hibernate.orm.jdbc.error             : HHH000247: ErrorCode: 0, SQLState: 25P02
+2025-11-01T16:54:40.863+07:00  WARN 6900 --- [erp] [virtual-65] org.hibernate.orm.jdbc.error             : HHH000247: ErrorCode: 0, SQLState: 25P02
+2025-11-01T16:54:40.862+07:00  WARN 6900 --- [erp] [virtual-61] org.hibernate.orm.jdbc.error             : HHH000247: ErrorCode: 0, SQLState: 25P02
+2025-11-01T16:54:40.864+07:00  WARN 6900 --- [erp] [virtual-63] org.hibernate.orm.jdbc.error             : ERROR: current transaction is aborted, commands ignored until end of transaction block
+2025-11-01T16:54:40.864+07:00  WARN 6900 --- [erp] [virtual-65] org.hibernate.orm.jdbc.error             : ERROR: current transaction is aborted, commands ignored until end of transaction block
+2025-11-01T16:54:40.864+07:00  WARN 6900 --- [erp] [virtual-61] org.hibernate.orm.jdbc.error             : ERROR: current transaction is aborted, commands ignored until end of transaction block
+2025-11-01T16:54:40.865+07:00  WARN 6900 --- [erp] [virtual-63] c.s.erp.service.UnitImportService        : 导入第126行数据失败: 无法创建或获取单位: L008
+2025-11-01T16:54:40.865+07:00  WARN 6900 --- [erp] [virtual-65] c.s.erp.service.UnitImportService        : 导入第236行数据失败: 无法创建或获取单位: Y002
+2025-11-01T16:54:40.866+07:00  WARN 6900 --- [erp] [virtual-61] c.s.erp.service.UnitImportService        : 导入第21行数据失败: 无法创建或获取单位: K005
+2025-11-01T16:54:40.893+07:00  WARN 6900 --- [erp] [virtual-65] org.hibernate.orm.jdbc.error             : HHH000247: ErrorCode: 0, SQLState: 25P02
+2025-11-01T16:54:40.894+07:00  WARN 6900 --- [erp] [virtual-65] org.hibernate.orm.jdbc.error             : ERROR: current transaction is aborted, commands ignored until end of transaction block
+2025-11-01T16:54:40.895+07:00  WARN 6900 --- [erp] [virtual-65] c.s.erp.service.UnitImportService        : 导入第237行数据失败: 无法创建或获取单位: Y003
+2025-11-01T16:54:40.903+07:00  WARN 6900 --- [erp] [virtual-63] org.hibernate.orm.jdbc.error             : HHH000247: ErrorCode: 0, SQLState: 25P02
+2025-11-01T16:54:40.904+07:00  WARN 6900 --- [erp] [virtual-63] org.hibernate.orm.jdbc.error             : ERROR: current transaction is aborted, commands ignored until end of transaction block
+2025-11-01T16:54:40.904+07:00  WARN 6900 --- [erp] [virtual-61] org.hibernate.orm.jdbc.error             : HHH000247: ErrorCode: 0, SQLState: 25P02
+2025-11-01T16:54:40.905+07:00  WARN 6900 --- [erp] [virtual-61] org.hibernate.orm.jdbc.error             : ERROR: current transaction is aborted, commands ignored until end of transaction block
+2025-11-01T16:54:40.905+07:00  WARN 6900 --- [erp] [virtual-63] c.s.erp.service.UnitImportService        : 导入第127行数据失败: 无法创建或获取单位: L009
+2025-11-01T16:54:40.906+07:00  WARN 6900 --- [erp] [virtual-61] c.s.erp.service.UnitImportService        : 导入第22行数据失败: 无法创建或获取单位: K006
+2025-11-01T16:54:40.923+07:00  WARN 6900 --- [erp] [virtual-65] org.hibernate.orm.jdbc.error             : HHH000247: ErrorCode: 0, SQLState: 25P02
+2025-11-01T16:54:40.924+07:00  WARN 6900 --- [erp] [virtual-65] org.hibernate.orm.jdbc.error             : ERROR: current transaction is aborted, commands ignored until end of transaction block
+2025-11-01T16:54:40.925+07:00  WARN 6900 --- [erp] [virtual-65] c.s.erp.service.UnitImportService        : 导入第238行数据失败: 无法创建或获取单位: Y004
+2025-11-01T16:54:40.943+07:00  WARN 6900 --- [erp] [virtual-63] org.hibernate.orm.jdbc.error             : HHH000247: ErrorCode: 0, SQLState: 25P02
+2025-11-01T16:54:40.945+07:00  WARN 6900 --- [erp] [virtual-63] org.hibernate.orm.jdbc.error             : ERROR: current transaction is aborted, commands ignored until end of transaction block
+2025-11-01T16:54:40.945+07:00  WARN 6900 --- [erp] [virtual-61] org.hibernate.orm.jdbc.error             : HHH000247: ErrorCode: 0, SQLState: 25P02
+2025-11-01T16:54:40.946+07:00  WARN 6900 --- [erp] [virtual-61] org.hibernate.orm.jdbc.error             : ERROR: current transaction is aborted, commands ignored until end of transaction block
+2025-11-01T16:54:40.946+07:00  WARN 6900 --- [erp] [virtual-63] c.s.erp.service.UnitImportService        : 导入第128行数据失败: 无法创建或获取单位: L010
+2025-11-01T16:54:40.947+07:00  WARN 6900 --- [erp] [virtual-61] c.s.erp.service.UnitImportService        : 导入第23行数据失败: 无法创建或获取单位: K007
+2025-11-01T16:54:40.952+07:00  WARN 6900 --- [erp] [virtual-65] org.hibernate.orm.jdbc.error             : HHH000247: ErrorCode: 0, SQLState: 25P02
+2025-11-01T16:54:40.953+07:00  WARN 6900 --- [erp] [virtual-65] org.hibernate.orm.jdbc.error             : ERROR: current transaction is aborted, commands ignored until end of transaction block
+2025-11-01T16:54:40.955+07:00  WARN 6900 --- [erp] [virtual-65] c.s.erp.service.UnitImportService        : 导入第239行数据失败: 无法创建或获取单位: Y005
+2025-11-01T16:54:40.984+07:00  WARN 6900 --- [erp] [virtual-65] org.hibernate.orm.jdbc.error             : HHH000247: ErrorCode: 0, SQLState: 25P02
+2025-11-01T16:54:40.985+07:00  WARN 6900 --- [erp] [virtual-63] org.hibernate.orm.jdbc.error             : HHH000247: ErrorCode: 0, SQLState: 25P02
+2025-11-01T16:54:40.985+07:00  WARN 6900 --- [erp] [virtual-61] org.hibernate.orm.jdbc.error             : HHH000247: ErrorCode: 0, SQLState: 25P02
+2025-11-01T16:54:40.985+07:00  WARN 6900 --- [erp] [virtual-65] org.hibernate.orm.jdbc.error             : ERROR: current transaction is aborted, commands ignored until end of transaction block
+2025-11-01T16:54:40.986+07:00  WARN 6900 --- [erp] [virtual-61] org.hibernate.orm.jdbc.error             : ERROR: current transaction is aborted, commands ignored until end of transaction block
+2025-11-01T16:54:40.985+07:00  WARN 6900 --- [erp] [virtual-63] org.hibernate.orm.jdbc.error             : ERROR: current transaction is aborted, commands ignored until end of transaction block
+2025-11-01T16:54:40.987+07:00  WARN 6900 --- [erp] [virtual-61] c.s.erp.service.UnitImportService        : 导入第24行数据失败: 无法创建或获取单位: K008
+2025-11-01T16:54:40.987+07:00  WARN 6900 --- [erp] [virtual-65] c.s.erp.service.UnitImportService        : 导入第240行数据失败: 无法创建或获取单位: Y006
+2025-11-01T16:54:40.987+07:00  WARN 6900 --- [erp] [virtual-63] c.s.erp.service.UnitImportService        : 导入第129行数据失败: 无法创建或获取单位: L011
+2025-11-01T16:54:41.018+07:00  WARN 6900 --- [erp] [virtual-65] org.hibernate.orm.jdbc.error             : HHH000247: ErrorCode: 0, SQLState: 25P02
+2025-11-01T16:54:41.019+07:00  WARN 6900 --- [erp] [virtual-65] org.hibernate.orm.jdbc.error             : ERROR: current transaction is aborted, commands ignored until end of transaction block
+2025-11-01T16:54:41.020+07:00  WARN 6900 --- [erp] [virtual-65] c.s.erp.service.UnitImportService        : 导入第241行数据失败: 无法创建或获取单位: Y007
+2025-11-01T16:54:41.027+07:00  WARN 6900 --- [erp] [virtual-63] org.hibernate.orm.jdbc.error             : HHH000247: ErrorCode: 0, SQLState: 25P02
+2025-11-01T16:54:41.028+07:00  WARN 6900 --- [erp] [virtual-63] org.hibernate.orm.jdbc.error             : ERROR: current transaction is aborted, commands ignored until end of transaction block
+2025-11-01T16:54:41.028+07:00  WARN 6900 --- [erp] [virtual-61] org.hibernate.orm.jdbc.error             : HHH000247: ErrorCode: 0, SQLState: 25P02
+2025-11-01T16:54:41.029+07:00  WARN 6900 --- [erp] [virtual-61] org.hibernate.orm.jdbc.error             : ERROR: current transaction is aborted, commands ignored until end of transaction block
+2025-11-01T16:54:41.029+07:00  WARN 6900 --- [erp] [virtual-63] c.s.erp.service.UnitImportService        : 导入第130行数据失败: 无法创建或获取单位: L012
+2025-11-01T16:54:41.030+07:00  WARN 6900 --- [erp] [virtual-61] c.s.erp.service.UnitImportService        : 导入第25行数据失败: 无法创建或获取单位: K009
+2025-11-01T16:54:41.048+07:00  WARN 6900 --- [erp] [virtual-65] org.hibernate.orm.jdbc.error             : HHH000247: ErrorCode: 0, SQLState: 25P02
+2025-11-01T16:54:41.049+07:00  WARN 6900 --- [erp] [virtual-65] org.hibernate.orm.jdbc.error             : ERROR: current transaction is aborted, commands ignored until end of transaction block
+2025-11-01T16:54:41.049+07:00  WARN 6900 --- [erp] [virtual-65] c.s.erp.service.UnitImportService        : 导入第242行数据失败: 无法创建或获取单位: Y008
+2025-11-01T16:54:41.074+07:00  WARN 6900 --- [erp] [virtual-63] org.hibernate.orm.jdbc.error             : HHH000247: ErrorCode: 0, SQLState: 25P02
+2025-11-01T16:54:41.074+07:00  WARN 6900 --- [erp] [virtual-63] org.hibernate.orm.jdbc.error             : ERROR: current transaction is aborted, commands ignored until end of transaction block
+2025-11-01T16:54:41.075+07:00  WARN 6900 --- [erp] [virtual-61] org.hibernate.orm.jdbc.error             : HHH000247: ErrorCode: 0, SQLState: 25P02
+2025-11-01T16:54:41.075+07:00  WARN 6900 --- [erp] [virtual-63] c.s.erp.service.UnitImportService        : 导入第131行数据失败: 无法创建或获取单位: L013
+2025-11-01T16:54:41.076+07:00  WARN 6900 --- [erp] [virtual-61] org.hibernate.orm.jdbc.error             : ERROR: current transaction is aborted, commands ignored until end of transaction block
+2025-11-01T16:54:41.077+07:00  WARN 6900 --- [erp] [virtual-61] c.s.erp.service.UnitImportService        : 导入第26行数据失败: 无法创建或获取单位: K010
+2025-11-01T16:54:41.089+07:00  WARN 6900 --- [erp] [virtual-65] org.hibernate.orm.jdbc.error             : HHH000247: ErrorCode: 0, SQLState: 25P02
+2025-11-01T16:54:41.090+07:00  WARN 6900 --- [erp] [virtual-65] org.hibernate.orm.jdbc.error             : ERROR: current transaction is aborted, commands ignored until end of transaction block
+2025-11-01T16:54:41.091+07:00  WARN 6900 --- [erp] [virtual-65] c.s.erp.service.UnitImportService        : 导入第243行数据失败: 无法创建或获取单位: Y009
+2025-11-01T16:54:41.126+07:00  WARN 6900 --- [erp] [virtual-65] org.hibernate.orm.jdbc.error             : HHH000247: ErrorCode: 0, SQLState: 25P02
+2025-11-01T16:54:41.126+07:00  WARN 6900 --- [erp] [virtual-61] org.hibernate.orm.jdbc.error             : HHH000247: ErrorCode: 0, SQLState: 25P02
+2025-11-01T16:54:41.126+07:00  WARN 6900 --- [erp] [virtual-63] org.hibernate.orm.jdbc.error             : HHH000247: ErrorCode: 0, SQLState: 25P02
+2025-11-01T16:54:41.127+07:00  WARN 6900 --- [erp] [virtual-65] org.hibernate.orm.jdbc.error             : ERROR: current transaction is aborted, commands ignored until end of transaction block
+2025-11-01T16:54:41.127+07:00  WARN 6900 --- [erp] [virtual-61] org.hibernate.orm.jdbc.error             : ERROR: current transaction is aborted, commands ignored until end of transaction block
+2025-11-01T16:54:41.128+07:00  WARN 6900 --- [erp] [virtual-63] org.hibernate.orm.jdbc.error             : ERROR: current transaction is aborted, commands ignored until end of transaction block
+2025-11-01T16:54:41.128+07:00  WARN 6900 --- [erp] [virtual-65] c.s.erp.service.UnitImportService        : 导入第244行数据失败: 无法创建或获取单位: Y010
+2025-11-01T16:54:41.129+07:00  WARN 6900 --- [erp] [virtual-61] c.s.erp.service.UnitImportService        : 导入第27行数据失败: 无法创建或获取单位: K011
+2025-11-01T16:54:41.129+07:00  WARN 6900 --- [erp] [virtual-63] c.s.erp.service.UnitImportService        : 导入第132行数据失败: 无法创建或获取单位: L015
+2025-11-01T16:54:41.157+07:00  WARN 6900 --- [erp] [virtual-65] org.hibernate.orm.jdbc.error             : HHH000247: ErrorCode: 0, SQLState: 25P02
+2025-11-01T16:54:41.158+07:00  WARN 6900 --- [erp] [virtual-65] org.hibernate.orm.jdbc.error             : ERROR: current transaction is aborted, commands ignored until end of transaction block
+2025-11-01T16:54:41.159+07:00  WARN 6900 --- [erp] [virtual-65] c.s.erp.service.UnitImportService        : 导入第245行数据失败: 无法创建或获取单位: Y011
+2025-11-01T16:54:41.170+07:00  WARN 6900 --- [erp] [virtual-63] org.hibernate.orm.jdbc.error             : HHH000247: ErrorCode: 0, SQLState: 25P02
+2025-11-01T16:54:41.171+07:00  WARN 6900 --- [erp] [virtual-63] org.hibernate.orm.jdbc.error             : ERROR: current transaction is aborted, commands ignored until end of transaction block
+2025-11-01T16:54:41.171+07:00  WARN 6900 --- [erp] [virtual-61] org.hibernate.orm.jdbc.error             : HHH000247: ErrorCode: 0, SQLState: 25P02
+2025-11-01T16:54:41.173+07:00  WARN 6900 --- [erp] [virtual-61] org.hibernate.orm.jdbc.error             : ERROR: current transaction is aborted, commands ignored until end of transaction block
+2025-11-01T16:54:41.173+07:00  WARN 6900 --- [erp] [virtual-63] c.s.erp.service.UnitImportService        : 导入第133行数据失败: 无法创建或获取单位: L016
+2025-11-01T16:54:41.173+07:00  WARN 6900 --- [erp] [virtual-61] c.s.erp.service.UnitImportService        : 导入第28行数据失败: 无法创建或获取单位: K012
+2025-11-01T16:54:41.229+07:00  WARN 6900 --- [erp] [virtual-63] org.hibernate.orm.jdbc.error             : HHH000247: ErrorCode: 0, SQLState: 25P02
+2025-11-01T16:54:41.230+07:00  WARN 6900 --- [erp] [virtual-63] org.hibernate.orm.jdbc.error             : ERROR: current transaction is aborted, commands ignored until end of transaction block
+2025-11-01T16:54:41.230+07:00  WARN 6900 --- [erp] [virtual-63] c.s.erp.service.UnitImportService        : 导入第134行数据失败: 无法创建或获取单位: L017
+2025-11-01T16:54:41.281+07:00  WARN 6900 --- [erp] [virtual-63] org.hibernate.orm.jdbc.error             : HHH000247: ErrorCode: 0, SQLState: 25P02
+2025-11-01T16:54:41.281+07:00  WARN 6900 --- [erp] [virtual-63] org.hibernate.orm.jdbc.error             : ERROR: current transaction is aborted, commands ignored until end of transaction block
+2025-11-01T16:54:41.283+07:00  WARN 6900 --- [erp] [virtual-63] c.s.erp.service.UnitImportService        : 导入第135行数据失败: 无法创建或获取单位: L018
+2025-11-01T16:54:41.301+07:00  WARN 6900 --- [erp] [virtual-65] org.hibernate.orm.jdbc.error             : HHH000247: ErrorCode: 0, SQLState: 25P02
+2025-11-01T16:54:41.302+07:00  WARN 6900 --- [erp] [virtual-65] org.hibernate.orm.jdbc.error             : ERROR: current transaction is aborted, commands ignored until end of transaction block
+2025-11-01T16:54:41.303+07:00  WARN 6900 --- [erp] [virtual-65] c.s.erp.service.UnitImportService        : 导入第246行数据失败: 无法创建或获取单位: Y012
+2025-11-01T16:54:41.338+07:00  WARN 6900 --- [erp] [virtual-63] org.hibernate.orm.jdbc.error             : HHH000247: ErrorCode: 0, SQLState: 25P02
+2025-11-01T16:54:41.339+07:00  WARN 6900 --- [erp] [virtual-63] org.hibernate.orm.jdbc.error             : ERROR: current transaction is aborted, commands ignored until end of transaction block
+2025-11-01T16:54:41.340+07:00  WARN 6900 --- [erp] [virtual-63] c.s.erp.service.UnitImportService        : 导入第136行数据失败: 无法创建或获取单位: L020
+2025-11-01T16:54:41.394+07:00  WARN 6900 --- [erp] [virtual-63] org.hibernate.orm.jdbc.error             : HHH000247: ErrorCode: 0, SQLState: 25P02
+2025-11-01T16:54:41.395+07:00  WARN 6900 --- [erp] [virtual-63] org.hibernate.orm.jdbc.error             : ERROR: current transaction is aborted, commands ignored until end of transaction block
+2025-11-01T16:54:41.395+07:00  WARN 6900 --- [erp] [virtual-63] c.s.erp.service.UnitImportService        : 导入第137行数据失败: 无法创建或获取单位: L021
+2025-11-01T16:54:41.446+07:00  WARN 6900 --- [erp] [virtual-65] org.hibernate.orm.jdbc.error             : HHH000247: ErrorCode: 0, SQLState: 25P02
+2025-11-01T16:54:41.447+07:00  WARN 6900 --- [erp] [virtual-63] org.hibernate.orm.jdbc.error             : HHH000247: ErrorCode: 0, SQLState: 25P02
+2025-11-01T16:54:41.447+07:00  WARN 6900 --- [erp] [virtual-65] org.hibernate.orm.jdbc.error             : ERROR: current transaction is aborted, commands ignored until end of transaction block
+2025-11-01T16:54:41.448+07:00  WARN 6900 --- [erp] [virtual-63] org.hibernate.orm.jdbc.error             : ERROR: current transaction is aborted, commands ignored until end of transaction block
+2025-11-01T16:54:41.448+07:00  WARN 6900 --- [erp] [virtual-65] c.s.erp.service.UnitImportService        : 导入第247行数据失败: 无法创建或获取单位: Y013
+2025-11-01T16:54:41.449+07:00  WARN 6900 --- [erp] [virtual-63] c.s.erp.service.UnitImportService        : 导入第138行数据失败: 无法创建或获取单位: L022
+2025-11-01T16:54:41.501+07:00  WARN 6900 --- [erp] [virtual-63] org.hibernate.orm.jdbc.error             : HHH000247: ErrorCode: 0, SQLState: 25P02
+2025-11-01T16:54:41.503+07:00  WARN 6900 --- [erp] [virtual-63] org.hibernate.orm.jdbc.error             : ERROR: current transaction is aborted, commands ignored until end of transaction block
+2025-11-01T16:54:41.505+07:00  WARN 6900 --- [erp] [virtual-63] c.s.erp.service.UnitImportService        : 导入第139行数据失败: 无法创建或获取单位: L038
+2025-11-01T16:54:41.560+07:00  WARN 6900 --- [erp] [virtual-63] org.hibernate.orm.jdbc.error             : HHH000247: ErrorCode: 0, SQLState: 25P02
+2025-11-01T16:54:41.561+07:00  WARN 6900 --- [erp] [virtual-63] org.hibernate.orm.jdbc.error             : ERROR: current transaction is aborted, commands ignored until end of transaction block
+2025-11-01T16:54:41.562+07:00  WARN 6900 --- [erp] [virtual-63] c.s.erp.service.UnitImportService        : 导入第140行数据失败: 无法创建或获取单位: L200
+2025-11-01T16:54:41.592+07:00  WARN 6900 --- [erp] [virtual-65] org.hibernate.orm.jdbc.error             : HHH000247: ErrorCode: 0, SQLState: 25P02
+2025-11-01T16:54:41.593+07:00  WARN 6900 --- [erp] [virtual-65] org.hibernate.orm.jdbc.error             : ERROR: current transaction is aborted, commands ignored until end of transaction block
+2025-11-01T16:54:41.594+07:00  WARN 6900 --- [erp] [virtual-65] c.s.erp.service.UnitImportService        : 导入第248行数据失败: 无法创建或获取单位: Y014
+2025-11-01T16:54:41.601+07:00  WARN 6900 --- [erp] [virtual-61] org.hibernate.orm.jdbc.error             : HHH000247: ErrorCode: 0, SQLState: 25P02
+2025-11-01T16:54:41.602+07:00  WARN 6900 --- [erp] [virtual-61] org.hibernate.orm.jdbc.error             : ERROR: current transaction is aborted, commands ignored until end of transaction block
+2025-11-01T16:54:41.603+07:00  WARN 6900 --- [erp] [virtual-61] c.s.erp.service.UnitImportService        : 导入第29行数据失败: 无法创建或获取单位: K013
+2025-11-01T16:54:41.658+07:00  WARN 6900 --- [erp] [virtual-61] org.hibernate.orm.jdbc.error             : HHH000247: ErrorCode: 0, SQLState: 25P02
+2025-11-01T16:54:41.659+07:00  WARN 6900 --- [erp] [virtual-61] org.hibernate.orm.jdbc.error             : ERROR: current transaction is aborted, commands ignored until end of transaction block
+2025-11-01T16:54:41.660+07:00  WARN 6900 --- [erp] [virtual-61] c.s.erp.service.UnitImportService        : 导入第30行数据失败: 无法创建或获取单位: K014
+2025-11-01T16:54:41.714+07:00  WARN 6900 --- [erp] [virtual-61] org.hibernate.orm.jdbc.error             : HHH000247: ErrorCode: 0, SQLState: 25P02
+2025-11-01T16:54:41.714+07:00  WARN 6900 --- [erp] [virtual-61] org.hibernate.orm.jdbc.error             : ERROR: current transaction is aborted, commands ignored until end of transaction block
+2025-11-01T16:54:41.716+07:00  WARN 6900 --- [erp] [virtual-61] c.s.erp.service.UnitImportService        : 导入第31行数据失败: 无法创建或获取单位: K015
+2025-11-01T16:54:41.773+07:00  WARN 6900 --- [erp] [virtual-61] org.hibernate.orm.jdbc.error             : HHH000247: ErrorCode: 0, SQLState: 25P02
+2025-11-01T16:54:41.773+07:00  WARN 6900 --- [erp] [virtual-61] org.hibernate.orm.jdbc.error             : ERROR: current transaction is aborted, commands ignored until end of transaction block
+2025-11-01T16:54:41.774+07:00  WARN 6900 --- [erp] [virtual-61] c.s.erp.service.UnitImportService        : 导入第32行数据失败: 无法创建或获取单位: K016
+2025-11-01T16:54:41.830+07:00  WARN 6900 --- [erp] [virtual-61] org.hibernate.orm.jdbc.error             : HHH000247: ErrorCode: 0, SQLState: 25P02
+2025-11-01T16:54:41.830+07:00  WARN 6900 --- [erp] [virtual-61] org.hibernate.orm.jdbc.error             : ERROR: current transaction is aborted, commands ignored until end of transaction block
+2025-11-01T16:54:41.832+07:00  WARN 6900 --- [erp] [virtual-61] c.s.erp.service.UnitImportService        : 导入第33行数据失败: 无法创建或获取单位: K017
+2025-11-01T16:54:41.887+07:00  WARN 6900 --- [erp] [virtual-61] org.hibernate.orm.jdbc.error             : HHH000247: ErrorCode: 0, SQLState: 25P02
+2025-11-01T16:54:41.888+07:00  WARN 6900 --- [erp] [virtual-61] org.hibernate.orm.jdbc.error             : ERROR: current transaction is aborted, commands ignored until end of transaction block
+2025-11-01T16:54:41.889+07:00  WARN 6900 --- [erp] [virtual-61] c.s.erp.service.UnitImportService        : 导入第34行数据失败: 无法创建或获取单位: K018
+2025-11-01T16:54:41.944+07:00  WARN 6900 --- [erp] [virtual-61] org.hibernate.orm.jdbc.error             : HHH000247: ErrorCode: 0, SQLState: 25P02
+2025-11-01T16:54:41.944+07:00  WARN 6900 --- [erp] [virtual-61] org.hibernate.orm.jdbc.error             : ERROR: current transaction is aborted, commands ignored until end of transaction block
+2025-11-01T16:54:41.945+07:00  WARN 6900 --- [erp] [virtual-61] c.s.erp.service.UnitImportService        : 导入第35行数据失败: 无法创建或获取单位: K020
+2025-11-01T16:54:41.964+07:00  WARN 6900 --- [erp] [virtual-63] org.hibernate.orm.jdbc.error             : HHH000247: ErrorCode: 0, SQLState: 25P02
+2025-11-01T16:54:41.965+07:00  WARN 6900 --- [erp] [virtual-63] org.hibernate.orm.jdbc.error             : ERROR: current transaction is aborted, commands ignored until end of transaction block
+2025-11-01T16:54:41.966+07:00  WARN 6900 --- [erp] [virtual-63] c.s.erp.service.UnitImportService        : 导入第141行数据失败: 无法创建或获取单位: L208
+2025-11-01T16:54:41.999+07:00  WARN 6900 --- [erp] [virtual-61] org.hibernate.orm.jdbc.error             : HHH000247: ErrorCode: 0, SQLState: 25P02
+2025-11-01T16:54:42.000+07:00  WARN 6900 --- [erp] [virtual-61] org.hibernate.orm.jdbc.error             : ERROR: current transaction is aborted, commands ignored until end of transaction block
+2025-11-01T16:54:42.001+07:00  WARN 6900 --- [erp] [virtual-61] c.s.erp.service.UnitImportService        : 导入第36行数据失败: 无法创建或获取单位: K021
+2025-11-01T16:54:42.057+07:00  WARN 6900 --- [erp] [virtual-61] org.hibernate.orm.jdbc.error             : HHH000247: ErrorCode: 0, SQLState: 25P02
+2025-11-01T16:54:42.058+07:00  WARN 6900 --- [erp] [virtual-61] org.hibernate.orm.jdbc.error             : ERROR: current transaction is aborted, commands ignored until end of transaction block
+2025-11-01T16:54:42.058+07:00  WARN 6900 --- [erp] [virtual-61] c.s.erp.service.UnitImportService        : 导入第37行数据失败: 无法创建或获取单位: K025
+2025-11-01T16:54:42.119+07:00  WARN 6900 --- [erp] [virtual-61] org.hibernate.orm.jdbc.error             : HHH000247: ErrorCode: 0, SQLState: 25P02
+2025-11-01T16:54:42.119+07:00  WARN 6900 --- [erp] [virtual-61] org.hibernate.orm.jdbc.error             : ERROR: current transaction is aborted, commands ignored until end of transaction block
+2025-11-01T16:54:42.121+07:00  WARN 6900 --- [erp] [virtual-61] c.s.erp.service.UnitImportService        : 导入第38行数据失败: 无法创建或获取单位: K026
+2025-11-01T16:54:42.174+07:00  WARN 6900 --- [erp] [virtual-63] org.hibernate.orm.jdbc.error             : HHH000247: ErrorCode: 0, SQLState: 25P02
+2025-11-01T16:54:42.175+07:00  WARN 6900 --- [erp] [virtual-63] org.hibernate.orm.jdbc.error             : ERROR: current transaction is aborted, commands ignored until end of transaction block
+2025-11-01T16:54:42.176+07:00  WARN 6900 --- [erp] [virtual-61] org.hibernate.orm.jdbc.error             : HHH000247: ErrorCode: 0, SQLState: 25P02
+2025-11-01T16:54:42.176+07:00  WARN 6900 --- [erp] [virtual-63] c.s.erp.service.UnitImportService        : 导入第142行数据失败: 无法创建或获取单位: liang
+2025-11-01T16:54:42.176+07:00  WARN 6900 --- [erp] [virtual-61] org.hibernate.orm.jdbc.error             : ERROR: current transaction is aborted, commands ignored until end of transaction block
+2025-11-01T16:54:42.177+07:00  WARN 6900 --- [erp] [virtual-61] c.s.erp.service.UnitImportService        : 导入第39行数据失败: 无法创建或获取单位: K027
+2025-11-01T16:54:42.231+07:00  WARN 6900 --- [erp] [virtual-63] org.hibernate.orm.jdbc.error             : HHH000247: ErrorCode: 0, SQLState: 25P02
+2025-11-01T16:54:42.231+07:00  WARN 6900 --- [erp] [virtual-63] org.hibernate.orm.jdbc.error             : ERROR: current transaction is aborted, commands ignored until end of transaction block
+2025-11-01T16:54:42.232+07:00  WARN 6900 --- [erp] [virtual-61] org.hibernate.orm.jdbc.error             : HHH000247: ErrorCode: 0, SQLState: 25P02
+2025-11-01T16:54:42.232+07:00  WARN 6900 --- [erp] [virtual-61] org.hibernate.orm.jdbc.error             : ERROR: current transaction is aborted, commands ignored until end of transaction block
+2025-11-01T16:54:42.232+07:00  WARN 6900 --- [erp] [virtual-63] c.s.erp.service.UnitImportService        : 导入第143行数据失败: 无法创建或获取单位: lump
+2025-11-01T16:54:42.233+07:00  WARN 6900 --- [erp] [virtual-61] c.s.erp.service.UnitImportService        : 导入第40行数据失败: 无法创建或获取单位: K029
+2025-11-01T16:54:42.288+07:00  WARN 6900 --- [erp] [virtual-63] org.hibernate.orm.jdbc.error             : HHH000247: ErrorCode: 0, SQLState: 25P02
+2025-11-01T16:54:42.288+07:00  WARN 6900 --- [erp] [virtual-63] org.hibernate.orm.jdbc.error             : ERROR: current transaction is aborted, commands ignored until end of transaction block
+2025-11-01T16:54:42.288+07:00  WARN 6900 --- [erp] [virtual-61] org.hibernate.orm.jdbc.error             : HHH000247: ErrorCode: 0, SQLState: 25P02
+2025-11-01T16:54:42.288+07:00  WARN 6900 --- [erp] [virtual-61] org.hibernate.orm.jdbc.error             : ERROR: current transaction is aborted, commands ignored until end of transaction block
+2025-11-01T16:54:42.289+07:00  WARN 6900 --- [erp] [virtual-63] c.s.erp.service.UnitImportService        : 导入第144行数据失败: 无法创建或获取单位: m
+2025-11-01T16:54:42.289+07:00  WARN 6900 --- [erp] [virtual-61] c.s.erp.service.UnitImportService        : 导入第41行数据失败: 无法创建或获取单位: K030
+2025-11-01T16:54:42.345+07:00  WARN 6900 --- [erp] [virtual-63] org.hibernate.orm.jdbc.error             : HHH000247: ErrorCode: 0, SQLState: 25P02
+2025-11-01T16:54:42.345+07:00  WARN 6900 --- [erp] [virtual-61] org.hibernate.orm.jdbc.error             : HHH000247: ErrorCode: 0, SQLState: 25P02
+2025-11-01T16:54:42.346+07:00  WARN 6900 --- [erp] [virtual-63] org.hibernate.orm.jdbc.error             : ERROR: current transaction is aborted, commands ignored until end of transaction block
+2025-11-01T16:54:42.346+07:00  WARN 6900 --- [erp] [virtual-61] org.hibernate.orm.jdbc.error             : ERROR: current transaction is aborted, commands ignored until end of transaction block
+2025-11-01T16:54:42.347+07:00  WARN 6900 --- [erp] [virtual-63] c.s.erp.service.UnitImportService        : 导入第145行数据失败: 无法创建或获取单位: M001
+2025-11-01T16:54:42.347+07:00  WARN 6900 --- [erp] [virtual-61] c.s.erp.service.UnitImportService        : 导入第42行数据失败: 无法创建或获取单位: K032
+2025-11-01T16:54:42.400+07:00  WARN 6900 --- [erp] [virtual-63] org.hibernate.orm.jdbc.error             : HHH000247: ErrorCode: 0, SQLState: 25P02
+2025-11-01T16:54:42.401+07:00  WARN 6900 --- [erp] [virtual-63] org.hibernate.orm.jdbc.error             : ERROR: current transaction is aborted, commands ignored until end of transaction block
+2025-11-01T16:54:42.402+07:00  WARN 6900 --- [erp] [virtual-63] c.s.erp.service.UnitImportService        : 导入第146行数据失败: 无法创建或获取单位: M002
+2025-11-01T16:54:42.403+07:00  WARN 6900 --- [erp] [virtual-61] org.hibernate.orm.jdbc.error             : HHH000247: ErrorCode: 0, SQLState: 25P02
+2025-11-01T16:54:42.403+07:00  WARN 6900 --- [erp] [virtual-61] org.hibernate.orm.jdbc.error             : ERROR: current transaction is aborted, commands ignored until end of transaction block
+2025-11-01T16:54:42.404+07:00  WARN 6900 --- [erp] [virtual-61] c.s.erp.service.UnitImportService        : 导入第43行数据失败: 无法创建或获取单位: K033
+2025-11-01T16:54:42.457+07:00  WARN 6900 --- [erp] [virtual-63] org.hibernate.orm.jdbc.error             : HHH000247: ErrorCode: 0, SQLState: 25P02
+2025-11-01T16:54:42.457+07:00  WARN 6900 --- [erp] [virtual-63] org.hibernate.orm.jdbc.error             : ERROR: current transaction is aborted, commands ignored until end of transaction block
+2025-11-01T16:54:42.458+07:00  WARN 6900 --- [erp] [virtual-63] c.s.erp.service.UnitImportService        : 导入第147行数据失败: 无法创建或获取单位: M003
+2025-11-01T16:54:42.499+07:00  WARN 6900 --- [erp] [virtual-63] org.hibernate.orm.jdbc.error             : HHH000247: ErrorCode: 0, SQLState: 25P02
+2025-11-01T16:54:42.500+07:00  WARN 6900 --- [erp] [virtual-63] org.hibernate.orm.jdbc.error             : ERROR: current transaction is aborted, commands ignored until end of transaction block
+2025-11-01T16:54:42.501+07:00  WARN 6900 --- [erp] [virtual-63] c.s.erp.service.UnitImportService        : 导入第148行数据失败: 无法创建或获取单位: M004
+2025-11-01T16:54:42.539+07:00  WARN 6900 --- [erp] [virtual-63] org.hibernate.orm.jdbc.error             : HHH000247: ErrorCode: 0, SQLState: 25P02
+2025-11-01T16:54:42.539+07:00  WARN 6900 --- [erp] [virtual-63] org.hibernate.orm.jdbc.error             : ERROR: current transaction is aborted, commands ignored until end of transaction block
+2025-11-01T16:54:42.540+07:00  WARN 6900 --- [erp] [virtual-63] c.s.erp.service.UnitImportService        : 导入第149行数据失败: 无法创建或获取单位: M007
+2025-11-01T16:54:42.578+07:00  WARN 6900 --- [erp] [virtual-63] org.hibernate.orm.jdbc.error             : HHH000247: ErrorCode: 0, SQLState: 25P02
+2025-11-01T16:54:42.578+07:00  WARN 6900 --- [erp] [virtual-63] org.hibernate.orm.jdbc.error             : ERROR: current transaction is aborted, commands ignored until end of transaction block
+2025-11-01T16:54:42.579+07:00  WARN 6900 --- [erp] [virtual-63] c.s.erp.service.UnitImportService        : 导入第150行数据失败: 无法创建或获取单位: M008
+2025-11-01T16:54:42.584+07:00  WARN 6900 --- [erp] [virtual-61] org.hibernate.orm.jdbc.error             : HHH000247: ErrorCode: 0, SQLState: 25P02
+2025-11-01T16:54:42.585+07:00  WARN 6900 --- [erp] [virtual-61] org.hibernate.orm.jdbc.error             : ERROR: current transaction is aborted, commands ignored until end of transaction block
+2025-11-01T16:54:42.585+07:00  WARN 6900 --- [erp] [virtual-61] c.s.erp.service.UnitImportService        : 导入第44行数据失败: 无法创建或获取单位: K035
+2025-11-01T16:54:42.616+07:00  WARN 6900 --- [erp] [virtual-63] org.hibernate.orm.jdbc.error             : HHH000247: ErrorCode: 0, SQLState: 25P02
+2025-11-01T16:54:42.617+07:00  WARN 6900 --- [erp] [virtual-63] org.hibernate.orm.jdbc.error             : ERROR: current transaction is aborted, commands ignored until end of transaction block
+2025-11-01T16:54:42.618+07:00  WARN 6900 --- [erp] [virtual-63] c.s.erp.service.UnitImportService        : 导入第151行数据失败: 无法创建或获取单位: M009
+2025-11-01T16:54:42.624+07:00  WARN 6900 --- [erp] [virtual-61] org.hibernate.orm.jdbc.error             : HHH000247: ErrorCode: 0, SQLState: 25P02
+2025-11-01T16:54:42.626+07:00  WARN 6900 --- [erp] [virtual-61] org.hibernate.orm.jdbc.error             : ERROR: current transaction is aborted, commands ignored until end of transaction block
+2025-11-01T16:54:42.626+07:00  WARN 6900 --- [erp] [virtual-61] c.s.erp.service.UnitImportService        : 导入第45行数据失败: 无法创建或获取单位: K036
+2025-11-01T16:54:42.656+07:00  WARN 6900 --- [erp] [virtual-63] org.hibernate.orm.jdbc.error             : HHH000247: ErrorCode: 0, SQLState: 25P02
+2025-11-01T16:54:42.657+07:00  WARN 6900 --- [erp] [virtual-63] org.hibernate.orm.jdbc.error             : ERROR: current transaction is aborted, commands ignored until end of transaction block
+2025-11-01T16:54:42.658+07:00  WARN 6900 --- [erp] [virtual-63] c.s.erp.service.UnitImportService        : 导入第152行数据失败: 无法创建或获取单位: M010
+2025-11-01T16:54:42.664+07:00  WARN 6900 --- [erp] [virtual-61] org.hibernate.orm.jdbc.error             : HHH000247: ErrorCode: 0, SQLState: 25P02
+2025-11-01T16:54:42.665+07:00  WARN 6900 --- [erp] [virtual-61] org.hibernate.orm.jdbc.error             : ERROR: current transaction is aborted, commands ignored until end of transaction block
+2025-11-01T16:54:42.666+07:00  WARN 6900 --- [erp] [virtual-61] c.s.erp.service.UnitImportService        : 导入第46行数据失败: 无法创建或获取单位: K037
+2025-11-01T16:54:42.694+07:00  WARN 6900 --- [erp] [virtual-63] org.hibernate.orm.jdbc.error             : HHH000247: ErrorCode: 0, SQLState: 25P02
+2025-11-01T16:54:42.695+07:00  WARN 6900 --- [erp] [virtual-63] org.hibernate.orm.jdbc.error             : ERROR: current transaction is aborted, commands ignored until end of transaction block
+2025-11-01T16:54:42.696+07:00  WARN 6900 --- [erp] [virtual-63] c.s.erp.service.UnitImportService        : 导入第153行数据失败: 无法创建或获取单位: M011
+2025-11-01T16:54:42.704+07:00  WARN 6900 --- [erp] [virtual-61] org.hibernate.orm.jdbc.error             : HHH000247: ErrorCode: 0, SQLState: 25P02
+2025-11-01T16:54:42.705+07:00  WARN 6900 --- [erp] [virtual-61] org.hibernate.orm.jdbc.error             : ERROR: current transaction is aborted, commands ignored until end of transaction block
+2025-11-01T16:54:42.706+07:00  WARN 6900 --- [erp] [virtual-61] c.s.erp.service.UnitImportService        : 导入第47行数据失败: 无法创建或获取单位: K038
+2025-11-01T16:54:42.733+07:00  WARN 6900 --- [erp] [virtual-63] org.hibernate.orm.jdbc.error             : HHH000247: ErrorCode: 0, SQLState: 25P02
+2025-11-01T16:54:42.734+07:00  WARN 6900 --- [erp] [virtual-63] org.hibernate.orm.jdbc.error             : ERROR: current transaction is aborted, commands ignored until end of transaction block
+2025-11-01T16:54:42.735+07:00  WARN 6900 --- [erp] [virtual-63] c.s.erp.service.UnitImportService        : 导入第154行数据失败: 无法创建或获取单位: M012
+2025-11-01T16:54:42.745+07:00  WARN 6900 --- [erp] [virtual-61] org.hibernate.orm.jdbc.error             : HHH000247: ErrorCode: 0, SQLState: 25P02
+2025-11-01T16:54:42.745+07:00  WARN 6900 --- [erp] [virtual-61] org.hibernate.orm.jdbc.error             : ERROR: current transaction is aborted, commands ignored until end of transaction block
+2025-11-01T16:54:42.746+07:00  WARN 6900 --- [erp] [virtual-61] c.s.erp.service.UnitImportService        : 导入第48行数据失败: 无法创建或获取单位: K040
+2025-11-01T16:54:42.772+07:00  WARN 6900 --- [erp] [virtual-63] org.hibernate.orm.jdbc.error             : HHH000247: ErrorCode: 0, SQLState: 25P02
+2025-11-01T16:54:42.773+07:00  WARN 6900 --- [erp] [virtual-63] org.hibernate.orm.jdbc.error             : ERROR: current transaction is aborted, commands ignored until end of transaction block
+2025-11-01T16:54:42.774+07:00  WARN 6900 --- [erp] [virtual-63] c.s.erp.service.UnitImportService        : 导入第155行数据失败: 无法创建或获取单位: M013
+2025-11-01T16:54:42.783+07:00  WARN 6900 --- [erp] [virtual-61] org.hibernate.orm.jdbc.error             : HHH000247: ErrorCode: 0, SQLState: 25P02
+2025-11-01T16:54:42.784+07:00  WARN 6900 --- [erp] [virtual-61] org.hibernate.orm.jdbc.error             : ERROR: current transaction is aborted, commands ignored until end of transaction block
+2025-11-01T16:54:42.785+07:00  WARN 6900 --- [erp] [virtual-61] c.s.erp.service.UnitImportService        : 导入第49行数据失败: 无法创建或获取单位: K041
+2025-11-01T16:54:42.812+07:00  WARN 6900 --- [erp] [virtual-63] org.hibernate.orm.jdbc.error             : HHH000247: ErrorCode: 0, SQLState: 25P02
+2025-11-01T16:54:42.813+07:00  WARN 6900 --- [erp] [virtual-63] org.hibernate.orm.jdbc.error             : ERROR: current transaction is aborted, commands ignored until end of transaction block
+2025-11-01T16:54:42.814+07:00  WARN 6900 --- [erp] [virtual-63] c.s.erp.service.UnitImportService        : 导入第156行数据失败: 无法创建或获取单位: M014
+2025-11-01T16:54:42.824+07:00  WARN 6900 --- [erp] [virtual-61] org.hibernate.orm.jdbc.error             : HHH000247: ErrorCode: 0, SQLState: 25P02
+2025-11-01T16:54:42.825+07:00  WARN 6900 --- [erp] [virtual-61] org.hibernate.orm.jdbc.error             : ERROR: current transaction is aborted, commands ignored until end of transaction block
+2025-11-01T16:54:42.826+07:00  WARN 6900 --- [erp] [virtual-61] c.s.erp.service.UnitImportService        : 导入第50行数据失败: 无法创建或获取单位: K042
+2025-11-01T16:54:42.852+07:00  WARN 6900 --- [erp] [virtual-63] org.hibernate.orm.jdbc.error             : HHH000247: ErrorCode: 0, SQLState: 25P02
+2025-11-01T16:54:42.852+07:00  WARN 6900 --- [erp] [virtual-63] org.hibernate.orm.jdbc.error             : ERROR: current transaction is aborted, commands ignored until end of transaction block
+2025-11-01T16:54:42.853+07:00  WARN 6900 --- [erp] [virtual-63] c.s.erp.service.UnitImportService        : 导入第157行数据失败: 无法创建或获取单位: M015
+2025-11-01T16:54:42.864+07:00  WARN 6900 --- [erp] [virtual-61] org.hibernate.orm.jdbc.error             : HHH000247: ErrorCode: 0, SQLState: 25P02
+2025-11-01T16:54:42.865+07:00  WARN 6900 --- [erp] [virtual-61] org.hibernate.orm.jdbc.error             : ERROR: current transaction is aborted, commands ignored until end of transaction block
+2025-11-01T16:54:42.866+07:00  WARN 6900 --- [erp] [virtual-61] c.s.erp.service.UnitImportService        : 导入第51行数据失败: 无法创建或获取单位: K045
+2025-11-01T16:54:42.891+07:00  WARN 6900 --- [erp] [virtual-63] org.hibernate.orm.jdbc.error             : HHH000247: ErrorCode: 0, SQLState: 25P02
+2025-11-01T16:54:42.891+07:00  WARN 6900 --- [erp] [virtual-63] org.hibernate.orm.jdbc.error             : ERROR: current transaction is aborted, commands ignored until end of transaction block
+2025-11-01T16:54:42.891+07:00  WARN 6900 --- [erp] [virtual-63] c.s.erp.service.UnitImportService        : 导入第158行数据失败: 无法创建或获取单位: M016
+2025-11-01T16:54:42.904+07:00  WARN 6900 --- [erp] [virtual-61] org.hibernate.orm.jdbc.error             : HHH000247: ErrorCode: 0, SQLState: 25P02
+2025-11-01T16:54:42.905+07:00  WARN 6900 --- [erp] [virtual-61] org.hibernate.orm.jdbc.error             : ERROR: current transaction is aborted, commands ignored until end of transaction block
+2025-11-01T16:54:42.906+07:00  WARN 6900 --- [erp] [virtual-61] c.s.erp.service.UnitImportService        : 导入第52行数据失败: 无法创建或获取单位: K050
+2025-11-01T16:54:42.929+07:00  WARN 6900 --- [erp] [virtual-63] org.hibernate.orm.jdbc.error             : HHH000247: ErrorCode: 0, SQLState: 25P02
+2025-11-01T16:54:42.929+07:00  WARN 6900 --- [erp] [virtual-63] org.hibernate.orm.jdbc.error             : ERROR: current transaction is aborted, commands ignored until end of transaction block
+2025-11-01T16:54:42.930+07:00  WARN 6900 --- [erp] [virtual-63] c.s.erp.service.UnitImportService        : 导入第159行数据失败: 无法创建或获取单位: M017
+2025-11-01T16:54:42.944+07:00  WARN 6900 --- [erp] [virtual-61] org.hibernate.orm.jdbc.error             : HHH000247: ErrorCode: 0, SQLState: 25P02
+2025-11-01T16:54:42.945+07:00  WARN 6900 --- [erp] [virtual-61] org.hibernate.orm.jdbc.error             : ERROR: current transaction is aborted, commands ignored until end of transaction block
+2025-11-01T16:54:42.946+07:00  WARN 6900 --- [erp] [virtual-61] c.s.erp.service.UnitImportService        : 导入第53行数据失败: 无法创建或获取单位: K055
+2025-11-01T16:54:42.969+07:00  WARN 6900 --- [erp] [virtual-63] org.hibernate.orm.jdbc.error             : HHH000247: ErrorCode: 0, SQLState: 25P02
+2025-11-01T16:54:42.969+07:00  WARN 6900 --- [erp] [virtual-63] org.hibernate.orm.jdbc.error             : ERROR: current transaction is aborted, commands ignored until end of transaction block
+2025-11-01T16:54:42.971+07:00  WARN 6900 --- [erp] [virtual-63] c.s.erp.service.UnitImportService        : 导入第160行数据失败: 无法创建或获取单位: M018
+2025-11-01T16:54:42.985+07:00  WARN 6900 --- [erp] [virtual-61] org.hibernate.orm.jdbc.error             : HHH000247: ErrorCode: 0, SQLState: 25P02
+2025-11-01T16:54:42.986+07:00  WARN 6900 --- [erp] [virtual-61] org.hibernate.orm.jdbc.error             : ERROR: current transaction is aborted, commands ignored until end of transaction block
+2025-11-01T16:54:42.986+07:00  WARN 6900 --- [erp] [virtual-61] c.s.erp.service.UnitImportService        : 导入第54行数据失败: 无法创建或获取单位: K060
+2025-11-01T16:54:43.010+07:00  WARN 6900 --- [erp] [virtual-63] org.hibernate.orm.jdbc.error             : HHH000247: ErrorCode: 0, SQLState: 25P02
+2025-11-01T16:54:43.011+07:00  WARN 6900 --- [erp] [virtual-63] org.hibernate.orm.jdbc.error             : ERROR: current transaction is aborted, commands ignored until end of transaction block
+2025-11-01T16:54:43.011+07:00  WARN 6900 --- [erp] [virtual-63] c.s.erp.service.UnitImportService        : 导入第161行数据失败: 无法创建或获取单位: M019
+2025-11-01T16:54:43.025+07:00  WARN 6900 --- [erp] [virtual-61] org.hibernate.orm.jdbc.error             : HHH000247: ErrorCode: 0, SQLState: 25P02
+2025-11-01T16:54:43.026+07:00  WARN 6900 --- [erp] [virtual-61] org.hibernate.orm.jdbc.error             : ERROR: current transaction is aborted, commands ignored until end of transaction block
+2025-11-01T16:54:43.028+07:00  WARN 6900 --- [erp] [virtual-61] c.s.erp.service.UnitImportService        : 导入第55行数据失败: 无法创建或获取单位: K065
+2025-11-01T16:54:43.048+07:00  WARN 6900 --- [erp] [virtual-63] org.hibernate.orm.jdbc.error             : HHH000247: ErrorCode: 0, SQLState: 25P02
+2025-11-01T16:54:43.049+07:00  WARN 6900 --- [erp] [virtual-63] org.hibernate.orm.jdbc.error             : ERROR: current transaction is aborted, commands ignored until end of transaction block
+2025-11-01T16:54:43.050+07:00  WARN 6900 --- [erp] [virtual-63] c.s.erp.service.UnitImportService        : 导入第162行数据失败: 无法创建或获取单位: M020
+2025-11-01T16:54:43.065+07:00  WARN 6900 --- [erp] [virtual-61] org.hibernate.orm.jdbc.error             : HHH000247: ErrorCode: 0, SQLState: 25P02
+2025-11-01T16:54:43.066+07:00  WARN 6900 --- [erp] [virtual-61] org.hibernate.orm.jdbc.error             : ERROR: current transaction is aborted, commands ignored until end of transaction block
+2025-11-01T16:54:43.067+07:00  WARN 6900 --- [erp] [virtual-61] c.s.erp.service.UnitImportService        : 导入第56行数据失败: 无法创建或获取单位: K066
+2025-11-01T16:54:43.088+07:00  WARN 6900 --- [erp] [virtual-63] org.hibernate.orm.jdbc.error             : HHH000247: ErrorCode: 0, SQLState: 25P02
+2025-11-01T16:54:43.089+07:00  WARN 6900 --- [erp] [virtual-63] org.hibernate.orm.jdbc.error             : ERROR: current transaction is aborted, commands ignored until end of transaction block
+2025-11-01T16:54:43.090+07:00  WARN 6900 --- [erp] [virtual-63] c.s.erp.service.UnitImportService        : 导入第163行数据失败: 无法创建或获取单位: M021
+2025-11-01T16:54:43.106+07:00  WARN 6900 --- [erp] [virtual-61] org.hibernate.orm.jdbc.error             : HHH000247: ErrorCode: 0, SQLState: 25P02
+2025-11-01T16:54:43.107+07:00  WARN 6900 --- [erp] [virtual-61] org.hibernate.orm.jdbc.error             : ERROR: current transaction is aborted, commands ignored until end of transaction block
+2025-11-01T16:54:43.108+07:00  WARN 6900 --- [erp] [virtual-61] c.s.erp.service.UnitImportService        : 导入第57行数据失败: 无法创建或获取单位: K070
+2025-11-01T16:54:43.127+07:00  WARN 6900 --- [erp] [virtual-63] org.hibernate.orm.jdbc.error             : HHH000247: ErrorCode: 0, SQLState: 25P02
+2025-11-01T16:54:43.127+07:00  WARN 6900 --- [erp] [virtual-63] org.hibernate.orm.jdbc.error             : ERROR: current transaction is aborted, commands ignored until end of transaction block
+2025-11-01T16:54:43.128+07:00  WARN 6900 --- [erp] [virtual-63] c.s.erp.service.UnitImportService        : 导入第164行数据失败: 无法创建或获取单位: M022
+2025-11-01T16:54:43.146+07:00  WARN 6900 --- [erp] [virtual-61] org.hibernate.orm.jdbc.error             : HHH000247: ErrorCode: 0, SQLState: 25P02
+2025-11-01T16:54:43.147+07:00  WARN 6900 --- [erp] [virtual-61] org.hibernate.orm.jdbc.error             : ERROR: current transaction is aborted, commands ignored until end of transaction block
+2025-11-01T16:54:43.148+07:00  WARN 6900 --- [erp] [virtual-61] c.s.erp.service.UnitImportService        : 导入第58行数据失败: 无法创建或获取单位: K075
+2025-11-01T16:54:43.166+07:00  WARN 6900 --- [erp] [virtual-63] org.hibernate.orm.jdbc.error             : HHH000247: ErrorCode: 0, SQLState: 25P02
+2025-11-01T16:54:43.167+07:00  WARN 6900 --- [erp] [virtual-63] org.hibernate.orm.jdbc.error             : ERROR: current transaction is aborted, commands ignored until end of transaction block
+2025-11-01T16:54:43.168+07:00  WARN 6900 --- [erp] [virtual-63] c.s.erp.service.UnitImportService        : 导入第165行数据失败: 无法创建或获取单位: M023
+2025-11-01T16:54:43.187+07:00  WARN 6900 --- [erp] [virtual-61] org.hibernate.orm.jdbc.error             : HHH000247: ErrorCode: 0, SQLState: 25P02
+2025-11-01T16:54:43.188+07:00  WARN 6900 --- [erp] [virtual-61] org.hibernate.orm.jdbc.error             : ERROR: current transaction is aborted, commands ignored until end of transaction block
+2025-11-01T16:54:43.189+07:00  WARN 6900 --- [erp] [virtual-61] c.s.erp.service.UnitImportService        : 导入第59行数据失败: 无法创建或获取单位: K080
+2025-11-01T16:54:43.207+07:00  WARN 6900 --- [erp] [virtual-63] org.hibernate.orm.jdbc.error             : HHH000247: ErrorCode: 0, SQLState: 25P02
+2025-11-01T16:54:43.207+07:00  WARN 6900 --- [erp] [virtual-63] org.hibernate.orm.jdbc.error             : ERROR: current transaction is aborted, commands ignored until end of transaction block
+2025-11-01T16:54:43.208+07:00  WARN 6900 --- [erp] [virtual-63] c.s.erp.service.UnitImportService        : 导入第166行数据失败: 无法创建或获取单位: M024
+2025-11-01T16:54:43.229+07:00  WARN 6900 --- [erp] [virtual-61] org.hibernate.orm.jdbc.error             : HHH000247: ErrorCode: 0, SQLState: 25P02
+2025-11-01T16:54:43.230+07:00  WARN 6900 --- [erp] [virtual-61] org.hibernate.orm.jdbc.error             : ERROR: current transaction is aborted, commands ignored until end of transaction block
+2025-11-01T16:54:43.231+07:00  WARN 6900 --- [erp] [virtual-61] c.s.erp.service.UnitImportService        : 导入第60行数据失败: 无法创建或获取单位: K085
+2025-11-01T16:54:43.244+07:00  WARN 6900 --- [erp] [virtual-63] org.hibernate.orm.jdbc.error             : HHH000247: ErrorCode: 0, SQLState: 25P02
+2025-11-01T16:54:43.245+07:00  WARN 6900 --- [erp] [virtual-63] org.hibernate.orm.jdbc.error             : ERROR: current transaction is aborted, commands ignored until end of transaction block
+2025-11-01T16:54:43.246+07:00  WARN 6900 --- [erp] [virtual-63] c.s.erp.service.UnitImportService        : 导入第167行数据失败: 无法创建或获取单位: M025
+2025-11-01T16:54:43.270+07:00  WARN 6900 --- [erp] [virtual-61] org.hibernate.orm.jdbc.error             : HHH000247: ErrorCode: 0, SQLState: 25P02
+2025-11-01T16:54:43.271+07:00  WARN 6900 --- [erp] [virtual-61] org.hibernate.orm.jdbc.error             : ERROR: current transaction is aborted, commands ignored until end of transaction block
+2025-11-01T16:54:43.273+07:00  WARN 6900 --- [erp] [virtual-61] c.s.erp.service.UnitImportService        : 导入第61行数据失败: 无法创建或获取单位: K090
+2025-11-01T16:54:43.282+07:00  WARN 6900 --- [erp] [virtual-63] org.hibernate.orm.jdbc.error             : HHH000247: ErrorCode: 0, SQLState: 25P02
+2025-11-01T16:54:43.283+07:00  WARN 6900 --- [erp] [virtual-63] org.hibernate.orm.jdbc.error             : ERROR: current transaction is aborted, commands ignored until end of transaction block
+2025-11-01T16:54:43.283+07:00  WARN 6900 --- [erp] [virtual-63] c.s.erp.service.UnitImportService        : 导入第168行数据失败: 无法创建或获取单位: M026
+2025-11-01T16:54:43.311+07:00  WARN 6900 --- [erp] [virtual-61] org.hibernate.orm.jdbc.error             : HHH000247: ErrorCode: 0, SQLState: 25P02
+2025-11-01T16:54:43.312+07:00  WARN 6900 --- [erp] [virtual-61] org.hibernate.orm.jdbc.error             : ERROR: current transaction is aborted, commands ignored until end of transaction block
+2025-11-01T16:54:43.312+07:00  WARN 6900 --- [erp] [virtual-61] c.s.erp.service.UnitImportService        : 导入第62行数据失败: 无法创建或获取单位: K095
+2025-11-01T16:54:43.321+07:00  WARN 6900 --- [erp] [virtual-63] org.hibernate.orm.jdbc.error             : HHH000247: ErrorCode: 0, SQLState: 25P02
+2025-11-01T16:54:43.322+07:00  WARN 6900 --- [erp] [virtual-63] org.hibernate.orm.jdbc.error             : ERROR: current transaction is aborted, commands ignored until end of transaction block
+2025-11-01T16:54:43.323+07:00  WARN 6900 --- [erp] [virtual-63] c.s.erp.service.UnitImportService        : 导入第169行数据失败: 无法创建或获取单位: M027
+2025-11-01T16:54:43.350+07:00  WARN 6900 --- [erp] [virtual-61] org.hibernate.orm.jdbc.error             : HHH000247: ErrorCode: 0, SQLState: 25P02
+2025-11-01T16:54:43.351+07:00  WARN 6900 --- [erp] [virtual-61] org.hibernate.orm.jdbc.error             : ERROR: current transaction is aborted, commands ignored until end of transaction block
+2025-11-01T16:54:43.352+07:00  WARN 6900 --- [erp] [virtual-61] c.s.erp.service.UnitImportService        : 导入第63行数据失败: 无法创建或获取单位: K096
+2025-11-01T16:54:43.361+07:00  WARN 6900 --- [erp] [virtual-63] org.hibernate.orm.jdbc.error             : HHH000247: ErrorCode: 0, SQLState: 25P02
+2025-11-01T16:54:43.362+07:00  WARN 6900 --- [erp] [virtual-63] org.hibernate.orm.jdbc.error             : ERROR: current transaction is aborted, commands ignored until end of transaction block
+2025-11-01T16:54:43.363+07:00  WARN 6900 --- [erp] [virtual-63] c.s.erp.service.UnitImportService        : 导入第170行数据失败: 无法创建或获取单位: M028
+2025-11-01T16:54:43.392+07:00  WARN 6900 --- [erp] [virtual-61] org.hibernate.orm.jdbc.error             : HHH000247: ErrorCode: 0, SQLState: 25P02
+2025-11-01T16:54:43.392+07:00  WARN 6900 --- [erp] [virtual-61] org.hibernate.orm.jdbc.error             : ERROR: current transaction is aborted, commands ignored until end of transaction block
+2025-11-01T16:54:43.393+07:00  WARN 6900 --- [erp] [virtual-61] c.s.erp.service.UnitImportService        : 导入第64行数据失败: 无法创建或获取单位: K097
+2025-11-01T16:54:43.400+07:00  WARN 6900 --- [erp] [virtual-63] org.hibernate.orm.jdbc.error             : HHH000247: ErrorCode: 0, SQLState: 25P02
+2025-11-01T16:54:43.400+07:00  WARN 6900 --- [erp] [virtual-63] org.hibernate.orm.jdbc.error             : ERROR: current transaction is aborted, commands ignored until end of transaction block
+2025-11-01T16:54:43.401+07:00  WARN 6900 --- [erp] [virtual-63] c.s.erp.service.UnitImportService        : 导入第171行数据失败: 无法创建或获取单位: M029
+2025-11-01T16:54:43.432+07:00  WARN 6900 --- [erp] [virtual-61] org.hibernate.orm.jdbc.error             : HHH000247: ErrorCode: 0, SQLState: 25P02
+2025-11-01T16:54:43.432+07:00  WARN 6900 --- [erp] [virtual-61] org.hibernate.orm.jdbc.error             : ERROR: current transaction is aborted, commands ignored until end of transaction block
+2025-11-01T16:54:43.433+07:00  WARN 6900 --- [erp] [virtual-61] c.s.erp.service.UnitImportService        : 导入第65行数据失败: 无法创建或获取单位: K098
+2025-11-01T16:54:43.438+07:00  WARN 6900 --- [erp] [virtual-63] org.hibernate.orm.jdbc.error             : HHH000247: ErrorCode: 0, SQLState: 25P02
+2025-11-01T16:54:43.438+07:00  WARN 6900 --- [erp] [virtual-63] org.hibernate.orm.jdbc.error             : ERROR: current transaction is aborted, commands ignored until end of transaction block
+2025-11-01T16:54:43.439+07:00  WARN 6900 --- [erp] [virtual-63] c.s.erp.service.UnitImportService        : 导入第172行数据失败: 无法创建或获取单位: M030
+2025-11-01T16:54:43.472+07:00  WARN 6900 --- [erp] [virtual-61] org.hibernate.orm.jdbc.error             : HHH000247: ErrorCode: 0, SQLState: 25P02
+2025-11-01T16:54:43.472+07:00  WARN 6900 --- [erp] [virtual-61] org.hibernate.orm.jdbc.error             : ERROR: current transaction is aborted, commands ignored until end of transaction block
+2025-11-01T16:54:43.473+07:00  WARN 6900 --- [erp] [virtual-61] c.s.erp.service.UnitImportService        : 导入第66行数据失败: 无法创建或获取单位: K099
+2025-11-01T16:54:43.476+07:00  WARN 6900 --- [erp] [virtual-63] org.hibernate.orm.jdbc.error             : HHH000247: ErrorCode: 0, SQLState: 25P02
+2025-11-01T16:54:43.477+07:00  WARN 6900 --- [erp] [virtual-63] org.hibernate.orm.jdbc.error             : ERROR: current transaction is aborted, commands ignored until end of transaction block
+2025-11-01T16:54:43.478+07:00  WARN 6900 --- [erp] [virtual-63] c.s.erp.service.UnitImportService        : 导入第173行数据失败: 无法创建或获取单位: M031
+2025-11-01T16:54:43.518+07:00  WARN 6900 --- [erp] [virtual-61] org.hibernate.orm.jdbc.error             : HHH000247: ErrorCode: 0, SQLState: 25P02
+2025-11-01T16:54:43.519+07:00  WARN 6900 --- [erp] [virtual-61] org.hibernate.orm.jdbc.error             : ERROR: current transaction is aborted, commands ignored until end of transaction block
+2025-11-01T16:54:43.520+07:00  WARN 6900 --- [erp] [virtual-61] c.s.erp.service.UnitImportService        : 导入第67行数据失败: 无法创建或获取单位: K100
+2025-11-01T16:54:43.521+07:00  WARN 6900 --- [erp] [virtual-63] org.hibernate.orm.jdbc.error             : HHH000247: ErrorCode: 0, SQLState: 25P02
+2025-11-01T16:54:43.521+07:00  WARN 6900 --- [erp] [virtual-63] org.hibernate.orm.jdbc.error             : ERROR: current transaction is aborted, commands ignored until end of transaction block
+2025-11-01T16:54:43.523+07:00  WARN 6900 --- [erp] [virtual-63] c.s.erp.service.UnitImportService        : 导入第174行数据失败: 无法创建或获取单位: M032
+2025-11-01T16:54:43.559+07:00  WARN 6900 --- [erp] [virtual-61] org.hibernate.orm.jdbc.error             : HHH000247: ErrorCode: 0, SQLState: 25P02
+2025-11-01T16:54:43.560+07:00  WARN 6900 --- [erp] [virtual-61] org.hibernate.orm.jdbc.error             : ERROR: current transaction is aborted, commands ignored until end of transaction block
+2025-11-01T16:54:43.560+07:00  WARN 6900 --- [erp] [virtual-63] org.hibernate.orm.jdbc.error             : HHH000247: ErrorCode: 0, SQLState: 25P02
+2025-11-01T16:54:43.560+07:00  WARN 6900 --- [erp] [virtual-63] org.hibernate.orm.jdbc.error             : ERROR: current transaction is aborted, commands ignored until end of transaction block
+2025-11-01T16:54:43.561+07:00  WARN 6900 --- [erp] [virtual-61] c.s.erp.service.UnitImportService        : 导入第68行数据失败: 无法创建或获取单位: K1000
+2025-11-01T16:54:43.561+07:00  WARN 6900 --- [erp] [virtual-63] c.s.erp.service.UnitImportService        : 导入第175行数据失败: 无法创建或获取单位: M033
+2025-11-01T16:54:43.600+07:00  WARN 6900 --- [erp] [virtual-63] org.hibernate.orm.jdbc.error             : HHH000247: ErrorCode: 0, SQLState: 25P02
+2025-11-01T16:54:43.601+07:00  WARN 6900 --- [erp] [virtual-63] org.hibernate.orm.jdbc.error             : ERROR: current transaction is aborted, commands ignored until end of transaction block
+2025-11-01T16:54:43.601+07:00  WARN 6900 --- [erp] [virtual-61] org.hibernate.orm.jdbc.error             : HHH000247: ErrorCode: 0, SQLState: 25P02
+2025-11-01T16:54:43.602+07:00  WARN 6900 --- [erp] [virtual-61] org.hibernate.orm.jdbc.error             : ERROR: current transaction is aborted, commands ignored until end of transaction block
+2025-11-01T16:54:43.602+07:00  WARN 6900 --- [erp] [virtual-63] c.s.erp.service.UnitImportService        : 导入第176行数据失败: 无法创建或获取单位: M034
+2025-11-01T16:54:43.603+07:00  WARN 6900 --- [erp] [virtual-61] c.s.erp.service.UnitImportService        : 导入第69行数据失败: 无法创建或获取单位: K101
+2025-11-01T16:54:43.641+07:00  WARN 6900 --- [erp] [virtual-63] org.hibernate.orm.jdbc.error             : HHH000247: ErrorCode: 0, SQLState: 25P02
+2025-11-01T16:54:43.641+07:00  WARN 6900 --- [erp] [virtual-63] org.hibernate.orm.jdbc.error             : ERROR: current transaction is aborted, commands ignored until end of transaction block
+2025-11-01T16:54:43.641+07:00  WARN 6900 --- [erp] [virtual-61] org.hibernate.orm.jdbc.error             : HHH000247: ErrorCode: 0, SQLState: 25P02
+2025-11-01T16:54:43.642+07:00  WARN 6900 --- [erp] [virtual-61] org.hibernate.orm.jdbc.error             : ERROR: current transaction is aborted, commands ignored until end of transaction block
+2025-11-01T16:54:43.642+07:00  WARN 6900 --- [erp] [virtual-63] c.s.erp.service.UnitImportService        : 导入第177行数据失败: 无法创建或获取单位: M035
+2025-11-01T16:54:43.643+07:00  WARN 6900 --- [erp] [virtual-61] c.s.erp.service.UnitImportService        : 导入第70行数据失败: 无法创建或获取单位: K105
+2025-11-01T16:54:43.683+07:00  WARN 6900 --- [erp] [virtual-63] org.hibernate.orm.jdbc.error             : HHH000247: ErrorCode: 0, SQLState: 25P02
+2025-11-01T16:54:43.683+07:00  WARN 6900 --- [erp] [virtual-63] org.hibernate.orm.jdbc.error             : ERROR: current transaction is aborted, commands ignored until end of transaction block
+2025-11-01T16:54:43.685+07:00  WARN 6900 --- [erp] [virtual-61] org.hibernate.orm.jdbc.error             : HHH000247: ErrorCode: 0, SQLState: 25P02
+2025-11-01T16:54:43.685+07:00  WARN 6900 --- [erp] [virtual-63] c.s.erp.service.UnitImportService        : 导入第178行数据失败: 无法创建或获取单位: M036
+2025-11-01T16:54:43.685+07:00  WARN 6900 --- [erp] [virtual-61] org.hibernate.orm.jdbc.error             : ERROR: current transaction is aborted, commands ignored until end of transaction block
+2025-11-01T16:54:43.686+07:00  WARN 6900 --- [erp] [virtual-61] c.s.erp.service.UnitImportService        : 导入第71行数据失败: 无法创建或获取单位: K110
+2025-11-01T16:54:43.723+07:00  WARN 6900 --- [erp] [virtual-63] org.hibernate.orm.jdbc.error             : HHH000247: ErrorCode: 0, SQLState: 25P02
+2025-11-01T16:54:43.724+07:00  WARN 6900 --- [erp] [virtual-63] org.hibernate.orm.jdbc.error             : ERROR: current transaction is aborted, commands ignored until end of transaction block
+2025-11-01T16:54:43.725+07:00  WARN 6900 --- [erp] [virtual-63] c.s.erp.service.UnitImportService        : 导入第179行数据失败: 无法创建或获取单位: M040
+2025-11-01T16:54:43.726+07:00  WARN 6900 --- [erp] [virtual-61] org.hibernate.orm.jdbc.error             : HHH000247: ErrorCode: 0, SQLState: 25P02
+2025-11-01T16:54:43.727+07:00  WARN 6900 --- [erp] [virtual-61] org.hibernate.orm.jdbc.error             : ERROR: current transaction is aborted, commands ignored until end of transaction block
+2025-11-01T16:54:43.728+07:00  WARN 6900 --- [erp] [virtual-61] c.s.erp.service.UnitImportService        : 导入第72行数据失败: 无法创建或获取单位: K120
+2025-11-01T16:54:43.762+07:00  WARN 6900 --- [erp] [virtual-63] org.hibernate.orm.jdbc.error             : HHH000247: ErrorCode: 0, SQLState: 25P02
+2025-11-01T16:54:43.762+07:00  WARN 6900 --- [erp] [virtual-63] org.hibernate.orm.jdbc.error             : ERROR: current transaction is aborted, commands ignored until end of transaction block
+2025-11-01T16:54:43.763+07:00  WARN 6900 --- [erp] [virtual-63] c.s.erp.service.UnitImportService        : 导入第180行数据失败: 无法创建或获取单位: M066
+2025-11-01T16:54:43.765+07:00  WARN 6900 --- [erp] [virtual-61] org.hibernate.orm.jdbc.error             : HHH000247: ErrorCode: 0, SQLState: 25P02
+2025-11-01T16:54:43.765+07:00  WARN 6900 --- [erp] [virtual-61] org.hibernate.orm.jdbc.error             : ERROR: current transaction is aborted, commands ignored until end of transaction block
+2025-11-01T16:54:43.766+07:00  WARN 6900 --- [erp] [virtual-61] c.s.erp.service.UnitImportService        : 导入第73行数据失败: 无法创建或获取单位: K130
+2025-11-01T16:54:43.798+07:00  WARN 6900 --- [erp] [virtual-63] org.hibernate.orm.jdbc.error             : HHH000247: ErrorCode: 0, SQLState: 25P02
+2025-11-01T16:54:43.799+07:00  WARN 6900 --- [erp] [virtual-63] org.hibernate.orm.jdbc.error             : ERROR: current transaction is aborted, commands ignored until end of transaction block
+2025-11-01T16:54:43.799+07:00  WARN 6900 --- [erp] [virtual-63] c.s.erp.service.UnitImportService        : 导入第181行数据失败: 无法创建或获取单位: M067
+2025-11-01T16:54:43.805+07:00  WARN 6900 --- [erp] [virtual-61] org.hibernate.orm.jdbc.error             : HHH000247: ErrorCode: 0, SQLState: 25P02
+2025-11-01T16:54:43.805+07:00  WARN 6900 --- [erp] [virtual-61] org.hibernate.orm.jdbc.error             : ERROR: current transaction is aborted, commands ignored until end of transaction block
+2025-11-01T16:54:43.806+07:00  WARN 6900 --- [erp] [virtual-61] c.s.erp.service.UnitImportService        : 导入第74行数据失败: 无法创建或获取单位: K140
+2025-11-01T16:54:43.835+07:00  WARN 6900 --- [erp] [virtual-63] org.hibernate.orm.jdbc.error             : HHH000247: ErrorCode: 0, SQLState: 25P02
+2025-11-01T16:54:43.835+07:00  WARN 6900 --- [erp] [virtual-63] org.hibernate.orm.jdbc.error             : ERROR: current transaction is aborted, commands ignored until end of transaction block
+2025-11-01T16:54:43.836+07:00  WARN 6900 --- [erp] [virtual-63] c.s.erp.service.UnitImportService        : 导入第182行数据失败: 无法创建或获取单位: M100
+2025-11-01T16:54:43.843+07:00  WARN 6900 --- [erp] [virtual-61] org.hibernate.orm.jdbc.error             : HHH000247: ErrorCode: 0, SQLState: 25P02
+2025-11-01T16:54:43.843+07:00  WARN 6900 --- [erp] [virtual-61] org.hibernate.orm.jdbc.error             : ERROR: current transaction is aborted, commands ignored until end of transaction block
+2025-11-01T16:54:43.844+07:00  WARN 6900 --- [erp] [virtual-61] c.s.erp.service.UnitImportService        : 导入第75行数据失败: 无法创建或获取单位: K150
+2025-11-01T16:54:43.872+07:00  WARN 6900 --- [erp] [virtual-63] org.hibernate.orm.jdbc.error             : HHH000247: ErrorCode: 0, SQLState: 25P02
+2025-11-01T16:54:43.873+07:00  WARN 6900 --- [erp] [virtual-63] org.hibernate.orm.jdbc.error             : ERROR: current transaction is aborted, commands ignored until end of transaction block
+2025-11-01T16:54:43.873+07:00  WARN 6900 --- [erp] [virtual-63] c.s.erp.service.UnitImportService        : 导入第183行数据失败: 无法创建或获取单位: M122
+2025-11-01T16:54:43.880+07:00  WARN 6900 --- [erp] [virtual-61] org.hibernate.orm.jdbc.error             : HHH000247: ErrorCode: 0, SQLState: 25P02
+2025-11-01T16:54:43.881+07:00  WARN 6900 --- [erp] [virtual-61] org.hibernate.orm.jdbc.error             : ERROR: current transaction is aborted, commands ignored until end of transaction block
+2025-11-01T16:54:43.881+07:00  WARN 6900 --- [erp] [virtual-61] c.s.erp.service.UnitImportService        : 导入第76行数据失败: 无法创建或获取单位: K15300
+2025-11-01T16:54:43.910+07:00  WARN 6900 --- [erp] [virtual-63] org.hibernate.orm.jdbc.error             : HHH000247: ErrorCode: 0, SQLState: 25P02
+2025-11-01T16:54:43.910+07:00  WARN 6900 --- [erp] [virtual-63] org.hibernate.orm.jdbc.error             : ERROR: current transaction is aborted, commands ignored until end of transaction block
+2025-11-01T16:54:43.910+07:00  WARN 6900 --- [erp] [virtual-63] c.s.erp.service.UnitImportService        : 导入第184行数据失败: 无法创建或获取单位: M150
+2025-11-01T16:54:43.917+07:00  WARN 6900 --- [erp] [virtual-61] org.hibernate.orm.jdbc.error             : HHH000247: ErrorCode: 0, SQLState: 25P02
+2025-11-01T16:54:43.917+07:00  WARN 6900 --- [erp] [virtual-61] org.hibernate.orm.jdbc.error             : ERROR: current transaction is aborted, commands ignored until end of transaction block
+2025-11-01T16:54:43.918+07:00  WARN 6900 --- [erp] [virtual-61] c.s.erp.service.UnitImportService        : 导入第77行数据失败: 无法创建或获取单位: K16
+2025-11-01T16:54:43.946+07:00  WARN 6900 --- [erp] [virtual-63] org.hibernate.orm.jdbc.error             : HHH000247: ErrorCode: 0, SQLState: 25P02
+2025-11-01T16:54:43.946+07:00  WARN 6900 --- [erp] [virtual-63] org.hibernate.orm.jdbc.error             : ERROR: current transaction is aborted, commands ignored until end of transaction block
+2025-11-01T16:54:43.947+07:00  WARN 6900 --- [erp] [virtual-63] c.s.erp.service.UnitImportService        : 导入第185行数据失败: 无法创建或获取单位: M2
+2025-11-01T16:54:43.954+07:00  WARN 6900 --- [erp] [virtual-61] org.hibernate.orm.jdbc.error             : HHH000247: ErrorCode: 0, SQLState: 25P02
+2025-11-01T16:54:43.954+07:00  WARN 6900 --- [erp] [virtual-61] org.hibernate.orm.jdbc.error             : ERROR: current transaction is aborted, commands ignored until end of transaction block
+2025-11-01T16:54:43.955+07:00  WARN 6900 --- [erp] [virtual-61] c.s.erp.service.UnitImportService        : 导入第78行数据失败: 无法创建或获取单位: K160
+2025-11-01T16:54:43.983+07:00  WARN 6900 --- [erp] [virtual-63] org.hibernate.orm.jdbc.error             : HHH000247: ErrorCode: 0, SQLState: 25P02
+2025-11-01T16:54:43.983+07:00  WARN 6900 --- [erp] [virtual-63] org.hibernate.orm.jdbc.error             : ERROR: current transaction is aborted, commands ignored until end of transaction block
+2025-11-01T16:54:43.984+07:00  WARN 6900 --- [erp] [virtual-63] c.s.erp.service.UnitImportService        : 导入第186行数据失败: 无法创建或获取单位: M244
+2025-11-01T16:54:43.993+07:00  WARN 6900 --- [erp] [virtual-61] org.hibernate.orm.jdbc.error             : HHH000247: ErrorCode: 0, SQLState: 25P02
+2025-11-01T16:54:43.994+07:00  WARN 6900 --- [erp] [virtual-61] org.hibernate.orm.jdbc.error             : ERROR: current transaction is aborted, commands ignored until end of transaction block
+2025-11-01T16:54:43.994+07:00  WARN 6900 --- [erp] [virtual-61] c.s.erp.service.UnitImportService        : 导入第79行数据失败: 无法创建或获取单位: K170
+2025-11-01T16:54:44.022+07:00  WARN 6900 --- [erp] [virtual-63] org.hibernate.orm.jdbc.error             : HHH000247: ErrorCode: 0, SQLState: 25P02
+2025-11-01T16:54:44.023+07:00  WARN 6900 --- [erp] [virtual-63] org.hibernate.orm.jdbc.error             : ERROR: current transaction is aborted, commands ignored until end of transaction block
+2025-11-01T16:54:44.024+07:00  WARN 6900 --- [erp] [virtual-63] c.s.erp.service.UnitImportService        : 导入第187行数据失败: 无法创建或获取单位: M280
+2025-11-01T16:54:44.031+07:00  WARN 6900 --- [erp] [virtual-61] org.hibernate.orm.jdbc.error             : HHH000247: ErrorCode: 0, SQLState: 25P02
+2025-11-01T16:54:44.032+07:00  WARN 6900 --- [erp] [virtual-61] org.hibernate.orm.jdbc.error             : ERROR: current transaction is aborted, commands ignored until end of transaction block
+2025-11-01T16:54:44.032+07:00  WARN 6900 --- [erp] [virtual-61] c.s.erp.service.UnitImportService        : 导入第80行数据失败: 无法创建或获取单位: K175
+2025-11-01T16:54:44.061+07:00  WARN 6900 --- [erp] [virtual-63] org.hibernate.orm.jdbc.error             : HHH000247: ErrorCode: 0, SQLState: 25P02
+2025-11-01T16:54:44.061+07:00  WARN 6900 --- [erp] [virtual-63] org.hibernate.orm.jdbc.error             : ERROR: current transaction is aborted, commands ignored until end of transaction block
+2025-11-01T16:54:44.062+07:00  WARN 6900 --- [erp] [virtual-63] c.s.erp.service.UnitImportService        : 导入第188行数据失败: 无法创建或获取单位: M29
+2025-11-01T16:54:44.069+07:00  WARN 6900 --- [erp] [virtual-61] org.hibernate.orm.jdbc.error             : HHH000247: ErrorCode: 0, SQLState: 25P02
+2025-11-01T16:54:44.070+07:00  WARN 6900 --- [erp] [virtual-61] org.hibernate.orm.jdbc.error             : ERROR: current transaction is aborted, commands ignored until end of transaction block
+2025-11-01T16:54:44.070+07:00  WARN 6900 --- [erp] [virtual-61] c.s.erp.service.UnitImportService        : 导入第81行数据失败: 无法创建或获取单位: K180
+2025-11-01T16:54:44.098+07:00  WARN 6900 --- [erp] [virtual-63] org.hibernate.orm.jdbc.error             : HHH000247: ErrorCode: 0, SQLState: 25P02
+2025-11-01T16:54:44.100+07:00  WARN 6900 --- [erp] [virtual-63] org.hibernate.orm.jdbc.error             : ERROR: current transaction is aborted, commands ignored until end of transaction block
+2025-11-01T16:54:44.101+07:00  WARN 6900 --- [erp] [virtual-63] c.s.erp.service.UnitImportService        : 导入第189行数据失败: 无法创建或获取单位: M3
+2025-11-01T16:54:44.108+07:00  WARN 6900 --- [erp] [virtual-61] org.hibernate.orm.jdbc.error             : HHH000247: ErrorCode: 0, SQLState: 25P02
+2025-11-01T16:54:44.109+07:00  WARN 6900 --- [erp] [virtual-61] org.hibernate.orm.jdbc.error             : ERROR: current transaction is aborted, commands ignored until end of transaction block
+2025-11-01T16:54:44.110+07:00  WARN 6900 --- [erp] [virtual-61] c.s.erp.service.UnitImportService        : 导入第82行数据失败: 无法创建或获取单位: K185
+2025-11-01T16:54:44.138+07:00  WARN 6900 --- [erp] [virtual-63] org.hibernate.orm.jdbc.error             : HHH000247: ErrorCode: 0, SQLState: 25P02
+2025-11-01T16:54:44.139+07:00  WARN 6900 --- [erp] [virtual-63] org.hibernate.orm.jdbc.error             : ERROR: current transaction is aborted, commands ignored until end of transaction block
+2025-11-01T16:54:44.140+07:00  WARN 6900 --- [erp] [virtual-63] c.s.erp.service.UnitImportService        : 导入第190行数据失败: 无法创建或获取单位: M30
+2025-11-01T16:54:44.150+07:00  WARN 6900 --- [erp] [virtual-61] org.hibernate.orm.jdbc.error             : HHH000247: ErrorCode: 0, SQLState: 25P02
+2025-11-01T16:54:44.151+07:00  WARN 6900 --- [erp] [virtual-61] org.hibernate.orm.jdbc.error             : ERROR: current transaction is aborted, commands ignored until end of transaction block
+2025-11-01T16:54:44.152+07:00  WARN 6900 --- [erp] [virtual-61] c.s.erp.service.UnitImportService        : 导入第83行数据失败: 无法创建或获取单位: K190
+2025-11-01T16:54:44.175+07:00  WARN 6900 --- [erp] [virtual-63] org.hibernate.orm.jdbc.error             : HHH000247: ErrorCode: 0, SQLState: 25P02
+2025-11-01T16:54:44.177+07:00  WARN 6900 --- [erp] [virtual-63] org.hibernate.orm.jdbc.error             : ERROR: current transaction is aborted, commands ignored until end of transaction block
+2025-11-01T16:54:44.178+07:00  WARN 6900 --- [erp] [virtual-63] c.s.erp.service.UnitImportService        : 导入第191行数据失败: 无法创建或获取单位: M300
+2025-11-01T16:54:44.190+07:00  WARN 6900 --- [erp] [virtual-61] org.hibernate.orm.jdbc.error             : HHH000247: ErrorCode: 0, SQLState: 25P02
+2025-11-01T16:54:44.191+07:00  WARN 6900 --- [erp] [virtual-61] org.hibernate.orm.jdbc.error             : ERROR: current transaction is aborted, commands ignored until end of transaction block
+2025-11-01T16:54:44.192+07:00  WARN 6900 --- [erp] [virtual-61] c.s.erp.service.UnitImportService        : 导入第84行数据失败: 无法创建或获取单位: K200
+2025-11-01T16:54:44.215+07:00  WARN 6900 --- [erp] [virtual-63] org.hibernate.orm.jdbc.error             : HHH000247: ErrorCode: 0, SQLState: 25P02
+2025-11-01T16:54:44.216+07:00  WARN 6900 --- [erp] [virtual-63] org.hibernate.orm.jdbc.error             : ERROR: current transaction is aborted, commands ignored until end of transaction block
+2025-11-01T16:54:44.217+07:00  WARN 6900 --- [erp] [virtual-63] c.s.erp.service.UnitImportService        : 导入第192行数据失败: 无法创建或获取单位: M305
+2025-11-01T16:54:44.229+07:00  WARN 6900 --- [erp] [virtual-61] org.hibernate.orm.jdbc.error             : HHH000247: ErrorCode: 0, SQLState: 25P02
+2025-11-01T16:54:44.230+07:00  WARN 6900 --- [erp] [virtual-61] org.hibernate.orm.jdbc.error             : ERROR: current transaction is aborted, commands ignored until end of transaction block
+2025-11-01T16:54:44.230+07:00  WARN 6900 --- [erp] [virtual-61] c.s.erp.service.UnitImportService        : 导入第85行数据失败: 无法创建或获取单位: K220
+2025-11-01T16:54:44.255+07:00  WARN 6900 --- [erp] [virtual-63] org.hibernate.orm.jdbc.error             : HHH000247: ErrorCode: 0, SQLState: 25P02
+2025-11-01T16:54:44.255+07:00  WARN 6900 --- [erp] [virtual-63] org.hibernate.orm.jdbc.error             : ERROR: current transaction is aborted, commands ignored until end of transaction block
+2025-11-01T16:54:44.257+07:00  WARN 6900 --- [erp] [virtual-63] c.s.erp.service.UnitImportService        : 导入第193行数据失败: 无法创建或获取单位: M500
+2025-11-01T16:54:44.268+07:00  WARN 6900 --- [erp] [virtual-61] org.hibernate.orm.jdbc.error             : HHH000247: ErrorCode: 0, SQLState: 25P02
+2025-11-01T16:54:44.269+07:00  WARN 6900 --- [erp] [virtual-61] org.hibernate.orm.jdbc.error             : ERROR: current transaction is aborted, commands ignored until end of transaction block
+2025-11-01T16:54:44.271+07:00  WARN 6900 --- [erp] [virtual-61] c.s.erp.service.UnitImportService        : 导入第86行数据失败: 无法创建或获取单位: K230
+2025-11-01T16:54:44.293+07:00  WARN 6900 --- [erp] [virtual-63] org.hibernate.orm.jdbc.error             : HHH000247: ErrorCode: 0, SQLState: 25P02
+2025-11-01T16:54:44.294+07:00  WARN 6900 --- [erp] [virtual-63] org.hibernate.orm.jdbc.error             : ERROR: current transaction is aborted, commands ignored until end of transaction block
+2025-11-01T16:54:44.295+07:00  WARN 6900 --- [erp] [virtual-63] c.s.erp.service.UnitImportService        : 导入第194行数据失败: 无法创建或获取单位: minute
+2025-11-01T16:54:44.309+07:00  WARN 6900 --- [erp] [virtual-61] org.hibernate.orm.jdbc.error             : HHH000247: ErrorCode: 0, SQLState: 25P02
+2025-11-01T16:54:44.309+07:00  WARN 6900 --- [erp] [virtual-61] org.hibernate.orm.jdbc.error             : ERROR: current transaction is aborted, commands ignored until end of transaction block
+2025-11-01T16:54:44.310+07:00  WARN 6900 --- [erp] [virtual-61] c.s.erp.service.UnitImportService        : 导入第87行数据失败: 无法创建或获取单位: K240
+2025-11-01T16:54:44.332+07:00  WARN 6900 --- [erp] [virtual-63] org.hibernate.orm.jdbc.error             : HHH000247: ErrorCode: 0, SQLState: 25P02
+2025-11-01T16:54:44.333+07:00  WARN 6900 --- [erp] [virtual-63] org.hibernate.orm.jdbc.error             : ERROR: current transaction is aborted, commands ignored until end of transaction block
+2025-11-01T16:54:44.334+07:00  WARN 6900 --- [erp] [virtual-63] c.s.erp.service.UnitImportService        : 导入第195行数据失败: 无法创建或获取单位: ml
+2025-11-01T16:54:44.348+07:00  WARN 6900 --- [erp] [virtual-61] org.hibernate.orm.jdbc.error             : HHH000247: ErrorCode: 0, SQLState: 25P02
+2025-11-01T16:54:44.349+07:00  WARN 6900 --- [erp] [virtual-61] org.hibernate.orm.jdbc.error             : ERROR: current transaction is aborted, commands ignored until end of transaction block
+2025-11-01T16:54:44.350+07:00  WARN 6900 --- [erp] [virtual-61] c.s.erp.service.UnitImportService        : 导入第88行数据失败: 无法创建或获取单位: K25
+2025-11-01T16:54:44.371+07:00  WARN 6900 --- [erp] [virtual-63] org.hibernate.orm.jdbc.error             : HHH000247: ErrorCode: 0, SQLState: 25P02
+2025-11-01T16:54:44.372+07:00  WARN 6900 --- [erp] [virtual-63] org.hibernate.orm.jdbc.error             : ERROR: current transaction is aborted, commands ignored until end of transaction block
+2025-11-01T16:54:44.373+07:00  WARN 6900 --- [erp] [virtual-63] c.s.erp.service.UnitImportService        : 导入第196行数据失败: 无法创建或获取单位: mm
+2025-11-01T16:54:44.388+07:00  WARN 6900 --- [erp] [virtual-61] org.hibernate.orm.jdbc.error             : HHH000247: ErrorCode: 0, SQLState: 25P02
+2025-11-01T16:54:44.389+07:00  WARN 6900 --- [erp] [virtual-61] org.hibernate.orm.jdbc.error             : ERROR: current transaction is aborted, commands ignored until end of transaction block
+2025-11-01T16:54:44.390+07:00  WARN 6900 --- [erp] [virtual-61] c.s.erp.service.UnitImportService        : 导入第89行数据失败: 无法创建或获取单位: K250
+2025-11-01T16:54:44.425+07:00  WARN 6900 --- [erp] [virtual-63] org.hibernate.orm.jdbc.error             : HHH000247: ErrorCode: 0, SQLState: 25P02
+2025-11-01T16:54:44.426+07:00  WARN 6900 --- [erp] [virtual-63] org.hibernate.orm.jdbc.error             : ERROR: current transaction is aborted, commands ignored until end of transaction block
+2025-11-01T16:54:44.427+07:00  WARN 6900 --- [erp] [virtual-63] c.s.erp.service.UnitImportService        : 导入第197行数据失败: 无法创建或获取单位: P001
+2025-11-01T16:54:44.444+07:00  WARN 6900 --- [erp] [virtual-61] org.hibernate.orm.jdbc.error             : HHH000247: ErrorCode: 0, SQLState: 25P02
+2025-11-01T16:54:44.445+07:00  WARN 6900 --- [erp] [virtual-61] org.hibernate.orm.jdbc.error             : ERROR: current transaction is aborted, commands ignored until end of transaction block
+2025-11-01T16:54:44.446+07:00  WARN 6900 --- [erp] [virtual-61] c.s.erp.service.UnitImportService        : 导入第90行数据失败: 无法创建或获取单位: K260
+2025-11-01T16:54:44.479+07:00  WARN 6900 --- [erp] [virtual-63] org.hibernate.orm.jdbc.error             : HHH000247: ErrorCode: 0, SQLState: 25P02
+2025-11-01T16:54:44.480+07:00  WARN 6900 --- [erp] [virtual-63] org.hibernate.orm.jdbc.error             : ERROR: current transaction is aborted, commands ignored until end of transaction block
+2025-11-01T16:54:44.481+07:00  WARN 6900 --- [erp] [virtual-63] c.s.erp.service.UnitImportService        : 导入第198行数据失败: 无法创建或获取单位: P002
+2025-11-01T16:54:44.508+07:00  WARN 6900 --- [erp] [virtual-61] org.hibernate.orm.jdbc.error             : HHH000247: ErrorCode: 0, SQLState: 25P02
+2025-11-01T16:54:44.510+07:00  WARN 6900 --- [erp] [virtual-61] org.hibernate.orm.jdbc.error             : ERROR: current transaction is aborted, commands ignored until end of transaction block
+2025-11-01T16:54:44.511+07:00  WARN 6900 --- [erp] [virtual-61] c.s.erp.service.UnitImportService        : 导入第91行数据失败: 无法创建或获取单位: K270
+2025-11-01T16:54:44.530+07:00  WARN 6900 --- [erp] [virtual-63] org.hibernate.orm.jdbc.error             : HHH000247: ErrorCode: 0, SQLState: 25P02
+2025-11-01T16:54:44.531+07:00  WARN 6900 --- [erp] [virtual-63] org.hibernate.orm.jdbc.error             : ERROR: current transaction is aborted, commands ignored until end of transaction block
+2025-11-01T16:54:44.532+07:00  WARN 6900 --- [erp] [virtual-63] c.s.erp.service.UnitImportService        : 导入第199行数据失败: 无法创建或获取单位: P003
+2025-11-01T16:54:44.566+07:00  WARN 6900 --- [erp] [virtual-61] org.hibernate.orm.jdbc.error             : HHH000247: ErrorCode: 0, SQLState: 25P02
+2025-11-01T16:54:44.567+07:00  WARN 6900 --- [erp] [virtual-61] org.hibernate.orm.jdbc.error             : ERROR: current transaction is aborted, commands ignored until end of transaction block
+2025-11-01T16:54:44.567+07:00  WARN 6900 --- [erp] [virtual-61] c.s.erp.service.UnitImportService        : 导入第92行数据失败: 无法创建或获取单位: K280
+2025-11-01T16:54:44.584+07:00  WARN 6900 --- [erp] [virtual-63] org.hibernate.orm.jdbc.error             : HHH000247: ErrorCode: 0, SQLState: 25P02
+2025-11-01T16:54:44.584+07:00  WARN 6900 --- [erp] [virtual-63] org.hibernate.orm.jdbc.error             : ERROR: current transaction is aborted, commands ignored until end of transaction block
+2025-11-01T16:54:44.585+07:00  WARN 6900 --- [erp] [virtual-63] c.s.erp.service.UnitImportService        : 导入第200行数据失败: 无法创建或获取单位: P004
+2025-11-01T16:54:44.620+07:00  WARN 6900 --- [erp] [virtual-61] org.hibernate.orm.jdbc.error             : HHH000247: ErrorCode: 0, SQLState: 25P02
+2025-11-01T16:54:44.621+07:00  WARN 6900 --- [erp] [virtual-61] org.hibernate.orm.jdbc.error             : ERROR: current transaction is aborted, commands ignored until end of transaction block
+2025-11-01T16:54:44.622+07:00  WARN 6900 --- [erp] [virtual-61] c.s.erp.service.UnitImportService        : 导入第93行数据失败: 无法创建或获取单位: K2800
+2025-11-01T16:54:44.636+07:00  WARN 6900 --- [erp] [virtual-63] org.hibernate.orm.jdbc.error             : HHH000247: ErrorCode: 0, SQLState: 25P02
+2025-11-01T16:54:44.637+07:00  WARN 6900 --- [erp] [virtual-63] org.hibernate.orm.jdbc.error             : ERROR: current transaction is aborted, commands ignored until end of transaction block
+2025-11-01T16:54:44.638+07:00  WARN 6900 --- [erp] [virtual-63] c.s.erp.service.UnitImportService        : 导入第201行数据失败: 无法创建或获取单位: P005
+2025-11-01T16:54:44.672+07:00  WARN 6900 --- [erp] [virtual-61] org.hibernate.orm.jdbc.error             : HHH000247: ErrorCode: 0, SQLState: 25P02
+2025-11-01T16:54:44.673+07:00  WARN 6900 --- [erp] [virtual-61] org.hibernate.orm.jdbc.error             : ERROR: current transaction is aborted, commands ignored until end of transaction block
+2025-11-01T16:54:44.673+07:00  WARN 6900 --- [erp] [virtual-61] c.s.erp.service.UnitImportService        : 导入第94行数据失败: 无法创建或获取单位: K30
+2025-11-01T16:54:44.684+07:00  WARN 6900 --- [erp] [virtual-63] org.hibernate.orm.jdbc.error             : HHH000247: ErrorCode: 0, SQLState: 25P02
+2025-11-01T16:54:44.685+07:00  WARN 6900 --- [erp] [virtual-63] org.hibernate.orm.jdbc.error             : ERROR: current transaction is aborted, commands ignored until end of transaction block
+2025-11-01T16:54:44.685+07:00  WARN 6900 --- [erp] [virtual-63] c.s.erp.service.UnitImportService        : 导入第202行数据失败: 无法创建或获取单位: P006
+2025-11-01T16:54:44.717+07:00  WARN 6900 --- [erp] [virtual-61] org.hibernate.orm.jdbc.error             : HHH000247: ErrorCode: 0, SQLState: 25P02
+2025-11-01T16:54:44.717+07:00  WARN 6900 --- [erp] [virtual-61] org.hibernate.orm.jdbc.error             : ERROR: current transaction is aborted, commands ignored until end of transaction block
+2025-11-01T16:54:44.717+07:00  WARN 6900 --- [erp] [virtual-61] c.s.erp.service.UnitImportService        : 导入第95行数据失败: 无法创建或获取单位: K300
+2025-11-01T16:54:44.761+07:00  WARN 6900 --- [erp] [virtual-61] org.hibernate.orm.jdbc.error             : HHH000247: ErrorCode: 0, SQLState: 25P02
+2025-11-01T16:54:44.762+07:00  WARN 6900 --- [erp] [virtual-61] org.hibernate.orm.jdbc.error             : ERROR: current transaction is aborted, commands ignored until end of transaction block
+2025-11-01T16:54:44.763+07:00  WARN 6900 --- [erp] [virtual-61] c.s.erp.service.UnitImportService        : 导入第96行数据失败: 无法创建或获取单位: K330
+2025-11-01T16:54:44.816+07:00  WARN 6900 --- [erp] [virtual-61] org.hibernate.orm.jdbc.error             : HHH000247: ErrorCode: 0, SQLState: 25P02
+2025-11-01T16:54:44.817+07:00  WARN 6900 --- [erp] [virtual-61] org.hibernate.orm.jdbc.error             : ERROR: current transaction is aborted, commands ignored until end of transaction block
+2025-11-01T16:54:44.818+07:00  WARN 6900 --- [erp] [virtual-61] c.s.erp.service.UnitImportService        : 导入第97行数据失败: 无法创建或获取单位: K340
+2025-11-01T16:54:44.855+07:00  WARN 6900 --- [erp] [virtual-61] org.hibernate.orm.jdbc.error             : HHH000247: ErrorCode: 0, SQLState: 25P02
+2025-11-01T16:54:44.856+07:00  WARN 6900 --- [erp] [virtual-61] org.hibernate.orm.jdbc.error             : ERROR: current transaction is aborted, commands ignored until end of transaction block
+2025-11-01T16:54:44.857+07:00  WARN 6900 --- [erp] [virtual-61] c.s.erp.service.UnitImportService        : 导入第98行数据失败: 无法创建或获取单位: K350
+2025-11-01T16:54:44.894+07:00  WARN 6900 --- [erp] [virtual-61] org.hibernate.orm.jdbc.error             : HHH000247: ErrorCode: 0, SQLState: 25P02
+2025-11-01T16:54:44.894+07:00  WARN 6900 --- [erp] [virtual-61] org.hibernate.orm.jdbc.error             : ERROR: current transaction is aborted, commands ignored until end of transaction block
+2025-11-01T16:54:44.894+07:00  WARN 6900 --- [erp] [virtual-61] c.s.erp.service.UnitImportService        : 导入第99行数据失败: 无法创建或获取单位: K370
+2025-11-01T16:54:44.930+07:00  WARN 6900 --- [erp] [virtual-61] org.hibernate.orm.jdbc.error             : HHH000247: ErrorCode: 0, SQLState: 25P02
+2025-11-01T16:54:44.931+07:00  WARN 6900 --- [erp] [virtual-61] org.hibernate.orm.jdbc.error             : ERROR: current transaction is aborted, commands ignored until end of transaction block
+2025-11-01T16:54:44.931+07:00  WARN 6900 --- [erp] [virtual-61] c.s.erp.service.UnitImportService        : 导入第100行数据失败: 无法创建或获取单位: K39
+2025-11-01T16:54:44.967+07:00  WARN 6900 --- [erp] [virtual-61] org.hibernate.orm.jdbc.error             : HHH000247: ErrorCode: 0, SQLState: 25P02
+2025-11-01T16:54:44.967+07:00  WARN 6900 --- [erp] [virtual-61] org.hibernate.orm.jdbc.error             : ERROR: current transaction is aborted, commands ignored until end of transaction block
+2025-11-01T16:54:44.968+07:00  WARN 6900 --- [erp] [virtual-61] c.s.erp.service.UnitImportService        : 导入第101行数据失败: 无法创建或获取单位: K390
+2025-11-01T16:54:45.005+07:00  WARN 6900 --- [erp] [virtual-61] org.hibernate.orm.jdbc.error             : HHH000247: ErrorCode: 0, SQLState: 25P02
+2025-11-01T16:54:45.005+07:00  WARN 6900 --- [erp] [virtual-61] org.hibernate.orm.jdbc.error             : ERROR: current transaction is aborted, commands ignored until end of transaction block
+2025-11-01T16:54:45.006+07:00  WARN 6900 --- [erp] [virtual-61] c.s.erp.service.UnitImportService        : 导入第102行数据失败: 无法创建或获取单位: K40
+2025-11-01T16:54:45.042+07:00 ERROR 6900 --- [erp] [http-nio-8080-exec-6] c.s.erp.service.UnitImportService        : 多线程导入失败
+
+java.util.concurrent.ExecutionException: org.springframework.transaction.UnexpectedRollbackException: Transaction silently rolled back because it has been marked as rollback-only
+	at java.base/java.util.concurrent.CompletableFuture.wrapInExecutionException(CompletableFuture.java:345) ~[na:na]
+	at java.base/java.util.concurrent.CompletableFuture.reportGet(CompletableFuture.java:440) ~[na:na]
+	at java.base/java.util.concurrent.CompletableFuture.get(CompletableFuture.java:2117) ~[na:na]
+	at com.sambound.erp.service.UnitImportService.importMultiThread(UnitImportService.java:247) ~[!/:0.0.1-SNAPSHOT]
+	at com.sambound.erp.service.UnitImportService.importFromCsv(UnitImportService.java:127) ~[!/:0.0.1-SNAPSHOT]
+	at java.base/jdk.internal.reflect.DirectMethodHandleAccessor.invoke(DirectMethodHandleAccessor.java:104) ~[na:na]
+	at java.base/java.lang.reflect.Method.invoke(Method.java:565) ~[na:na]
+	at org.springframework.aop.support.AopUtils.invokeJoinpointUsingReflection(AopUtils.java:359) ~[spring-aop-7.0.0-RC2.jar!/:7.0.0-RC2]
+	at org.springframework.aop.framework.ReflectiveMethodInvocation.invokeJoinpoint(ReflectiveMethodInvocation.java:190) ~[spring-aop-7.0.0-RC2.jar!/:7.0.0-RC2]
+	at org.springframework.aop.framework.ReflectiveMethodInvocation.proceed(ReflectiveMethodInvocation.java:158) ~[spring-aop-7.0.0-RC2.jar!/:7.0.0-RC2]
+	at org.springframework.transaction.interceptor.TransactionAspectSupport.invokeWithinTransaction(TransactionAspectSupport.java:370) ~[spring-tx-7.0.0-RC2.jar!/:7.0.0-RC2]
+	at org.springframework.transaction.interceptor.TransactionInterceptor.invoke(TransactionInterceptor.java:118) ~[spring-tx-7.0.0-RC2.jar!/:7.0.0-RC2]
+	at org.springframework.aop.framework.ReflectiveMethodInvocation.proceed(ReflectiveMethodInvocation.java:179) ~[spring-aop-7.0.0-RC2.jar!/:7.0.0-RC2]
+	at org.springframework.aop.framework.CglibAopProxy$DynamicAdvisedInterceptor.intercept(CglibAopProxy.java:719) ~[spring-aop-7.0.0-RC2.jar!/:7.0.0-RC2]
+	at com.sambound.erp.service.UnitImportService$$SpringCGLIB$$0.importFromCsv(<generated>) ~[!/:0.0.1-SNAPSHOT]
+	at com.sambound.erp.controller.UnitController.importUnits(UnitController.java:88) ~[!/:0.0.1-SNAPSHOT]
+	at java.base/jdk.internal.reflect.DirectMethodHandleAccessor.invoke(DirectMethodHandleAccessor.java:104) ~[na:na]
+	at java.base/java.lang.reflect.Method.invoke(Method.java:565) ~[na:na]
+	at org.springframework.aop.support.AopUtils.invokeJoinpointUsingReflection(AopUtils.java:359) ~[spring-aop-7.0.0-RC2.jar!/:7.0.0-RC2]
+	at org.springframework.aop.framework.ReflectiveMethodInvocation.invokeJoinpoint(ReflectiveMethodInvocation.java:190) ~[spring-aop-7.0.0-RC2.jar!/:7.0.0-RC2]
+	at org.springframework.aop.framework.ReflectiveMethodInvocation.proceed(ReflectiveMethodInvocation.java:158) ~[spring-aop-7.0.0-RC2.jar!/:7.0.0-RC2]
+	at org.springframework.security.authorization.method.AuthorizationManagerBeforeMethodInterceptor.proceed(AuthorizationManagerBeforeMethodInterceptor.java:271) ~[spring-security-core-7.0.0-RC1.jar!/:7.0.0-RC1]
+	at org.springframework.security.authorization.method.AuthorizationManagerBeforeMethodInterceptor.attemptAuthorization(AuthorizationManagerBeforeMethodInterceptor.java:266) ~[spring-security-core-7.0.0-RC1.jar!/:7.0.0-RC1]
+	at org.springframework.security.authorization.method.AuthorizationManagerBeforeMethodInterceptor.invoke(AuthorizationManagerBeforeMethodInterceptor.java:197) ~[spring-security-core-7.0.0-RC1.jar!/:7.0.0-RC1]
+	at org.springframework.security.config.annotation.method.configuration.DeferringMethodInterceptor.invoke(DeferringMethodInterceptor.java:44) ~[spring-security-config-7.0.0-RC1.jar!/:7.0.0-RC1]
+	at org.springframework.aop.framework.ReflectiveMethodInvocation.proceed(ReflectiveMethodInvocation.java:179) ~[spring-aop-7.0.0-RC2.jar!/:7.0.0-RC2]
+	at org.springframework.aop.framework.CglibAopProxy$DynamicAdvisedInterceptor.intercept(CglibAopProxy.java:719) ~[spring-aop-7.0.0-RC2.jar!/:7.0.0-RC2]
+	at com.sambound.erp.controller.UnitController$$SpringCGLIB$$0.importUnits(<generated>) ~[!/:0.0.1-SNAPSHOT]
+	at java.base/jdk.internal.reflect.DirectMethodHandleAccessor.invoke(DirectMethodHandleAccessor.java:104) ~[na:na]
+	at java.base/java.lang.reflect.Method.invoke(Method.java:565) ~[na:na]
+	at org.springframework.web.method.support.InvocableHandlerMethod.doInvoke(InvocableHandlerMethod.java:258) ~[spring-web-7.0.0-RC2.jar!/:7.0.0-RC2]
+	at org.springframework.web.method.support.InvocableHandlerMethod.invokeForRequest(InvocableHandlerMethod.java:190) ~[spring-web-7.0.0-RC2.jar!/:7.0.0-RC2]
+	at org.springframework.web.servlet.mvc.method.annotation.ServletInvocableHandlerMethod.invokeAndHandle(ServletInvocableHandlerMethod.java:117) ~[spring-webmvc-7.0.0-RC2.jar!/:7.0.0-RC2]
+	at org.springframework.web.servlet.mvc.method.annotation.RequestMappingHandlerAdapter.invokeHandlerMethod(RequestMappingHandlerAdapter.java:934) ~[spring-webmvc-7.0.0-RC2.jar!/:7.0.0-RC2]
+	at org.springframework.web.servlet.mvc.method.annotation.RequestMappingHandlerAdapter.handleInternal(RequestMappingHandlerAdapter.java:853) ~[spring-webmvc-7.0.0-RC2.jar!/:7.0.0-RC2]
+	at org.springframework.web.servlet.mvc.method.AbstractHandlerMethodAdapter.handle(AbstractHandlerMethodAdapter.java:86) ~[spring-webmvc-7.0.0-RC2.jar!/:7.0.0-RC2]
+	at org.springframework.web.servlet.DispatcherServlet.doDispatch(DispatcherServlet.java:963) ~[spring-webmvc-7.0.0-RC2.jar!/:7.0.0-RC2]
+	at org.springframework.web.servlet.DispatcherServlet.doService(DispatcherServlet.java:866) ~[spring-webmvc-7.0.0-RC2.jar!/:7.0.0-RC2]
+	at org.springframework.web.servlet.FrameworkServlet.processRequest(FrameworkServlet.java:1003) ~[spring-webmvc-7.0.0-RC2.jar!/:7.0.0-RC2]
+	at org.springframework.web.servlet.FrameworkServlet.doPost(FrameworkServlet.java:903) ~[spring-webmvc-7.0.0-RC2.jar!/:7.0.0-RC2]
+	at jakarta.servlet.http.HttpServlet.service(HttpServlet.java:649) ~[tomcat-embed-core-11.0.13.jar!/:na]
+	at org.springframework.web.servlet.FrameworkServlet.service(FrameworkServlet.java:874) ~[spring-webmvc-7.0.0-RC2.jar!/:7.0.0-RC2]
+	at jakarta.servlet.http.HttpServlet.service(HttpServlet.java:710) ~[tomcat-embed-core-11.0.13.jar!/:na]
+	at org.apache.catalina.core.ApplicationFilterChain.doFilter(ApplicationFilterChain.java:128) ~[tomcat-embed-core-11.0.13.jar!/:na]
+	at org.apache.tomcat.websocket.server.WsFilter.doFilter(WsFilter.java:53) ~[tomcat-embed-websocket-11.0.13.jar!/:na]
+	at org.apache.catalina.core.ApplicationFilterChain.doFilter(ApplicationFilterChain.java:107) ~[tomcat-embed-core-11.0.13.jar!/:na]
+	at org.springframework.web.filter.OncePerRequestFilter.doFilter(OncePerRequestFilter.java:110) ~[spring-web-7.0.0-RC2.jar!/:7.0.0-RC2]
+	at org.apache.catalina.core.ApplicationFilterChain.doFilter(ApplicationFilterChain.java:107) ~[tomcat-embed-core-11.0.13.jar!/:na]
+	at org.springframework.web.filter.CompositeFilter$VirtualFilterChain.doFilter(CompositeFilter.java:108) ~[spring-web-7.0.0-RC2.jar!/:7.0.0-RC2]
+	at org.springframework.security.web.FilterChainProxy.lambda$doFilterInternal$3(FilterChainProxy.java:235) ~[spring-security-web-7.0.0-RC1.jar!/:7.0.0-RC1]
+	at org.springframework.security.web.FilterChainProxy$VirtualFilterChain.doFilter(FilterChainProxy.java:371) ~[spring-security-web-7.0.0-RC1.jar!/:7.0.0-RC1]
+	at org.springframework.security.web.access.intercept.AuthorizationFilter.doFilter(AuthorizationFilter.java:101) ~[spring-security-web-7.0.0-RC1.jar!/:7.0.0-RC1]
+	at org.springframework.security.web.FilterChainProxy$VirtualFilterChain.doFilter(FilterChainProxy.java:380) ~[spring-security-web-7.0.0-RC1.jar!/:7.0.0-RC1]
+	at org.springframework.security.web.access.ExceptionTranslationFilter.doFilter(ExceptionTranslationFilter.java:126) ~[spring-security-web-7.0.0-RC1.jar!/:7.0.0-RC1]
+	at org.springframework.security.web.access.ExceptionTranslationFilter.doFilter(ExceptionTranslationFilter.java:120) ~[spring-security-web-7.0.0-RC1.jar!/:7.0.0-RC1]
+	at org.springframework.security.web.FilterChainProxy$VirtualFilterChain.doFilter(FilterChainProxy.java:380) ~[spring-security-web-7.0.0-RC1.jar!/:7.0.0-RC1]
+	at org.springframework.security.web.session.SessionManagementFilter.doFilter(SessionManagementFilter.java:132) ~[spring-security-web-7.0.0-RC1.jar!/:7.0.0-RC1]
+	at org.springframework.security.web.session.SessionManagementFilter.doFilter(SessionManagementFilter.java:86) ~[spring-security-web-7.0.0-RC1.jar!/:7.0.0-RC1]
+	at org.springframework.security.web.FilterChainProxy$VirtualFilterChain.doFilter(FilterChainProxy.java:380) ~[spring-security-web-7.0.0-RC1.jar!/:7.0.0-RC1]
+	at org.springframework.security.web.authentication.AnonymousAuthenticationFilter.doFilter(AnonymousAuthenticationFilter.java:100) ~[spring-security-web-7.0.0-RC1.jar!/:7.0.0-RC1]
+	at org.springframework.security.web.FilterChainProxy$VirtualFilterChain.doFilter(FilterChainProxy.java:380) ~[spring-security-web-7.0.0-RC1.jar!/:7.0.0-RC1]
+	at org.springframework.security.web.servletapi.SecurityContextHolderAwareRequestFilter.doFilter(SecurityContextHolderAwareRequestFilter.java:181) ~[spring-security-web-7.0.0-RC1.jar!/:7.0.0-RC1]
+	at org.springframework.security.web.FilterChainProxy$VirtualFilterChain.doFilter(FilterChainProxy.java:380) ~[spring-security-web-7.0.0-RC1.jar!/:7.0.0-RC1]
+	at org.springframework.security.web.savedrequest.RequestCacheAwareFilter.doFilter(RequestCacheAwareFilter.java:63) ~[spring-security-web-7.0.0-RC1.jar!/:7.0.0-RC1]
+	at org.springframework.security.web.FilterChainProxy$VirtualFilterChain.doFilter(FilterChainProxy.java:380) ~[spring-security-web-7.0.0-RC1.jar!/:7.0.0-RC1]
+	at com.sambound.erp.config.JwtAuthenticationFilter.doFilterInternal(JwtAuthenticationFilter.java:71) ~[!/:0.0.1-SNAPSHOT]
+	at org.springframework.web.filter.OncePerRequestFilter.doFilter(OncePerRequestFilter.java:116) ~[spring-web-7.0.0-RC2.jar!/:7.0.0-RC2]
+	at org.springframework.security.web.FilterChainProxy$VirtualFilterChain.doFilter(FilterChainProxy.java:380) ~[spring-security-web-7.0.0-RC1.jar!/:7.0.0-RC1]
+	at org.springframework.security.web.authentication.logout.LogoutFilter.doFilter(LogoutFilter.java:110) ~[spring-security-web-7.0.0-RC1.jar!/:7.0.0-RC1]
+	at org.springframework.security.web.authentication.logout.LogoutFilter.doFilter(LogoutFilter.java:96) ~[spring-security-web-7.0.0-RC1.jar!/:7.0.0-RC1]
+	at org.springframework.security.web.FilterChainProxy$VirtualFilterChain.doFilter(FilterChainProxy.java:380) ~[spring-security-web-7.0.0-RC1.jar!/:7.0.0-RC1]
+	at org.springframework.web.filter.CorsFilter.doFilterInternal(CorsFilter.java:91) ~[spring-web-7.0.0-RC2.jar!/:7.0.0-RC2]
+	at org.springframework.web.filter.OncePerRequestFilter.doFilter(OncePerRequestFilter.java:116) ~[spring-web-7.0.0-RC2.jar!/:7.0.0-RC2]
+	at org.springframework.security.web.FilterChainProxy$VirtualFilterChain.doFilter(FilterChainProxy.java:380) ~[spring-security-web-7.0.0-RC1.jar!/:7.0.0-RC1]
+	at org.springframework.security.web.header.HeaderWriterFilter.doHeadersAfter(HeaderWriterFilter.java:90) ~[spring-security-web-7.0.0-RC1.jar!/:7.0.0-RC1]
+	at org.springframework.security.web.header.HeaderWriterFilter.doFilterInternal(HeaderWriterFilter.java:75) ~[spring-security-web-7.0.0-RC1.jar!/:7.0.0-RC1]
+	at org.springframework.web.filter.OncePerRequestFilter.doFilter(OncePerRequestFilter.java:116) ~[spring-web-7.0.0-RC2.jar!/:7.0.0-RC2]
+	at org.springframework.security.web.FilterChainProxy$VirtualFilterChain.doFilter(FilterChainProxy.java:380) ~[spring-security-web-7.0.0-RC1.jar!/:7.0.0-RC1]
+	at org.springframework.security.web.context.SecurityContextHolderFilter.doFilter(SecurityContextHolderFilter.java:82) ~[spring-security-web-7.0.0-RC1.jar!/:7.0.0-RC1]
+	at org.springframework.security.web.context.SecurityContextHolderFilter.doFilter(SecurityContextHolderFilter.java:69) ~[spring-security-web-7.0.0-RC1.jar!/:7.0.0-RC1]
+	at org.springframework.security.web.FilterChainProxy$VirtualFilterChain.doFilter(FilterChainProxy.java:380) ~[spring-security-web-7.0.0-RC1.jar!/:7.0.0-RC1]
+	at org.springframework.security.web.context.request.async.WebAsyncManagerIntegrationFilter.doFilterInternal(WebAsyncManagerIntegrationFilter.java:62) ~[spring-security-web-7.0.0-RC1.jar!/:7.0.0-RC1]
+	at org.springframework.web.filter.OncePerRequestFilter.doFilter(OncePerRequestFilter.java:116) ~[spring-web-7.0.0-RC2.jar!/:7.0.0-RC2]
+	at org.springframework.security.web.FilterChainProxy$VirtualFilterChain.doFilter(FilterChainProxy.java:380) ~[spring-security-web-7.0.0-RC1.jar!/:7.0.0-RC1]
+	at org.springframework.security.web.session.DisableEncodeUrlFilter.doFilterInternal(DisableEncodeUrlFilter.java:42) ~[spring-security-web-7.0.0-RC1.jar!/:7.0.0-RC1]
+	at org.springframework.web.filter.OncePerRequestFilter.doFilter(OncePerRequestFilter.java:116) ~[spring-web-7.0.0-RC2.jar!/:7.0.0-RC2]
+	at org.springframework.security.web.FilterChainProxy$VirtualFilterChain.doFilter(FilterChainProxy.java:380) ~[spring-security-web-7.0.0-RC1.jar!/:7.0.0-RC1]
+	at org.springframework.security.web.FilterChainProxy.doFilterInternal(FilterChainProxy.java:237) ~[spring-security-web-7.0.0-RC1.jar!/:7.0.0-RC1]
+	at org.springframework.security.web.FilterChainProxy.doFilter(FilterChainProxy.java:195) ~[spring-security-web-7.0.0-RC1.jar!/:7.0.0-RC1]
+	at org.springframework.web.filter.CompositeFilter$VirtualFilterChain.doFilter(CompositeFilter.java:113) ~[spring-web-7.0.0-RC2.jar!/:7.0.0-RC2]
+	at org.springframework.web.filter.ServletRequestPathFilter.doFilter(ServletRequestPathFilter.java:52) ~[spring-web-7.0.0-RC2.jar!/:7.0.0-RC2]
+	at org.springframework.web.filter.CompositeFilter$VirtualFilterChain.doFilter(CompositeFilter.java:113) ~[spring-web-7.0.0-RC2.jar!/:7.0.0-RC2]
+	at org.springframework.web.filter.CompositeFilter.doFilter(CompositeFilter.java:74) ~[spring-web-7.0.0-RC2.jar!/:7.0.0-RC2]
+	at org.springframework.security.config.annotation.web.configuration.WebSecurityConfiguration$CompositeFilterChainProxy.doFilter(WebSecurityConfiguration.java:317) ~[spring-security-config-7.0.0-RC1.jar!/:7.0.0-RC1]
+	at org.springframework.web.filter.DelegatingFilterProxy.invokeDelegate(DelegatingFilterProxy.java:355) ~[spring-web-7.0.0-RC2.jar!/:7.0.0-RC2]
+	at org.springframework.web.filter.DelegatingFilterProxy.doFilter(DelegatingFilterProxy.java:272) ~[spring-web-7.0.0-RC2.jar!/:7.0.0-RC2]
+	at org.apache.catalina.core.ApplicationFilterChain.doFilter(ApplicationFilterChain.java:107) ~[tomcat-embed-core-11.0.13.jar!/:na]
+	at org.springframework.web.filter.RequestContextFilter.doFilterInternal(RequestContextFilter.java:100) ~[spring-web-7.0.0-RC2.jar!/:7.0.0-RC2]
+	at org.springframework.web.filter.OncePerRequestFilter.doFilter(OncePerRequestFilter.java:116) ~[spring-web-7.0.0-RC2.jar!/:7.0.0-RC2]
+	at org.apache.catalina.core.ApplicationFilterChain.doFilter(ApplicationFilterChain.java:107) ~[tomcat-embed-core-11.0.13.jar!/:na]
+	at org.springframework.web.filter.FormContentFilter.doFilterInternal(FormContentFilter.java:93) ~[spring-web-7.0.0-RC2.jar!/:7.0.0-RC2]
+	at org.springframework.web.filter.OncePerRequestFilter.doFilter(OncePerRequestFilter.java:116) ~[spring-web-7.0.0-RC2.jar!/:7.0.0-RC2]
+	at org.apache.catalina.core.ApplicationFilterChain.doFilter(ApplicationFilterChain.java:107) ~[tomcat-embed-core-11.0.13.jar!/:na]
+	at org.springframework.web.filter.CharacterEncodingFilter.doFilterInternal(CharacterEncodingFilter.java:199) ~[spring-web-7.0.0-RC2.jar!/:7.0.0-RC2]
+	at org.springframework.web.filter.OncePerRequestFilter.doFilter(OncePerRequestFilter.java:116) ~[spring-web-7.0.0-RC2.jar!/:7.0.0-RC2]
+	at org.apache.catalina.core.ApplicationFilterChain.doFilter(ApplicationFilterChain.java:107) ~[tomcat-embed-core-11.0.13.jar!/:na]
+	at org.apache.catalina.core.StandardWrapperValve.invoke(StandardWrapperValve.java:165) ~[tomcat-embed-core-11.0.13.jar!/:na]
+	at org.apache.catalina.core.StandardContextValve.invoke(StandardContextValve.java:77) ~[tomcat-embed-core-11.0.13.jar!/:na]
+	at org.apache.catalina.authenticator.AuthenticatorBase.invoke(AuthenticatorBase.java:482) ~[tomcat-embed-core-11.0.13.jar!/:na]
+	at org.apache.catalina.core.StandardHostValve.invoke(StandardHostValve.java:113) ~[tomcat-embed-core-11.0.13.jar!/:na]
+	at org.apache.catalina.valves.ErrorReportValve.invoke(ErrorReportValve.java:83) ~[tomcat-embed-core-11.0.13.jar!/:na]
+	at org.apache.catalina.core.StandardEngineValve.invoke(StandardEngineValve.java:72) ~[tomcat-embed-core-11.0.13.jar!/:na]
+	at org.apache.catalina.connector.CoyoteAdapter.service(CoyoteAdapter.java:341) ~[tomcat-embed-core-11.0.13.jar!/:na]
+	at org.apache.coyote.http11.Http11Processor.service(Http11Processor.java:397) ~[tomcat-embed-core-11.0.13.jar!/:na]
+	at org.apache.coyote.AbstractProcessorLight.process(AbstractProcessorLight.java:63) ~[tomcat-embed-core-11.0.13.jar!/:na]
+	at org.apache.coyote.AbstractProtocol$ConnectionHandler.process(AbstractProtocol.java:903) ~[tomcat-embed-core-11.0.13.jar!/:na]
+	at org.apache.tomcat.util.net.NioEndpoint$SocketProcessor.doRun(NioEndpoint.java:1778) ~[tomcat-embed-core-11.0.13.jar!/:na]
+	at org.apache.tomcat.util.net.SocketProcessorBase.run(SocketProcessorBase.java:52) ~[tomcat-embed-core-11.0.13.jar!/:na]
+	at org.apache.tomcat.util.threads.ThreadPoolExecutor.runWorker(ThreadPoolExecutor.java:946) ~[tomcat-embed-core-11.0.13.jar!/:na]
+	at org.apache.tomcat.util.threads.ThreadPoolExecutor$Worker.run(ThreadPoolExecutor.java:480) ~[tomcat-embed-core-11.0.13.jar!/:na]
+	at org.apache.tomcat.util.threads.TaskThread$WrappingRunnable.run(TaskThread.java:57) ~[tomcat-embed-core-11.0.13.jar!/:na]
+	at java.base/java.lang.Thread.run(Thread.java:1474) ~[na:na]
+Caused by: org.springframework.transaction.UnexpectedRollbackException: Transaction silently rolled back because it has been marked as rollback-only
+	at org.springframework.transaction.support.AbstractPlatformTransactionManager.processCommit(AbstractPlatformTransactionManager.java:803) ~[spring-tx-7.0.0-RC2.jar!/:7.0.0-RC2]
+	at org.springframework.transaction.support.AbstractPlatformTransactionManager.commit(AbstractPlatformTransactionManager.java:757) ~[spring-tx-7.0.0-RC2.jar!/:7.0.0-RC2]
+	at org.springframework.transaction.support.TransactionTemplate.execute(TransactionTemplate.java:149) ~[spring-tx-7.0.0-RC2.jar!/:7.0.0-RC2]
+	at com.sambound.erp.service.UnitImportService.processBatch(UnitImportService.java:284) ~[!/:0.0.1-SNAPSHOT]
+	at com.sambound.erp.service.UnitImportService.lambda$importMultiThread$0(UnitImportService.java:234) ~[!/:0.0.1-SNAPSHOT]
+	at java.base/java.util.concurrent.CompletableFuture$AsyncSupply.run(CompletableFuture.java:1789) ~[na:na]
+	at java.base/java.util.concurrent.ThreadPerTaskExecutor$TaskRunner.run(ThreadPerTaskExecutor.java:291) ~[na:na]
+	at java.base/java.lang.VirtualThread.run(VirtualThread.java:456) ~[na:na]
+
+2025-11-01T16:56:03.011+07:00  INFO 6900 --- [erp] [SpringApplicationShutdownHook] o.s.boot.tomcat.GracefulShutdown         : Commencing graceful shutdown. Waiting for active requests to complete
+2025-11-01T16:56:03.052+07:00  INFO 6900 --- [erp] [tomcat-shutdown] o.s.boot.tomcat.GracefulShutdown         : Graceful shutdown complete
+2025-11-01T16:56:03.080+07:00  INFO 6900 --- [erp] [SpringApplicationShutdownHook] j.LocalContainerEntityManagerFactoryBean : Closing JPA EntityManagerFactory for persistence unit 'default'
+2025-11-01T16:56:03.082+07:00  INFO 6900 --- [erp] [SpringApplicationShutdownHook] com.zaxxer.hikari.HikariDataSource       : HikariPool-1 - Shutdown initiated...
+2025-11-01T16:56:03.082+07:00  INFO 6900 --- [erp] [SpringApplicationShutdownHook] com.zaxxer.hikari.HikariDataSource       : HikariPool-1 - Shutdown completed.
+2025-11-01T16:57:28.773+07:00  INFO 14516 --- [erp] [main] com.sambound.erp.ErpApplication          : Starting ErpApplication v0.0.1-SNAPSHOT using Java 25 with PID 14516 (E:\Projects\erp\backend\target\erp-0.0.1-SNAPSHOT.jar started by 98310 in E:\Projects\erp\backend)
+2025-11-01T16:57:28.776+07:00  INFO 14516 --- [erp] [main] com.sambound.erp.ErpApplication          : No active profile set, falling back to 1 default profile: "default"

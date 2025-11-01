@@ -1,0 +1,4 @@
+﻿FBillHead(BD_UNIT),FNumber,FName#2052,FUnitGroupId,FUnitGroupId#Name,*Split*1,SubHeadEntity,FConvertType,FConvertNumerator,FConvertDenominator
+*单据头(序号),(单据头)编码,*(单据头)名称#中文(简体),*(单据头)所属组别#编码,(单据头)所属组别#名称,间隔列,*转换率(序号),(转换率)换算类型,(转换率)换算分子,(转换率)换算分母
+392885,bem,本（100张）,Quantity,数量,,100091,固定,100,1
+393085,ben1,本,Quantity,数量,,100092,固定,1,1

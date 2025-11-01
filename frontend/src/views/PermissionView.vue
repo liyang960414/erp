@@ -6,16 +6,18 @@
       </template>
 
       <!-- 权限表格 -->
-      <el-table
-        v-loading="loading"
-        :data="permissions"
-        style="width: 100%"
-        border
-      >
+      <div class="table-container">
+        <el-table
+          v-loading="loading"
+          :data="permissions"
+          style="width: 100%"
+          border
+        >
         <el-table-column prop="id" label="ID" width="80" />
         <el-table-column prop="name" label="权限名称" width="200" />
         <el-table-column prop="description" label="描述" />
-      </el-table>
+        </el-table>
+      </div>
 
       <!-- 分页 -->
       <div class="pagination">
@@ -73,14 +75,39 @@ const loadPermissions = async () => {
 
 <style scoped>
 .permission-container {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
   max-width: 1400px;
   margin: 0 auto;
+}
+
+.permission-container :deep(.el-card) {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.permission-container :deep(.el-card__body) {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  min-height: 0;
+}
+
+.table-container {
+  flex: 1;
+  overflow: auto;
+  min-height: 0;
 }
 
 .pagination {
   margin-top: 24px;
   display: flex;
   justify-content: flex-end;
+  flex-shrink: 0;
 }
 
 /* 桌面端适配 */

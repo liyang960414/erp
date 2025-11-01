@@ -4,7 +4,7 @@ import router from '@/router'
 
 const request: AxiosInstance = axios.create({
   baseURL: import.meta.env.VITE_API_BASE_URL || 'http://localhost:8080/api',
-  timeout: 10000,
+  timeout: 30000, // 默认30秒
 })
 
 // 请求拦截器
@@ -70,7 +70,12 @@ request.interceptors.response.use(
         message = errorMessages || message
       }
     } else if (error.request) {
+      // 判断是否为超时错误
+      if (error.code === 'ECONNABORTED' || error.message?.includes('timeout')) {
+        message = '请求超时，请稍后重试'
+      } else {
       message = '网络连接失败，请检查网络'
+      }
     } else {
       message = error.message || '请求配置错误'
     }

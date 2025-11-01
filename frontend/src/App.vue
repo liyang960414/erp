@@ -46,8 +46,11 @@ onMounted(() => {
 }
 
 #app {
-  width: 100%;
+  display: flex;
+  flex-direction: column;
+  width: 100vw;
   height: 100vh;
+  overflow: hidden; /* 禁止整体界面滚动 */
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial,
     sans-serif;
   line-height: 1.6;
@@ -60,6 +63,13 @@ body {
   padding: 0;
   font-size: 14px;
   color: #333;
+  overflow: hidden; /* 禁止 body 滚动 */
+  height: 100vh;
+}
+
+html {
+  overflow: hidden; /* 禁止 html 滚动 */
+  height: 100vh;
 }
 
 /* 桌面端适配 - 最小宽度限制 */

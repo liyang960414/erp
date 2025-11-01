@@ -97,13 +97,14 @@
       </div>
 
       <!-- 审计日志表格 -->
-      <el-table
-        v-loading="loading"
-        :data="auditLogs"
-        style="width: 100%"
-        border
-        stripe
-      >
+      <div class="table-container">
+        <el-table
+          v-loading="loading"
+          :data="auditLogs"
+          style="width: 100%"
+          border
+          stripe
+        >
         <el-table-column prop="id" label="ID" width="80" />
         <el-table-column :label="$t('audit.username')" prop="username" width="120" />
         <el-table-column :label="$t('audit.action')" prop="action" width="150">
@@ -147,7 +148,8 @@
             </el-button>
           </template>
         </el-table-column>
-      </el-table>
+        </el-table>
+      </div>
 
       <!-- 分页 -->
       <div class="pagination">
@@ -305,8 +307,26 @@ const getModuleText = (module: string) => {
 
 <style scoped>
 .audit-log-container {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
   max-width: 1400px;
   margin: 0 auto;
+}
+
+.audit-log-container :deep(.el-card) {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.audit-log-container :deep(.el-card__body) {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  min-height: 0;
 }
 
 .card-header {
@@ -319,12 +339,20 @@ const getModuleText = (module: string) => {
 
 .search-bar {
   margin-bottom: 24px;
+  flex-shrink: 0;
+}
+
+.table-container {
+  flex: 1;
+  overflow: auto;
+  min-height: 0;
 }
 
 .pagination {
   margin-top: 24px;
   display: flex;
   justify-content: flex-end;
+  flex-shrink: 0;
 }
 
 /* 桌面端适配 */
