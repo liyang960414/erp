@@ -17,6 +17,7 @@ DROP TABLE IF EXISTS user_roles CASCADE;
 DROP TABLE IF EXISTS role_permissions CASCADE;
 
 -- 删除主表
+DROP TABLE IF EXISTS audit_logs CASCADE;
 DROP TABLE IF EXISTS users CASCADE;
 DROP TABLE IF EXISTS roles CASCADE;
 DROP TABLE IF EXISTS permissions CASCADE;
@@ -32,5 +33,5 @@ SELECT
     tablename 
 FROM pg_tables 
 WHERE schemaname = 'public'
-    AND tablename IN ('users', 'roles', 'permissions', 'user_roles', 'role_permissions');
+    AND tablename IN ('users', 'roles', 'permissions', 'user_roles', 'role_permissions', 'audit_logs');
 

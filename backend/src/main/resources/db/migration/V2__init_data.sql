@@ -93,7 +93,7 @@ INSERT INTO users (
     credentials_non_expired
 ) VALUES (
     'admin',
-    '$2a$10$N.zmdr9k7uOCQb376NoUnuTJ8iAt6Z5EHsM8lE9lBOsl7iwKkg0.i',  -- admin123 (已验证的哈希值)
+    '$2a$10$frXVPPQ6Adx7L0RUmd3FNezNyWPzJEaZlR46qEBQnQyjyBdELowiW',  -- admin123 (已验证的哈希值)
     'admin@erp.example.com',
     '系统管理员',
     TRUE,
@@ -160,7 +160,7 @@ INSERT INTO users (
     credentials_non_expired
 ) VALUES (
     'testuser',
-    '$2a$10$N.zmdr9k7uOCQb376NoUnuTJ8iAt6Z5EHsM8lE9lBOsl7iwKkg0.i',  -- admin123 (测试用相同密码)
+    '$2a$10$frXVPPQ6Adx7L0RUmd3FNezNyWPzJEaZlR46qEBQnQyjyBdELowiW',  -- admin123 (测试用相同密码)
     'testuser@erp.example.com',
     '测试用户',
     TRUE,
