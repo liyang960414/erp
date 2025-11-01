@@ -1,7 +1,7 @@
 <template>
   <el-dialog
     v-model="dialogVisible"
-    title="导入单位（CSV）"
+    title="导入单位"
     width="600px"
     @close="handleClose"
   >
@@ -11,16 +11,16 @@
       :on-change="handleFileChange"
       :file-list="fileList"
       :limit="1"
-      accept=".csv"
+      accept=".xlsx,.xls"
       drag
     >
       <el-icon class="el-icon--upload"><upload-filled /></el-icon>
       <div class="el-upload__text">
-        将CSV文件拖到此处，或<em>点击上传</em>
+        将文件拖到此处，或<em>点击上传</em>
       </div>
       <template #tip>
         <div class="el-upload__tip">
-          只能上传CSV文件，且不超过10MB
+          支持Excel文件（.xlsx或.xls），且不超过10MB
         </div>
       </template>
     </el-upload>
@@ -91,8 +91,9 @@ const importResult = ref<UnitImportResponse | null>(null)
 
 const handleFileChange = (file: UploadFile) => {
   if (file.raw) {
-    if (!file.raw.name.endsWith('.csv')) {
-      ElMessage.error('只能上传CSV文件')
+    const fileName = file.raw.name.toLowerCase()
+    if (!fileName.endsWith('.xlsx') && !fileName.endsWith('.xls')) {
+      ElMessage.error('只能上传Excel文件（.xlsx或.xls）')
       return
     }
     if (file.raw.size > 10 * 1024 * 1024) {
@@ -106,7 +107,7 @@ const handleFileChange = (file: UploadFile) => {
 
 const handleImport = async () => {
   if (!selectedFile.value) {
-    ElMessage.warning('请先选择CSV文件')
+    ElMessage.warning('请先选择文件')
     return
   }
   

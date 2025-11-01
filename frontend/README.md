@@ -88,29 +88,16 @@ npm install
 ### 开发模式
 
 ```bash
-# 使用开发环境配置（连接本地后端）
 npm run dev
-
-# 使用测试环境配置（连接测试服务器）
-npm run dev:staging
 ```
 
 访问 http://localhost:5173
 
-### 构建不同环境版本
+### 构建生产版本
 
 ```bash
-# 构建开发版本
 npm run build
-
-# 构建测试版本
-npm run build:staging
-
-# 构建生产版本
-npm run build:production
 ```
-
-构建后可在 `dist` 目录找到打包好的文件。
 
 ### 类型检查
 
@@ -199,67 +186,17 @@ router.push({ name: 'userList', params: { id: 1 } })
 
 ## 配置
 
-### 环境变量配置
+### 环境变量
 
-项目支持多环境配置，通过 `.env` 文件管理不同环境的配置：
+创建`.env.local`文件：
 
-#### 环境文件说明
-
-- `.env.development` - 开发环境（本地开发）
-- `.env.staging` - 测试环境（测试服务器）
-- `.env.production` - 生产环境（生产服务器）
-- `.env.local` - 本地覆盖配置（会被 git 忽略）
-- `.env.example` - 配置示例文件
-
-#### 配置示例
-
-**开发环境 (`.env.development`)**
 ```env
 VITE_API_BASE_URL=http://localhost:8080/api
-VITE_APP_TITLE=ERP系统 - 开发环境
-VITE_DEBUG=true
 ```
 
-**测试环境 (`.env.staging`)**
-```env
-VITE_API_BASE_URL=http://43.161.248.212:8080/api
-VITE_APP_TITLE=ERP系统 - 测试环境
-VITE_DEBUG=false
-```
+### API地址配置
 
-**生产环境 (`.env.production`)**
-```env
-VITE_API_BASE_URL=https://api.yourdomain.com/api
-VITE_APP_TITLE=ERP系统
-VITE_DEBUG=false
-```
-
-#### 使用不同环境
-
-**开发模式**
-```bash
-# 使用开发环境配置
-npm run dev
-
-# 使用测试环境配置
-npm run dev:staging
-```
-
-**构建命令**
-```bash
-# 构建开发版本
-npm run build
-
-# 构建测试版本
-npm run build:staging
-
-# 构建生产版本
-npm run build:production
-```
-
-#### API地址配置
-
-API地址在 `src/utils/request.ts` 中自动读取环境变量：
+在`src/utils/request.ts`中配置：
 
 ```typescript
 const request = axios.create({

@@ -79,13 +79,14 @@ public class UnitController {
                     .body(ApiResponse.error("文件不能为空"));
         }
 
-        if (!file.getOriginalFilename().endsWith(".csv")) {
+        String filename = file.getOriginalFilename();
+        if (filename == null || (!filename.endsWith(".xlsx") && !filename.endsWith(".xls"))) {
             return ResponseEntity.badRequest()
-                    .body(ApiResponse.error("只支持CSV格式的文件"));
+                    .body(ApiResponse.error("只支持Excel格式的文件（.xlsx或.xls）"));
         }
 
         try {
-            UnitImportResponse result = unitImportService.importFromCsv(file);
+            UnitImportResponse result = unitImportService.importFromExcel(file);
             return ResponseEntity.ok(ApiResponse.success(result));
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
