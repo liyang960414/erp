@@ -113,7 +113,7 @@ echo.
 
 REM 验证数据
 echo [验证] 检查数据库内容...
-psql -h %DB_HOST% -p %DB_PORT% -U %DB_USER% -d %DB_NAME% -c "SELECT '用户表' AS 表名, COUNT(*) AS 记录数 FROM users UNION ALL SELECT '角色表', COUNT(*) FROM roles UNION ALL SELECT '权限表', COUNT(*) FROM permissions;"
+psql -h %DB_HOST% -p %DB_PORT% -U %DB_USER% -d %DB_NAME% -c "SELECT '用户表' AS 表名, COUNT(*) AS 记录数 FROM users UNION ALL SELECT '角色表', COUNT(*) FROM roles UNION ALL SELECT '权限表', COUNT(*) FROM permissions UNION ALL SELECT '审计日志表', COUNT(*) FROM audit_logs;"
 
 echo.
 echo ========================================

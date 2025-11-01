@@ -9,32 +9,52 @@
 #### 1. `migration/V1__init_schema.sql` - 表结构脚本
 - **用途**: 创建所有数据表
 - **内容**: 表结构、索引、注释
-- **表名**: users, roles, permissions, user_roles, role_permissions
+- **表名**: users, roles, permissions, user_roles, role_permissions, audit_logs
 
 #### 2. `migration/V2__init_data.sql` - 初始数据脚本
 - **用途**: 插入默认数据
 - **内容**: 权限、角色、管理员用户
 - **安全**: 使用ON CONFLICT避免重复插入
 
+#### 3. `init_all.sql` - 完整初始化脚本（推荐）
+- **用途**: 一次性完成所有表结构和数据的初始化
+- **内容**: 合并V1和V2的功能，支持事务
+- **优点**: 单一文件，支持回滚，适合快速初始化
+
 ### 维护脚本
 
-#### 3. `drop_all_tables.sql` - 删除所有表
+#### 4. `drop_all_tables.sql` - 删除所有表
 - **用途**: 完全删除数据库表和数据
 - **警告**: ⚠️ 会删除所有数据，请谨慎使用！
 
-#### 4. `recreate_database.sh` - 重建数据库（Linux/Mac）
+#### 5. `recreate_database.sh` - 重建数据库（Linux/Mac）
 - **用途**: 完全重建数据库的自动化脚本
 - **功能**: 删除→创建→导入结构→导入数据
 - **环境**: Linux/Mac/Unix
 
-#### 5. `recreate_database.bat` - 重建数据库（Windows）
+#### 6. `recreate_database.bat` - 重建数据库（Windows）
 - **用途**: Windows版本的数据库重建脚本
 - **功能**: 同上
 - **环境**: Windows
 
+#### 7. `migration/V3__add_audit_logs.sql` - 审计日志表脚本
+- **用途**: 仅添加审计日志表（已合并到V1，保留用于参考）
+- **状态**: 已废弃，请使用V1__init_schema.sql
+
 ## 使用方式
 
-### 方式一：手动执行SQL脚本
+### 方式一：使用完整初始化脚本（最简单）
+
+#### 使用init_all.sql一次性完成所有初始化
+```bash
+# Linux/Mac
+psql -h localhost -p 5432 -U postgres -d erp_db -f init_all.sql
+
+# Windows
+psql -h localhost -p 5432 -U postgres -d erp_db -f init_all.sql
+```
+
+### 方式二：手动执行SQL脚本
 
 #### 1. 连接到PostgreSQL
 ```bash
@@ -55,7 +75,7 @@ psql -h localhost -p 5432 -U postgres -d erp_db
 \i src/main/resources/db/migration/V2__init_data.sql
 ```
 
-### 方式二：使用自动化脚本（推荐）
+### 方式三：使用自动化脚本（推荐）
 
 #### Linux/Mac用户
 ```bash
@@ -81,7 +101,7 @@ REM 2. 执行脚本
 recreate_database.bat
 ```
 
-### 方式三：使用psql命令行
+### 方式四：使用psql命令行
 
 ```bash
 # 连接并执行脚本
@@ -89,7 +109,7 @@ psql -h localhost -p 5432 -U postgres -d erp_db -f V1__init_schema.sql
 psql -h localhost -p 5432 -U postgres -d erp_db -f V2__init_data.sql
 ```
 
-### 方式四：使用Spring Boot自动初始化（开发环境）
+### 方式五：使用Spring Boot自动初始化（开发环境）
 
 如果`application.yaml`配置为：
 ```yaml
@@ -115,6 +135,8 @@ roles (角色)
 role_permissions (角色权限关联)
   ↓
 permissions (权限)
+
+audit_logs (审计日志表 - 独立表)
 ```
 
 ### 表说明
@@ -126,6 +148,7 @@ permissions (权限)
 | permissions | 权限表 | 初始12个权限 |
 | user_roles | 用户角色关联 | 初始2条 |
 | role_permissions | 角色权限关联 | 初始多条 |
+| audit_logs | 审计日志表 | 初始为空 |
 
 ## 默认数据
 
@@ -238,6 +261,11 @@ psql -h localhost -p 5432 -U postgres erp_db < backup.sql
    - 备份重要数据
 
 ## 版本历史
+
+### v3.0 (2024-12-20)
+- 添加审计日志表（audit_logs）
+- 创建init_all.sql完整初始化脚本
+- 更新所有文档和脚本支持审计表
 
 ### v1.0 (2024-01-01)
 - 初始版本

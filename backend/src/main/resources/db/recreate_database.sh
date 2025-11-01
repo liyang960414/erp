@@ -112,7 +112,9 @@ SELECT
 UNION ALL
 SELECT '角色表', COUNT(*) FROM roles
 UNION ALL
-SELECT '权限表', COUNT(*) FROM permissions;
+SELECT '权限表', COUNT(*) FROM permissions
+UNION ALL
+SELECT '审计日志表', COUNT(*) FROM audit_logs;
 "
 
 echo ""
