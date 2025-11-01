@@ -37,7 +37,7 @@ export const unitApi = {
     return request.delete(`/units/${id}`)
   },
 
-  // 导入CSV文件
+  // 导入Excel文件
   importUnits(file: File): Promise<UnitImportResponse> {
     const formData = new FormData()
     formData.append('file', file)

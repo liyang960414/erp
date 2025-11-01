@@ -11,7 +11,7 @@
             </el-radio-group>
             <el-button type="success" @click="handleImport">
               <el-icon><Upload /></el-icon>
-              导入CSV
+              导入Excel
             </el-button>
             <el-button type="primary" @click="handleAddUnit">
               <el-icon><Plus /></el-icon>
@@ -109,7 +109,7 @@
       @success="loadUnits"
     />
 
-    <!-- CSV导入对话框 -->
+    <!-- Excel导入对话框 -->
     <UnitImportDialog v-model="importDialogVisible" @success="loadUnits" />
   </div>
 </template>
