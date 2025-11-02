@@ -1,17 +1,26 @@
 -- ============================================
 -- ERP系统数据库完整初始化脚本
--- 版本: 3.0
+-- 版本: 3.1
 -- 创建日期: 2024-12-20
+-- 更新日期: 2024-12-XX
 -- 说明: 一次性完成所有表结构和初始数据的初始化
--- 包含：用户、角色、权限、审计日志等所有表
+-- 包含：用户、角色、权限、审计日志、单位、物料等所有表
 -- ============================================
 
 -- 开始事务
 BEGIN;
 
 -- ============================================
--- 第一步：删除所有现有表
+-- 第一步：删除所有现有表（按依赖顺序）
 -- ============================================
+-- 删除物料相关表
+DROP TABLE IF EXISTS materials CASCADE;
+DROP TABLE IF EXISTS material_groups CASCADE;
+-- 删除单位相关表
+DROP TABLE IF EXISTS unit_conversions CASCADE;
+DROP TABLE IF EXISTS units CASCADE;
+DROP TABLE IF EXISTS unit_groups CASCADE;
+-- 删除审计和用户相关表
 DROP TABLE IF EXISTS audit_logs CASCADE;
 DROP TABLE IF EXISTS user_roles CASCADE;
 DROP TABLE IF EXISTS role_permissions CASCADE;
@@ -86,6 +95,66 @@ CREATE TABLE audit_logs (
     created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
 
+-- 单位组表
+CREATE TABLE unit_groups (
+    id BIGSERIAL PRIMARY KEY,
+    code VARCHAR(50) NOT NULL UNIQUE,
+    name VARCHAR(100) NOT NULL,
+    description VARCHAR(200),
+    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
+
+-- 单位表
+CREATE TABLE units (
+    id BIGSERIAL PRIMARY KEY,
+    code VARCHAR(50) NOT NULL UNIQUE,
+    name VARCHAR(100) NOT NULL,
+    unit_group_id BIGINT NOT NULL REFERENCES unit_groups(id) ON DELETE CASCADE,
+    enabled BOOLEAN NOT NULL DEFAULT TRUE,
+    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
+
+-- 单位转换表
+CREATE TABLE unit_conversions (
+    id BIGSERIAL PRIMARY KEY,
+    from_unit_id BIGINT NOT NULL REFERENCES units(id) ON DELETE CASCADE,
+    to_unit_id BIGINT NOT NULL REFERENCES units(id) ON DELETE CASCADE,
+    convert_type VARCHAR(20) NOT NULL DEFAULT 'FIXED',
+    numerator DECIMAL(18, 6) NOT NULL,
+    denominator DECIMAL(18, 6) NOT NULL DEFAULT 1,
+    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    CONSTRAINT chk_unit_conversion_self CHECK (from_unit_id != to_unit_id),
+    CONSTRAINT chk_unit_conversion_denominator CHECK (denominator > 0)
+);
+
+-- 物料组表
+CREATE TABLE material_groups (
+    id BIGSERIAL PRIMARY KEY,
+    code VARCHAR(50) NOT NULL UNIQUE,
+    name VARCHAR(100) NOT NULL,
+    description VARCHAR(200),
+    parent_id BIGINT REFERENCES material_groups(id) ON DELETE SET NULL,
+    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
+
+-- 物料表
+CREATE TABLE materials (
+    id BIGSERIAL PRIMARY KEY,
+    code VARCHAR(50) NOT NULL UNIQUE,
+    name VARCHAR(200) NOT NULL,
+    specification VARCHAR(500),
+    mnemonic_code VARCHAR(50),
+    old_number VARCHAR(50),
+    description VARCHAR(1000),
+    material_group_id BIGINT NOT NULL REFERENCES material_groups(id) ON DELETE RESTRICT,
+    base_unit_id BIGINT NOT NULL REFERENCES units(id) ON DELETE RESTRICT,
+    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
+
 -- ============================================
 -- 第三步：创建索引
 -- ============================================
@@ -110,6 +179,28 @@ CREATE INDEX idx_audit_logs_status ON audit_logs(status);
 CREATE INDEX idx_audit_logs_created_at ON audit_logs(created_at DESC);
 CREATE INDEX idx_audit_logs_resource ON audit_logs(resource_type, resource_id);
 
+-- 单位组表索引
+CREATE INDEX idx_unit_groups_code ON unit_groups(code);
+
+-- 单位表索引
+CREATE INDEX idx_units_code ON units(code);
+CREATE INDEX idx_units_unit_group_id ON units(unit_group_id);
+CREATE INDEX idx_units_enabled ON units(enabled);
+
+-- 单位转换表索引
+CREATE INDEX idx_unit_conversions_from_unit_id ON unit_conversions(from_unit_id);
+CREATE INDEX idx_unit_conversions_to_unit_id ON unit_conversions(to_unit_id);
+
+-- 物料组表索引
+CREATE INDEX idx_material_groups_code ON material_groups(code);
+CREATE INDEX idx_material_groups_parent_id ON material_groups(parent_id);
+
+-- 物料表索引
+CREATE INDEX idx_materials_code ON materials(code);
+CREATE INDEX idx_materials_material_group_id ON materials(material_group_id);
+CREATE INDEX idx_materials_base_unit_id ON materials(base_unit_id);
+CREATE INDEX idx_materials_name ON materials(name);
+
 -- ============================================
 -- 第四步：添加表注释和列注释
 -- ============================================
@@ -120,6 +211,11 @@ COMMENT ON TABLE permissions IS '权限表';
 COMMENT ON TABLE user_roles IS '用户角色关联表';
 COMMENT ON TABLE role_permissions IS '角色权限关联表';
 COMMENT ON TABLE audit_logs IS '审计日志表';
+COMMENT ON TABLE unit_groups IS '单位组表';
+COMMENT ON TABLE units IS '单位表';
+COMMENT ON TABLE unit_conversions IS '单位转换表';
+COMMENT ON TABLE material_groups IS '物料组表';
+COMMENT ON TABLE materials IS '物料表';
 
 COMMENT ON COLUMN users.id IS '用户ID';
 COMMENT ON COLUMN users.username IS '用户名（唯一）';
@@ -155,6 +251,49 @@ COMMENT ON COLUMN audit_logs.ip_address IS '请求IP地址';
 COMMENT ON COLUMN audit_logs.status IS '操作状态（SUCCESS, FAILURE）';
 COMMENT ON COLUMN audit_logs.error_message IS '错误信息（如果操作失败）';
 COMMENT ON COLUMN audit_logs.created_at IS '操作时间';
+
+COMMENT ON COLUMN unit_groups.id IS '单位组ID';
+COMMENT ON COLUMN unit_groups.code IS '单位组编码（唯一）';
+COMMENT ON COLUMN unit_groups.name IS '单位组名称';
+COMMENT ON COLUMN unit_groups.description IS '单位组描述';
+COMMENT ON COLUMN unit_groups.created_at IS '创建时间';
+COMMENT ON COLUMN unit_groups.updated_at IS '更新时间';
+
+COMMENT ON COLUMN units.id IS '单位ID';
+COMMENT ON COLUMN units.code IS '单位编码（唯一）';
+COMMENT ON COLUMN units.name IS '单位名称';
+COMMENT ON COLUMN units.unit_group_id IS '所属单位组ID';
+COMMENT ON COLUMN units.enabled IS '是否启用';
+COMMENT ON COLUMN units.created_at IS '创建时间';
+COMMENT ON COLUMN units.updated_at IS '更新时间';
+
+COMMENT ON COLUMN unit_conversions.id IS '单位转换ID';
+COMMENT ON COLUMN unit_conversions.from_unit_id IS '源单位ID';
+COMMENT ON COLUMN unit_conversions.to_unit_id IS '目标单位ID';
+COMMENT ON COLUMN unit_conversions.convert_type IS '换算类型（FIXED-固定, FLOAT-浮动）';
+COMMENT ON COLUMN unit_conversions.numerator IS '换算分子';
+COMMENT ON COLUMN unit_conversions.denominator IS '换算分母';
+COMMENT ON COLUMN unit_conversions.created_at IS '创建时间';
+
+COMMENT ON COLUMN material_groups.id IS '物料组ID';
+COMMENT ON COLUMN material_groups.code IS '物料组编码（唯一）';
+COMMENT ON COLUMN material_groups.name IS '物料组名称';
+COMMENT ON COLUMN material_groups.description IS '物料组描述';
+COMMENT ON COLUMN material_groups.parent_id IS '父级物料组ID（树形结构支持）';
+COMMENT ON COLUMN material_groups.created_at IS '创建时间';
+COMMENT ON COLUMN material_groups.updated_at IS '更新时间';
+
+COMMENT ON COLUMN materials.id IS '物料ID';
+COMMENT ON COLUMN materials.code IS '物料编码（唯一）';
+COMMENT ON COLUMN materials.name IS '物料名称';
+COMMENT ON COLUMN materials.specification IS '规格';
+COMMENT ON COLUMN materials.mnemonic_code IS '助记码';
+COMMENT ON COLUMN materials.old_number IS '旧编号';
+COMMENT ON COLUMN materials.description IS '描述';
+COMMENT ON COLUMN materials.material_group_id IS '所属物料组ID';
+COMMENT ON COLUMN materials.base_unit_id IS '基础单位ID';
+COMMENT ON COLUMN materials.created_at IS '创建时间';
+COMMENT ON COLUMN materials.updated_at IS '更新时间';
 
 -- ============================================
 -- 第五步：插入初始数据
@@ -290,7 +429,17 @@ SELECT '角色表', COUNT(*) FROM roles
 UNION ALL
 SELECT '权限表', COUNT(*) FROM permissions
 UNION ALL
-SELECT '审计日志表', COUNT(*) FROM audit_logs;
+SELECT '审计日志表', COUNT(*) FROM audit_logs
+UNION ALL
+SELECT '单位组表', COUNT(*) FROM unit_groups
+UNION ALL
+SELECT '单位表', COUNT(*) FROM units
+UNION ALL
+SELECT '单位转换表', COUNT(*) FROM unit_conversions
+UNION ALL
+SELECT '物料组表', COUNT(*) FROM material_groups
+UNION ALL
+SELECT '物料表', COUNT(*) FROM materials;
 
 SELECT 
     u.username,
@@ -333,5 +482,10 @@ COMMIT;
 \echo '  - user_roles (用户角色关联表)'
 \echo '  - role_permissions (角色权限关联表)'
 \echo '  - audit_logs (审计日志表)'
+\echo '  - unit_groups (单位组表)'
+\echo '  - units (单位表)'
+\echo '  - unit_conversions (单位转换表)'
+\echo '  - material_groups (物料组表)'
+\echo '  - materials (物料表)'
 \echo ''
 

@@ -12,7 +12,7 @@ public class UnitExcelRow {
     @ExcelProperty(value = {"FBillHead(BD_UNIT)", "*单据头(序号)"})
     private String billHead;
     
-    @ExcelProperty(value = {"FNumber", "*(单据头)编码"})
+    @ExcelProperty(value = {"FNumber", "(单据头)编码"})
     private String code;
     
     @ExcelProperty(value = {"FName#2052", "*(单据头)名称#中文(简体)"})
