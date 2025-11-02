@@ -43,7 +43,7 @@
         {{ formatDateTime(material.updatedAt) }}
       </el-descriptions-item>
     </el-descriptions>
-    
+
     <template #footer>
       <el-button @click="handleClose">关闭</el-button>
     </template>
@@ -90,4 +90,5 @@ const formatDateTime = (dateStr: string) => {
 
 <style scoped>
 </style>
+
 

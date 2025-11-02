@@ -45,6 +45,7 @@ public class SecurityConfig {
                 .requestMatchers("/api/auth/**").permitAll()
                 .requestMatchers("/api/public/**").permitAll()
                 .requestMatchers("/api/dev/**").permitAll()  // 开发环境：允许访问开发工具端点
+                .requestMatchers("/api/monitor/pool/**").hasRole("ADMIN")  // 连接池监控端点仅管理员可访问
                 .anyRequest().authenticated()
             )
             .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);

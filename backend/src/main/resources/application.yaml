@@ -9,9 +9,9 @@ spring:
     # HikariCP 连接池配置
     hikari:
       # 连接池最小空闲连接数（建议与最大连接数相同，避免连接创建开销）
-      minimum-idle: 5
-      # 连接池最大连接数（根据并发量调整，建议 10-20）
-      maximum-pool-size: 10
+      minimum-idle: 10
+      # 连接池最大连接数（根据并发量调整，用于支持大批量导入）
+      maximum-pool-size: 20
       # 连接最大存活时间（设置为小于数据库/网络超时时间，建议 20-25 分钟）
       max-lifetime: 1200000  # 20分钟（毫秒）
       # 连接空闲超时时间（空闲连接在此时间后被关闭）
@@ -19,7 +19,8 @@ spring:
       # 连接获取超时时间（从池中获取连接的最大等待时间）
       connection-timeout: 30000  # 30秒（毫秒）
       # 连接泄漏检测时间（连接在指定时间未关闭将被视为泄漏）
-      leak-detection-threshold: 60000  # 60秒（毫秒）
+      # 增加到120秒，配合批次处理优化，避免在批次处理时误报泄漏
+      leak-detection-threshold: 120000  # 120秒（毫秒）
       # 连接验证查询（PostgreSQL 推荐使用 SELECT 1）
       connection-test-query: SELECT 1
       # 连接验证超时时间
@@ -40,14 +41,13 @@ spring:
       file-size-threshold: 10MB
 
 server:
-  connection-timeout: 600000 # 10分钟连接超时（大文件上传需要更长时间）
   tomcat:
     max-threads: 200
     accept-count: 100
     connection-timeout: 600000 # 10分钟连接超时
     max-connections: 10000
-    max-http-post-size: 209715200 # 200MB (字节)
     max-swallow-size: 209715200 # 200MB (字节)
+    max-http-form-post-size: 209715200
 
 jwt:
   secret: mySecretKeyForJWTTokenGenerationAndValidationMustBeAtLeast256Bits
@@ -56,8 +56,25 @@ jwt:
 logging:
   level:
     root: INFO
-    com.sambound.erp: DEBUG
+    com.sambound.erp: INFO
+    com.zaxxer.hikari: DEBUG
     # 可选：启用 HikariCP 调试日志以监控连接池状态
     # com.zaxxer.hikari: DEBUG
   file:
-    path: ./target/logs/
+    name: ./target/logs/erp.log
+  logback:
+    rollingpolicy:
+      max-file-size: 2MB
+      max-history: 10
+      total-size-cap: 100MB
+      file-name-pattern: ${logging.file.name}.%d{yyyy-MM-dd}.%i
+
+# 添加以下配置
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics
+  endpoint:
+    health:
+      show-details: always

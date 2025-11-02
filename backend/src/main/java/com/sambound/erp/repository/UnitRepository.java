@@ -47,5 +47,14 @@ public interface UnitRepository extends JpaRepository<Unit, Long> {
         RETURNING id, code, name, unit_group_id, enabled, conversion_numerator, conversion_denominator, created_at, updated_at
         """, nativeQuery = true)
     Unit insertOrGetByCode(@Param("code") String code, @Param("name") String name, @Param("unitGroupId") Long unitGroupId);
+    
+    /**
+     * 批量查询单位（按编码列表）
+     * 
+     * @param codes 单位编码列表
+     * @return 单位列表
+     */
+    @Query("SELECT u FROM Unit u WHERE u.code IN :codes")
+    List<Unit> findByCodeIn(@Param("codes") List<String> codes);
 }
 

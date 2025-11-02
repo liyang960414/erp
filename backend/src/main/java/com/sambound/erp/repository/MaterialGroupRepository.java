@@ -6,6 +6,7 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
+import java.util.List;
 import java.util.Optional;
 
 @Repository
@@ -44,5 +45,14 @@ public interface MaterialGroupRepository extends JpaRepository<MaterialGroup, Lo
         @Param("description") String description,
         @Param("parentId") Long parentId
     );
+    
+    /**
+     * 批量查询物料组（按编码列表）
+     * 
+     * @param codes 物料组编码列表
+     * @return 物料组列表
+     */
+    @Query("SELECT mg FROM MaterialGroup mg WHERE mg.code IN :codes")
+    List<MaterialGroup> findByCodeIn(@Param("codes") List<String> codes);
 }
 

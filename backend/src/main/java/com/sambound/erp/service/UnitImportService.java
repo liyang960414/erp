@@ -52,6 +52,7 @@ public class UnitImportService {
         this.transactionTemplate = new TransactionTemplate(transactionManager);
         this.transactionTemplate.setPropagationBehavior(TransactionDefinition.PROPAGATION_REQUIRES_NEW);
         this.transactionTemplate.setIsolationLevel(TransactionDefinition.ISOLATION_READ_COMMITTED);
+        this.transactionTemplate.setTimeout(30); // 30秒超时，防止长时间占用连接
         // 使用虚拟线程执行器（Java 25特性）
         this.executorService = Executors.newVirtualThreadPerTaskExecutor();
     }
@@ -78,6 +79,9 @@ public class UnitImportService {
                     .sheet()
                     .headRowNumber(2)  // 前两行为表头
                     .doRead();
+            
+            // 等待所有异步批次处理完成
+            importer.waitForCompletion();
             
             return importer.getResult();
         } catch (Exception e) {
@@ -195,9 +199,7 @@ public class UnitImportService {
             if (!batch.isEmpty()) {
                 processBatchAsync(new ArrayList<>(batch));
             }
-            
-            // 等待所有批次处理完成
-            waitForAllBatches();
+            // 注意：等待操作在外部调用 waitForCompletion() 方法执行
         }
         
         private void processBatchAsync(List<UnitExcelRow> batchData) {
@@ -229,28 +231,49 @@ public class UnitImportService {
             return new BatchResult(batchSuccessCount.get(), batchErrors);
         }
         
-        private void waitForAllBatches() {
+        /**
+         * 等待所有异步批次处理完成
+         */
+        public void waitForCompletion() {
+            if (futures.isEmpty()) {
+                logger.info("没有需要处理的批次");
+                return;
+            }
+
             try {
                 // 等待所有批次完成（最多10分钟）
                 CompletableFuture.allOf(futures.toArray(new CompletableFuture[0]))
                         .get(10, TimeUnit.MINUTES);
                 
                 // 收集所有批次的结果
-                for (CompletableFuture<BatchResult> future : futures) {
-                    try {
-                        BatchResult result = future.get();
-                        successCount.addAndGet(result.successCount());
-                        errors.addAll(result.errors());
-                    } catch (Exception e) {
-                        logger.error("获取批次处理结果失败", e);
-                    }
-                }
+                collectResults();
             } catch (TimeoutException e) {
                 logger.error("导入超时", e);
+                // 取消未完成的任务
+                futures.forEach(f -> f.cancel(true));
                 throw new RuntimeException("导入超时，请检查数据量或重试", e);
             } catch (Exception e) {
                 logger.error("批次处理失败", e);
+                // 取消未完成的任务
+                futures.forEach(f -> f.cancel(true));
                 throw new RuntimeException("导入失败: " + e.getMessage(), e);
+            }
+        }
+
+        /**
+         * 收集所有批次的处理结果
+         */
+        private void collectResults() {
+            for (CompletableFuture<BatchResult> future : futures) {
+                try {
+                    BatchResult result = future.get();
+                    successCount.addAndGet(result.successCount());
+                    errors.addAll(result.errors());
+                } catch (CancellationException e) {
+                    logger.warn("批次被取消");
+                } catch (Exception e) {
+                    logger.error("获取批次处理结果失败", e);
+                }
             }
         }
         
