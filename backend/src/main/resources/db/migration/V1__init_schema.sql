@@ -6,6 +6,8 @@
 -- ============================================
 
 -- 删除外键约束（如果存在）
+DROP TABLE IF EXISTS materials CASCADE;
+DROP TABLE IF EXISTS material_groups CASCADE;
 DROP TABLE IF EXISTS unit_conversions CASCADE;
 DROP TABLE IF EXISTS units CASCADE;
 DROP TABLE IF EXISTS unit_groups CASCADE;
@@ -132,6 +134,36 @@ CREATE TABLE unit_conversions (
 );
 
 -- ============================================
+-- 物料组表
+-- ============================================
+CREATE TABLE material_groups (
+    id BIGSERIAL PRIMARY KEY,
+    code VARCHAR(50) NOT NULL UNIQUE,
+    name VARCHAR(100) NOT NULL,
+    description VARCHAR(200),
+    parent_id BIGINT REFERENCES material_groups(id) ON DELETE SET NULL,
+    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
+
+-- ============================================
+-- 物料表
+-- ============================================
+CREATE TABLE materials (
+    id BIGSERIAL PRIMARY KEY,
+    code VARCHAR(50) NOT NULL UNIQUE,
+    name VARCHAR(200) NOT NULL,
+    specification VARCHAR(500),
+    mnemonic_code VARCHAR(50),
+    old_number VARCHAR(50),
+    description VARCHAR(1000),
+    material_group_id BIGINT NOT NULL REFERENCES material_groups(id) ON DELETE RESTRICT,
+    base_unit_id BIGINT NOT NULL REFERENCES units(id) ON DELETE RESTRICT,
+    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
+
+-- ============================================
 -- 创建索引
 -- ============================================
 
@@ -167,6 +199,16 @@ CREATE INDEX idx_units_enabled ON units(enabled);
 CREATE INDEX idx_unit_conversions_from_unit_id ON unit_conversions(from_unit_id);
 CREATE INDEX idx_unit_conversions_to_unit_id ON unit_conversions(to_unit_id);
 
+-- 物料组表索引
+CREATE INDEX idx_material_groups_code ON material_groups(code);
+CREATE INDEX idx_material_groups_parent_id ON material_groups(parent_id);
+
+-- 物料表索引
+CREATE INDEX idx_materials_code ON materials(code);
+CREATE INDEX idx_materials_material_group_id ON materials(material_group_id);
+CREATE INDEX idx_materials_base_unit_id ON materials(base_unit_id);
+CREATE INDEX idx_materials_name ON materials(name);
+
 -- ============================================
 -- 添加注释
 -- ============================================
@@ -179,6 +221,8 @@ COMMENT ON TABLE audit_logs IS '审计日志表';
 COMMENT ON TABLE unit_groups IS '单位组表';
 COMMENT ON TABLE units IS '单位表';
 COMMENT ON TABLE unit_conversions IS '单位转换表';
+COMMENT ON TABLE material_groups IS '物料组表';
+COMMENT ON TABLE materials IS '物料表';
 
 COMMENT ON COLUMN users.id IS '用户ID';
 COMMENT ON COLUMN users.username IS '用户名（唯一）';
@@ -237,4 +281,24 @@ COMMENT ON COLUMN unit_conversions.convert_type IS '换算类型（FIXED-固定,
 COMMENT ON COLUMN unit_conversions.numerator IS '换算分子';
 COMMENT ON COLUMN unit_conversions.denominator IS '换算分母';
 COMMENT ON COLUMN unit_conversions.created_at IS '创建时间';
+
+COMMENT ON COLUMN material_groups.id IS '物料组ID';
+COMMENT ON COLUMN material_groups.code IS '物料组编码（唯一）';
+COMMENT ON COLUMN material_groups.name IS '物料组名称';
+COMMENT ON COLUMN material_groups.description IS '物料组描述';
+COMMENT ON COLUMN material_groups.parent_id IS '父级物料组ID（树形结构支持）';
+COMMENT ON COLUMN material_groups.created_at IS '创建时间';
+COMMENT ON COLUMN material_groups.updated_at IS '更新时间';
+
+COMMENT ON COLUMN materials.id IS '物料ID';
+COMMENT ON COLUMN materials.code IS '物料编码（唯一）';
+COMMENT ON COLUMN materials.name IS '物料名称';
+COMMENT ON COLUMN materials.specification IS '规格';
+COMMENT ON COLUMN materials.mnemonic_code IS '助记码';
+COMMENT ON COLUMN materials.old_number IS '旧编号';
+COMMENT ON COLUMN materials.description IS '描述';
+COMMENT ON COLUMN materials.material_group_id IS '所属物料组ID';
+COMMENT ON COLUMN materials.base_unit_id IS '基础单位ID';
+COMMENT ON COLUMN materials.created_at IS '创建时间';
+COMMENT ON COLUMN materials.updated_at IS '更新时间';
 

@@ -54,6 +54,7 @@ public class MaterialImportService {
         this.transactionTemplate = new TransactionTemplate(transactionManager);
         this.transactionTemplate.setPropagationBehavior(TransactionDefinition.PROPAGATION_REQUIRES_NEW);
         this.transactionTemplate.setIsolationLevel(TransactionDefinition.ISOLATION_READ_COMMITTED);
+        this.transactionTemplate.setTimeout(30); // 30秒超时，防止长时间占用连接
         // 使用虚拟线程执行器（Java 25特性）
         this.executorService = Executors.newVirtualThreadPerTaskExecutor();
     }
@@ -82,6 +83,9 @@ public class MaterialImportService {
                     .sheet("物料#物料(FBillHead)")
                     .headRowNumber(2)
                     .doRead();
+
+            // 等待所有异步批次处理完成
+            materialImporter.waitForCompletion();
 
             MaterialImportResponse.MaterialImportResult materialResult = materialImporter.getResult();
             logger.info("物料导入完成：总计 {} 条，成功 {} 条，失败 {} 条",
@@ -271,16 +275,13 @@ public class MaterialImportService {
                 batch.clear();
             }
         }
-
         @Override
         public void doAfterAllAnalysed(AnalysisContext context) {
             // 处理剩余数据
             if (!batch.isEmpty()) {
                 processBatchAsync(new ArrayList<>(batch));
             }
-
-            // 等待所有批次处理完成
-            waitForAllBatches();
+            // 注意：等待操作在外部调用 waitForCompletion() 方法执行
         }
 
         private void processBatchAsync(List<MaterialExcelRow> batchData) {
@@ -292,74 +293,123 @@ public class MaterialImportService {
         }
 
         private BatchResult processBatch(List<MaterialExcelRow> batch) {
+            // 预加载缓存在事务外完成，避免占用事务连接
+            Map<String, MaterialGroup> materialGroupCache = preloadMaterialGroups(batch);
+            Map<String, Unit> unitCache = preloadUnits(batch);
+
             List<MaterialImportResponse.ImportError> batchErrors = new ArrayList<>();
             AtomicInteger batchSuccessCount = new AtomicInteger(0);
 
-            // 预加载所有物料组和单位到缓存
-            Map<String, MaterialGroup> materialGroupCache = new HashMap<>();
-            Map<String, Unit> unitCache = new HashMap<>();
-
-            Set<String> materialGroupCodes = new HashSet<>();
-            Set<String> unitCodes = new HashSet<>();
-            for (MaterialExcelRow row : batch) {
-                if (row.getMaterialGroupCode() != null && !row.getMaterialGroupCode().isEmpty()) {
-                    materialGroupCodes.add(row.getMaterialGroupCode());
-                }
-                if (row.getBaseUnitCode() != null && !row.getBaseUnitCode().isEmpty()) {
-                    unitCodes.add(row.getBaseUnitCode());
-                }
-            }
-
-            // 批量查询物料组和单位
-            for (String code : materialGroupCodes) {
-                materialGroupRepository.findByCode(code).ifPresent(group -> materialGroupCache.put(code, group));
-            }
-            for (String code : unitCodes) {
-                unitRepository.findByCode(code).ifPresent(unit -> unitCache.put(code, unit));
-            }
-
-            logger.debug("预加载了 {} 个物料组和 {} 个单位", materialGroupCache.size(), unitCache.size());
-
             // 每个批次在独立事务中处理
             transactionTemplate.execute(status -> {
-                for (MaterialExcelRow data : batch) {
-                    try {
-                        importMaterialRow(data, materialGroupCache, unitCache);
-                        batchSuccessCount.incrementAndGet();
-                    } catch (Exception e) {
-                        logger.warn("导入物料数据失败: {}", e.getMessage());
-                        batchErrors.add(new MaterialImportResponse.ImportError(
-                                "物料", 0, null, e.getMessage()));
+                try {
+                    for (MaterialExcelRow data : batch) {
+                        try {
+                            importMaterialRow(data, materialGroupCache, unitCache);
+                            batchSuccessCount.incrementAndGet();
+                        } catch (Exception e) {
+                            logger.warn("导入物料数据失败: {}", e.getMessage());
+                            batchErrors.add(new MaterialImportResponse.ImportError(
+                                    "物料", 0, null, e.getMessage()));
+                        }
                     }
+                    return null;
+                } catch (Exception e) {
+                    status.setRollbackOnly();
+                    throw e;
                 }
-                return null;
             });
 
             return new BatchResult(batchSuccessCount.get(), batchErrors);
         }
 
-        private void waitForAllBatches() {
+        /**
+         * 预加载物料组到缓存（事务外）
+         */
+        private Map<String, MaterialGroup> preloadMaterialGroups(List<MaterialExcelRow> batch) {
+            Map<String, MaterialGroup> cache = new HashMap<>();
+            Set<String> materialGroupCodes = new HashSet<>();
+            
+            for (MaterialExcelRow row : batch) {
+                if (row.getMaterialGroupCode() != null && !row.getMaterialGroupCode().isEmpty()) {
+                    materialGroupCodes.add(row.getMaterialGroupCode());
+                }
+            }
+
+            // 批量查询物料组
+            for (String code : materialGroupCodes) {
+                materialGroupRepository.findByCode(code).ifPresent(group -> cache.put(code, group));
+            }
+            
+            logger.debug("预加载了 {} 个物料组", cache.size());
+            return cache;
+        }
+
+        /**
+         * 预加载单位到缓存（事务外）
+         */
+        private Map<String, Unit> preloadUnits(List<MaterialExcelRow> batch) {
+            Map<String, Unit> cache = new HashMap<>();
+            Set<String> unitCodes = new HashSet<>();
+            
+            for (MaterialExcelRow row : batch) {
+                if (row.getBaseUnitCode() != null && !row.getBaseUnitCode().isEmpty()) {
+                    unitCodes.add(row.getBaseUnitCode());
+                }
+            }
+
+            // 批量查询单位
+            for (String code : unitCodes) {
+                unitRepository.findByCode(code).ifPresent(unit -> cache.put(code, unit));
+            }
+            
+            logger.debug("预加载了 {} 个单位", cache.size());
+            return cache;
+        }
+
+        /**
+         * 等待所有异步批次处理完成
+         */
+        public void waitForCompletion() {
+            if (futures.isEmpty()) {
+                logger.info("没有需要处理的批次");
+                return;
+            }
+
             try {
                 // 等待所有批次完成（最多10分钟）
                 CompletableFuture.allOf(futures.toArray(new CompletableFuture[0]))
                         .get(10, TimeUnit.MINUTES);
 
                 // 收集所有批次的结果
-                for (CompletableFuture<BatchResult> future : futures) {
-                    try {
-                        BatchResult result = future.get();
-                        successCount.addAndGet(result.successCount());
-                        errors.addAll(result.errors());
-                    } catch (Exception e) {
-                        logger.error("获取批次处理结果失败", e);
-                    }
-                }
+                collectResults();
             } catch (TimeoutException e) {
                 logger.error("导入超时", e);
+                // 取消未完成的任务
+                futures.forEach(f -> f.cancel(true));
                 throw new RuntimeException("导入超时，请检查数据量或重试", e);
             } catch (Exception e) {
                 logger.error("批次处理失败", e);
+                // 取消未完成的任务
+                futures.forEach(f -> f.cancel(true));
                 throw new RuntimeException("导入失败: " + e.getMessage(), e);
+            }
+        }
+
+        /**
+         * 收集所有批次的处理结果
+         */
+        private void collectResults() {
+            for (CompletableFuture<BatchResult> future : futures) {
+                try {
+                    BatchResult result = future.get();
+                    successCount.addAndGet(result.successCount());
+                    errors.addAll(result.errors());
+                } catch (CancellationException e) {
+                    logger.warn("批次被取消");
+                } catch (Exception e) {
+                    logger.error("获取批次处理结果失败", e);
+                }
             }
         }
 

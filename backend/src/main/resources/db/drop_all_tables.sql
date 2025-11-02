@@ -12,6 +12,15 @@
 -- 按顺序删除表（确保外键约束正确）
 -- ============================================
 
+-- 删除物料相关表
+DROP TABLE IF EXISTS materials CASCADE;
+DROP TABLE IF EXISTS material_groups CASCADE;
+
+-- 删除单位相关表
+DROP TABLE IF EXISTS unit_conversions CASCADE;
+DROP TABLE IF EXISTS units CASCADE;
+DROP TABLE IF EXISTS unit_groups CASCADE;
+
 -- 删除关联表
 DROP TABLE IF EXISTS user_roles CASCADE;
 DROP TABLE IF EXISTS role_permissions CASCADE;
@@ -33,5 +42,9 @@ SELECT
     tablename 
 FROM pg_tables 
 WHERE schemaname = 'public'
-    AND tablename IN ('users', 'roles', 'permissions', 'user_roles', 'role_permissions', 'audit_logs');
+    AND tablename IN (
+        'users', 'roles', 'permissions', 'user_roles', 'role_permissions', 'audit_logs',
+        'unit_groups', 'units', 'unit_conversions',
+        'material_groups', 'materials'
+    );
 
