@@ -56,10 +56,8 @@ jwt:
 logging:
   level:
     root: INFO
-    com.sambound.erp: INFO
-    com.zaxxer.hikari: DEBUG
-    # 可选：启用 HikariCP 调试日志以监控连接池状态
-    # com.zaxxer.hikari: DEBUG
+    com.sambound.erp: DEBUG
+    com.zaxxer.hikari: INFO
   file:
     name: ./target/logs/erp.log
   logback:
