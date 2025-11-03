@@ -406,7 +406,7 @@ public class MaterialImportService {
      * 物料数据导入器
      */
     private class MaterialDataImporter implements ReadListener<MaterialExcelRow> {
-        private final List<MaterialExcelRow> allMaterials = new ArrayList<>();
+        private final List<MaterialRowData> allMaterials = new ArrayList<>();
         private final AtomicInteger successCount = new AtomicInteger(0);
         private final AtomicInteger totalRows = new AtomicInteger(0);
         private final List<MaterialImportResponse.ImportError> errors = Collections.synchronizedList(new ArrayList<>());
@@ -429,9 +429,9 @@ public class MaterialImportService {
 
             String code = data.getCode();
             String name = data.getName();
+            int rowNum = context.readRowHolder().getRowIndex();
 
             if (code == null || code.trim().isEmpty() || name == null || name.trim().isEmpty()) {
-                int rowNum = context.readRowHolder().getRowIndex();
                 if (errors.size() < MAX_ERROR_COUNT) {
                     errors.add(new MaterialImportResponse.ImportError(
                             "物料", rowNum, "FNumber", "物料编码或名称为空"));
@@ -439,8 +439,8 @@ public class MaterialImportService {
                 return;
             }
 
-            // 收集所有数据
-            allMaterials.add(data);
+            // 收集所有数据（包含行号）
+            allMaterials.add(new MaterialRowData(rowNum, data));
         }
 
         @Override
@@ -462,25 +462,65 @@ public class MaterialImportService {
             // 预加载数据
             Map<String, MaterialGroup> materialGroupCache = new HashMap<>(importedMaterialGroupCache);
             Map<String, Unit> unitCache = new HashMap<>();
-            preloadAllData(allMaterials, materialGroupCache, unitCache);
+            Set<String> allMaterialGroupCodes = preloadAllData(allMaterials, materialGroupCache, unitCache);
 
             // 收集需要批量插入的物料数据（code -> batchData）
             Map<String, MaterialBatchData> codeToBatchData = new HashMap<>();
             
-            for (MaterialExcelRow data : allMaterials) {
+            for (MaterialRowData rowData : allMaterials) {
+                MaterialExcelRow data = rowData.data();
+                int rowNum = rowData.rowNumber();
+                
                 String materialGroupCode = data.getMaterialGroupCode();
                 String baseUnitCode = data.getBaseUnitCode();
                 
+                // 如果物料组代码为空，尝试通过前缀匹配
+                MaterialGroup materialGroup = null;
+                if (materialGroupCode == null || materialGroupCode.trim().isEmpty()) {
+                    // 尝试前缀匹配
+                    materialGroup = MaterialImportService.this.findMaterialGroupByPrefix(
+                            data.getCode(), 
+                            importedMaterialGroupCache, 
+                            allMaterialGroupCodes);
+                    
+                    if (materialGroup == null) {
+                        // 前缀匹配失败，记录错误并跳过
+                        if (errors.size() < MAX_ERROR_COUNT) {
+                            errors.add(new MaterialImportResponse.ImportError(
+                                    "物料", rowNum, "FMaterialGroup",
+                                    String.format("无法通过前缀匹配到物料组：%s", data.getCode())));
+                        }
+                        continue;
+                    }
+                } else {
+                    // 使用指定的物料组代码
+                    materialGroup = materialGroupCache.get(materialGroupCode.trim());
+                }
+                
                 // 验证必要字段
-                if (materialGroupCode == null || materialGroupCode.trim().isEmpty() ||
-                    baseUnitCode == null || baseUnitCode.trim().isEmpty()) {
+                if (baseUnitCode == null || baseUnitCode.trim().isEmpty()) {
+                    if (errors.size() < MAX_ERROR_COUNT) {
+                        errors.add(new MaterialImportResponse.ImportError(
+                                "物料", rowNum, "FBaseUnitId", "基本单位编码为空"));
+                    }
                     continue;
                 }
                 
-                MaterialGroup materialGroup = materialGroupCache.get(materialGroupCode.trim());
                 Unit baseUnit = unitCache.get(baseUnitCode.trim());
                 
                 if (materialGroup == null || baseUnit == null) {
+                    if (errors.size() < MAX_ERROR_COUNT) {
+                        if (materialGroup == null) {
+                            errors.add(new MaterialImportResponse.ImportError(
+                                    "物料", rowNum, "FMaterialGroup",
+                                    String.format("物料组不存在：%s", materialGroupCode)));
+                        }
+                        if (baseUnit == null) {
+                            errors.add(new MaterialImportResponse.ImportError(
+                                    "物料", rowNum, "FBaseUnitId",
+                                    String.format("基本单位不存在：%s", baseUnitCode)));
+                        }
+                    }
                     continue;
                 }
                 
@@ -588,14 +628,14 @@ public class MaterialImportService {
                         MaterialBatchData batchData = codeToBatchData.get(data.code());
                         MaterialExcelRow excelRow = batchData.excelRow();
                         
-                        String materialGroupCode = excelRow.getMaterialGroupCode().trim();
-                        String baseUnitCode = excelRow.getBaseUnitCode().trim();
+                        String materialGroupCode = excelRow.getMaterialGroupCode();
+                        String baseUnitCode = excelRow.getBaseUnitCode();
                         
-                        if (material.getMaterialGroup() == null) {
-                            material.setMaterialGroup(materialGroupCache.get(materialGroupCode));
+                        if (material.getMaterialGroup() == null && materialGroupCode != null && !materialGroupCode.trim().isEmpty()) {
+                            material.setMaterialGroup(materialGroupCache.get(materialGroupCode.trim()));
                         }
-                        if (material.getBaseUnit() == null) {
-                            material.setBaseUnit(unitCache.get(baseUnitCode));
+                        if (material.getBaseUnit() == null && baseUnitCode != null && !baseUnitCode.trim().isEmpty()) {
+                            material.setBaseUnit(unitCache.get(baseUnitCode.trim()));
                         }
                         
                         // 检查是否需要更新字段
@@ -727,19 +767,30 @@ public class MaterialImportService {
                 Long baseUnitId,
                 MaterialExcelRow excelRow
         ) {}
+        
+        /**
+         * 物料行数据（包含行号）
+         */
+        private record MaterialRowData(
+                int rowNumber,
+                MaterialExcelRow data
+        ) {}
 
         /**
          * 预加载物料组和单位数据
          * 优化：使用批量查询替代循环查询，大幅提升性能
+         * 
+         * @return 所有物料组代码集合（用于前缀匹配）
          */
-        private void preloadAllData(List<MaterialExcelRow> materials,
+        private Set<String> preloadAllData(List<MaterialRowData> materials,
                                     Map<String, MaterialGroup> materialGroupCache,
                                     Map<String, Unit> unitCache) {
             Set<String> materialGroupCodes = new HashSet<>();
             Set<String> unitCodes = new HashSet<>();
 
             // 收集所有需要查询的数据
-            for (MaterialExcelRow row : materials) {
+            for (MaterialRowData rowData : materials) {
+                MaterialExcelRow row = rowData.data();
                 String materialGroupCode = row.getMaterialGroupCode();
                 String baseUnitCode = row.getBaseUnitCode();
 
@@ -781,8 +832,27 @@ public class MaterialImportService {
                 }
             }
 
-            logger.debug("预加载完成：物料组 {} 个，单位 {} 个",
-                    materialGroupCache.size(), unitCache.size());
+            // 预加载所有物料组代码（用于前缀匹配）
+            // 查询数据库中所有物料组代码，过滤掉已经缓存的
+            Set<String> allMaterialGroupCodes = new HashSet<>();
+            // 首先添加已缓存的物料组代码
+            allMaterialGroupCodes.addAll(materialGroupCache.keySet());
+            
+            // 查询数据库中所有物料组代码（分批查询以避免一次性加载过多）
+            List<MaterialGroup> allGroups = MaterialImportService.this.materialGroupRepository.findAll();
+            for (MaterialGroup group : allGroups) {
+                String code = group.getCode();
+                allMaterialGroupCodes.add(code);
+                // 如果不在缓存中，也加入缓存
+                if (!materialGroupCache.containsKey(code)) {
+                    materialGroupCache.put(code, group);
+                }
+            }
+
+            logger.debug("预加载完成：物料组 {} 个，单位 {} 个，所有物料组代码 {} 个",
+                    materialGroupCache.size(), unitCache.size(), allMaterialGroupCodes.size());
+            
+            return allMaterialGroupCodes;
         }
 
         public MaterialImportResponse.MaterialImportResult getResult() {
@@ -799,6 +869,59 @@ public class MaterialImportService {
      * 物料组行数据
      */
     private record MaterialGroupData(int rowNumber, String code, String name, String description, String parentCode) {
+    }
+
+    /**
+     * 通过物料编码前缀匹配物料组
+     * 优先从导入缓存中匹配，再从数据库匹配
+     * 使用最长匹配原则：如果有多个匹配，选择物料组代码最长的那个
+     *
+     * @param materialCode 物料编码
+     * @param importedMaterialGroupCache 导入的物料组缓存（code -> MaterialGroup）
+     * @param allMaterialGroupCodes 所有物料组代码集合（用于数据库匹配）
+     * @return 匹配到的物料组，如果未找到返回 null
+     */
+    private MaterialGroup findMaterialGroupByPrefix(String materialCode,
+                                                    Map<String, MaterialGroup> importedMaterialGroupCache,
+                                                    Set<String> allMaterialGroupCodes) {
+        if (materialCode == null || materialCode.trim().isEmpty()) {
+            return null;
+        }
+
+        String trimmedCode = materialCode.trim();
+        MaterialGroup matchedGroup = null;
+        int maxLength = 0;
+
+        // 1. 优先从导入缓存中匹配
+        for (Map.Entry<String, MaterialGroup> entry : importedMaterialGroupCache.entrySet()) {
+            String groupCode = entry.getKey();
+            if (trimmedCode.startsWith(groupCode) && groupCode.length() > maxLength) {
+                maxLength = groupCode.length();
+                matchedGroup = entry.getValue();
+            }
+        }
+
+        // 2. 如果缓存中未找到，从数据库的物料组代码集合中匹配
+        if (matchedGroup == null && allMaterialGroupCodes != null) {
+            String matchedCode = null;
+            for (String groupCode : allMaterialGroupCodes) {
+                if (trimmedCode.startsWith(groupCode) && groupCode.length() > maxLength) {
+                    maxLength = groupCode.length();
+                    matchedCode = groupCode;
+                }
+            }
+
+            // 如果找到匹配的代码，从数据库查询对应的物料组
+            if (matchedCode != null) {
+                matchedGroup = materialGroupRepository.findByCode(matchedCode).orElse(null);
+                if (matchedGroup != null) {
+                    // 将查询到的物料组加入缓存，避免后续重复查询
+                    importedMaterialGroupCache.put(matchedCode, matchedGroup);
+                }
+            }
+        }
+
+        return matchedGroup;
     }
 
 }
