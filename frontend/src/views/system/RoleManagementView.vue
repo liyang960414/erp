@@ -205,4 +205,3 @@ const handleDelete = async (role: Role) => {
   }
 }
 </style>
-

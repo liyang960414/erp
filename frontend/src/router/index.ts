@@ -2,7 +2,7 @@ import { createRouter, createWebHistory } from 'vue-router'
 import { ElMessage } from 'element-plus'
 import { useAuthStore } from '@/stores/auth'
 import MainLayout from '@/layouts/MainLayout.vue'
-import LoginView from '@/views/LoginView.vue'
+import LoginView from '@/views/auth/LoginView.vue'
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
@@ -22,62 +22,68 @@ const router = createRouter({
         {
           path: 'home',
           name: 'home',
-          component: () => import('@/views/HomeView.vue'),
+          component: () => import('@/views/home/HomeView.vue'),
           meta: { title: '首页', requiresAuth: true },
         },
         {
           path: 'users/list',
           name: 'userList',
-          component: () => import('@/views/UserListView.vue'),
+          component: () => import('@/views/users/UserListView.vue'),
           meta: { title: '用户列表', requiresAuth: true, roles: ['ADMIN'] },
         },
         {
           path: 'products',
           name: 'products',
-          component: () => import('@/views/ProductView.vue'),
+          component: () => import('@/views/products/ProductView.vue'),
           meta: { title: '商品管理', requiresAuth: true },
         },
         {
           path: 'orders',
           name: 'orders',
-          component: () => import('@/views/OrderView.vue'),
+          component: () => import('@/views/orders/OrderView.vue'),
           meta: { title: '订单管理', requiresAuth: true },
         },
         {
           path: 'system/settings',
           name: 'systemSettings',
-          component: () => import('@/views/SystemSettingsView.vue'),
+          component: () => import('@/views/system/SystemSettingsView.vue'),
           meta: { title: '系统设置', requiresAuth: true, roles: ['ADMIN'] },
         },
         {
           path: 'system/permissions',
           name: 'permissions',
-          component: () => import('@/views/PermissionView.vue'),
+          component: () => import('@/views/system/PermissionView.vue'),
           meta: { title: '权限管理', requiresAuth: true, roles: ['ADMIN'] },
         },
         {
           path: 'system/roles',
           name: 'roles',
-          component: () => import('@/views/RoleManagementView.vue'),
+          component: () => import('@/views/system/RoleManagementView.vue'),
           meta: { title: '角色管理', requiresAuth: true, roles: ['ADMIN'] },
         },
         {
           path: 'system/audit-logs',
           name: 'auditLogs',
-          component: () => import('@/views/AuditLogView.vue'),
+          component: () => import('@/views/system/AuditLogView.vue'),
           meta: { title: '审计日志', requiresAuth: true, roles: ['ADMIN'] },
         },
         {
           path: 'basic-info/units',
           name: 'units',
-          component: () => import('@/views/UnitManagementView.vue'),
+          component: () => import('@/views/basic-info/UnitManagementView.vue'),
           meta: { title: '单位管理', requiresAuth: true },
         },
         {
           path: 'basic-info/materials',
           name: 'materials',
-          component: () => import('@/views/MaterialManagementView.vue'),
+          component: () => import('@/views/basic-info/MaterialManagementView.vue'),
           meta: { title: '物料管理', requiresAuth: true },
+        },
+        {
+          path: 'engineering-data/bom-list/boms',
+          name: 'boms',
+          component: () => import('@/views/engineering-data/bom-list/BomManagementView.vue'),
+          meta: { title: '物料清单列表', requiresAuth: true },
         },
       ],
     },

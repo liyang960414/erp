@@ -13,6 +13,9 @@ BEGIN;
 -- ============================================
 -- 第一步：删除所有现有表（按依赖顺序）
 -- ============================================
+-- 删除BOM相关表
+DROP TABLE IF EXISTS bom_items CASCADE;
+DROP TABLE IF EXISTS bill_of_materials CASCADE;
 -- 删除物料相关表
 DROP TABLE IF EXISTS materials CASCADE;
 DROP TABLE IF EXISTS material_groups CASCADE;
@@ -149,10 +152,43 @@ CREATE TABLE materials (
     mnemonic_code TEXT,
     old_number VARCHAR(50),
     description TEXT,
+    erp_cls_id VARCHAR(50),
     material_group_id BIGINT NOT NULL REFERENCES material_groups(id) ON DELETE RESTRICT,
     base_unit_id BIGINT NOT NULL REFERENCES units(id) ON DELETE RESTRICT,
     created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
+
+-- BOM（物料清单）头表
+CREATE TABLE bill_of_materials (
+    id BIGSERIAL PRIMARY KEY,
+    material_id BIGINT NOT NULL REFERENCES materials(id) ON DELETE CASCADE,
+    version VARCHAR(50) NOT NULL DEFAULT 'V000',
+    name VARCHAR(200),
+    category VARCHAR(100),
+    usage VARCHAR(100),
+    description TEXT,
+    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    CONSTRAINT uk_bom_material_version UNIQUE (material_id, version)
+);
+
+-- BOM（物料清单）明细表
+CREATE TABLE bom_items (
+    id BIGSERIAL PRIMARY KEY,
+    bom_id BIGINT NOT NULL REFERENCES bill_of_materials(id) ON DELETE CASCADE,
+    sequence INTEGER NOT NULL,
+    child_material_id BIGINT NOT NULL REFERENCES materials(id) ON DELETE RESTRICT,
+    child_unit_id BIGINT NOT NULL REFERENCES units(id) ON DELETE RESTRICT,
+    numerator DECIMAL(18, 6) NOT NULL DEFAULT 1,
+    denominator DECIMAL(18, 6) NOT NULL DEFAULT 1,
+    scrap_rate DECIMAL(5, 2),
+    child_bom_version VARCHAR(50),
+    memo TEXT,
+    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    CONSTRAINT chk_bom_item_denominator CHECK (denominator > 0),
+    CONSTRAINT chk_bom_item_sequence CHECK (sequence > 0)
 );
 
 -- ============================================
@@ -199,7 +235,14 @@ CREATE INDEX idx_material_groups_parent_id ON material_groups(parent_id);
 CREATE INDEX idx_materials_code ON materials(code);
 CREATE INDEX idx_materials_material_group_id ON materials(material_group_id);
 CREATE INDEX idx_materials_base_unit_id ON materials(base_unit_id);
-CREATE INDEX idx_materials_name ON materials(name);
+
+-- BOM表索引
+CREATE INDEX idx_bill_of_materials_material_id ON bill_of_materials(material_id);
+CREATE INDEX idx_bill_of_materials_version ON bill_of_materials(version);
+CREATE INDEX idx_bom_items_bom_id ON bom_items(bom_id);
+CREATE INDEX idx_bom_items_child_material_id ON bom_items(child_material_id);
+CREATE INDEX idx_bom_items_child_unit_id ON bom_items(child_unit_id);
+CREATE INDEX idx_bom_items_sequence ON bom_items(bom_id, sequence);
 
 -- ============================================
 -- 第四步：添加表注释和列注释

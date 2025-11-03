@@ -68,7 +68,8 @@ public class MaterialService {
                     code,
                     name != null ? name : code,
                     materialGroup.getId(),
-                    baseUnit.getId()
+                    baseUnit.getId(),
+                    null
             );
             // 重新查询以加载关联对象
             Material material = materialRepository.findByCode(code)
@@ -116,6 +117,7 @@ public class MaterialService {
                 material.getMnemonicCode(),
                 material.getOldNumber(),
                 material.getDescription(),
+                material.getErpClsId(),
                 material.getMaterialGroup().getId(),
                 material.getMaterialGroup().getCode(),
                 material.getMaterialGroup().getName(),

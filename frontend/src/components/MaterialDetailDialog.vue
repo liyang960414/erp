@@ -27,6 +27,12 @@
       <el-descriptions-item label="物料组名称">
         {{ material.materialGroupName }}
       </el-descriptions-item>
+      <el-descriptions-item label="物料属性">
+        <el-tag v-if="material.erpClsId" size="small" :type="getErpClsIdTagType(material.erpClsId)">
+          {{ material.erpClsId }}
+        </el-tag>
+        <span v-else>-</span>
+      </el-descriptions-item>
       <el-descriptions-item label="基础单位编码">
         {{ material.baseUnitCode }}
       </el-descriptions-item>
@@ -85,6 +91,19 @@ const formatDateTime = (dateStr: string) => {
   const minutes = String(date.getMinutes()).padStart(2, '0')
   const seconds = String(date.getSeconds()).padStart(2, '0')
   return `${year}-${month}-${day} ${hours}:${minutes}:${seconds}`
+}
+
+// 获取物料属性的标签类型
+const getErpClsIdTagType = (erpClsId: string): string => {
+  const typeMap: Record<string, string> = {
+    '费用': 'warning',
+    '外购': 'info',
+    '委外': 'success',
+    '虚拟': 'danger',
+    '资产': 'primary',
+    '自制': 'success',
+  }
+  return typeMap[erpClsId] || 'info'
 }
 </script>
 

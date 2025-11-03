@@ -35,24 +35,26 @@ public class MaterialRepositoryImpl implements MaterialRepositoryCustom {
                 valuesClause.append(", ");
             }
             MaterialRepository.MaterialBatchData data = batchData.get(i);
-            valuesClause.append("(?, ?, ?, ?, ?, ?)");
+            valuesClause.append("(?, ?, ?, ?, ?, ?, ?)");
             parameters.add(data.code());
             parameters.add(data.name());
             parameters.add(data.materialGroupId());
             parameters.add(data.baseUnitId());
+            parameters.add(data.erpClsId());
             parameters.add(now);
             parameters.add(now);
         }
         
         String sql = String.format("""
-            INSERT INTO materials (code, name, material_group_id, base_unit_id, created_at, updated_at)
+            INSERT INTO materials (code, name, material_group_id, base_unit_id, erp_cls_id, created_at, updated_at)
             VALUES %s
             ON CONFLICT (code) DO UPDATE 
             SET name = EXCLUDED.name,
                 material_group_id = EXCLUDED.material_group_id,
                 base_unit_id = EXCLUDED.base_unit_id,
+                erp_cls_id = EXCLUDED.erp_cls_id,
                 updated_at = CURRENT_TIMESTAMP
-            RETURNING id, code, name, specification, mnemonic_code, old_number, description, 
+            RETURNING id, code, name, specification, mnemonic_code, old_number, description, erp_cls_id,
                       material_group_id, base_unit_id, created_at, updated_at
             """, valuesClause);
         

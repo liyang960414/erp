@@ -6,6 +6,7 @@ export interface Material {
   mnemonicCode?: string
   oldNumber?: string
   description?: string
+  erpClsId?: string
   materialGroupId: number
   materialGroupCode: string
   materialGroupName: string

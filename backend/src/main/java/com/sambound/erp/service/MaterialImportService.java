@@ -124,7 +124,12 @@ public class MaterialImportService {
         private final List<MaterialGroupData> materialGroups = new ArrayList<>();
         private final AtomicInteger totalRows = new AtomicInteger(0);
 
+        /**
+         * -- GETTER --
+         *  获取导入的物料组缓存
+         */
         // 缓存已导入的物料组对象（code -> MaterialGroup）
+        @Getter
         private final Map<String, MaterialGroup> importedMaterialGroupCache = new HashMap<>();
 
         @Override
@@ -196,12 +201,6 @@ public class MaterialImportService {
             return new MaterialImportResponse.UnitGroupImportResult(total, success, failure, errors);
         }
 
-        /**
-         * 获取导入的物料组缓存
-         */
-        public Map<String, MaterialGroup> getImportedMaterialGroupCache() {
-            return importedMaterialGroupCache;
-        }
     }
 
     /**
@@ -533,6 +532,8 @@ public class MaterialImportService {
                         data.getName() != null ? data.getName() : data.getCode(),
                         materialGroup.getId(),
                         baseUnit.getId(),
+                        data.getErpClsId() != null && !data.getErpClsId().trim().isEmpty() 
+                                ? data.getErpClsId().trim() : null,
                         data
                 ));
             }
@@ -605,7 +606,8 @@ public class MaterialImportService {
                                 data.code(),
                                 data.name(),
                                 data.materialGroupId(),
-                                data.baseUnitId()
+                                data.baseUnitId(),
+                                data.erpClsId()
                         ));
                     }
                     
@@ -655,6 +657,10 @@ public class MaterialImportService {
                         }
                         if (excelRow.getDescription() != null && !excelRow.getDescription().trim().isEmpty()) {
                             material.setDescription(excelRow.getDescription().trim());
+                            needUpdate = true;
+                        }
+                        if (excelRow.getErpClsId() != null && !excelRow.getErpClsId().trim().isEmpty()) {
+                            material.setErpClsId(excelRow.getErpClsId().trim());
                             needUpdate = true;
                         }
                         
@@ -765,6 +771,7 @@ public class MaterialImportService {
                 String name,
                 Long materialGroupId,
                 Long baseUnitId,
+                String erpClsId,
                 MaterialExcelRow excelRow
         ) {}
         

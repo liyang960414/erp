@@ -40,6 +40,9 @@ public class Material {
     @Column(columnDefinition = "TEXT")
     private String description;
 
+    @Column(name = "erp_cls_id", length = 50)
+    private String erpClsId;
+
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "material_group_id", nullable = false)
     private MaterialGroup materialGroup;

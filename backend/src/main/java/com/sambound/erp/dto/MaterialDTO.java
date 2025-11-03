@@ -10,6 +10,7 @@ public record MaterialDTO(
     String mnemonicCode,
     String oldNumber,
     String description,
+    String erpClsId,
     Long materialGroupId,
     String materialGroupCode,
     String materialGroupName,

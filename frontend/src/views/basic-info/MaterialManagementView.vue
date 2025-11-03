@@ -35,9 +35,9 @@
 
       <!-- 搜索栏 -->
       <div v-if="displayMode === 'flat' && materials.length > 0" class="search-bar">
-        <el-input
+          <el-input
           v-model="searchKeyword"
-          placeholder="搜索物料编码、名称、规格、物料组、单位..."
+          placeholder="搜索物料编码、名称、规格、属性、物料组、单位..."
           clearable
           style="width: 400px"
           @clear="handleSearch"
@@ -70,6 +70,14 @@
           <el-table-column prop="code" label="物料编码" width="150" />
           <el-table-column prop="name" label="物料名称" min-width="200" />
           <el-table-column prop="specification" label="规格" min-width="150" show-overflow-tooltip />
+          <el-table-column label="物料属性" width="100">
+            <template #default="{ row }">
+              <el-tag v-if="row.erpClsId" size="small" :type="getErpClsIdTagType(row.erpClsId)">
+                {{ row.erpClsId }}
+              </el-tag>
+              <span v-else>-</span>
+            </template>
+          </el-table-column>
           <el-table-column prop="materialGroupName" label="物料组" width="150" />
           <el-table-column prop="baseUnitName" label="基础单位" width="120" />
           <el-table-column label="操作" width="150" fixed="right">
@@ -127,6 +135,14 @@
                   <el-table-column prop="code" label="物料编码" width="150" />
                   <el-table-column prop="name" label="物料名称" min-width="200" />
                   <el-table-column prop="specification" label="规格" min-width="150" show-overflow-tooltip />
+                  <el-table-column label="物料属性" width="100">
+                    <template #default="{ row }">
+                      <el-tag v-if="row.erpClsId" size="small" :type="getErpClsIdTagType(row.erpClsId)">
+                        {{ row.erpClsId }}
+                      </el-tag>
+                      <span v-else>-</span>
+                    </template>
+                  </el-table-column>
                   <el-table-column prop="baseUnitName" label="基础单位" width="120" />
                   <el-table-column label="操作" width="150" fixed="right">
                     <template #default="{ row: material }">
@@ -208,6 +224,7 @@ const filteredMaterials = computed(() => {
       material.code.toLowerCase().includes(keyword) ||
       material.name.toLowerCase().includes(keyword) ||
       (material.specification && material.specification.toLowerCase().includes(keyword)) ||
+      (material.erpClsId && material.erpClsId.toLowerCase().includes(keyword)) ||
       material.materialGroupName.toLowerCase().includes(keyword) ||
       material.baseUnitName.toLowerCase().includes(keyword)
     )
@@ -311,6 +328,19 @@ const handleImportSuccess = () => {
     // 如果是分组显示模式，清空已加载的物料组数据，需要用户重新展开
     groupMaterialsMap.value = {}
   }
+}
+
+// 获取物料属性的标签类型
+const getErpClsIdTagType = (erpClsId: string): string => {
+  const typeMap: Record<string, string> = {
+    '费用': 'warning',
+    '外购': 'info',
+    '委外': 'success',
+    '虚拟': 'danger',
+    '资产': 'primary',
+    '自制': 'success',
+  }
+  return typeMap[erpClsId] || 'info'
 }
 
 // 处理表格展开
@@ -440,4 +470,3 @@ const handleTableExpand = (row: MaterialGroup, expandedRows: MaterialGroup[]) =>
   }
 }
 </style>
-

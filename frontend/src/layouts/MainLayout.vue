@@ -88,6 +88,19 @@
             <el-menu-item index="/basic-info/materials">{{ $t('menu.materialManagement') }}</el-menu-item>
           </el-sub-menu>
 
+          <el-sub-menu index="/engineering-data">
+            <template #title>
+              <el-icon><Tools /></el-icon>
+              <span>{{ $t('menu.engineeringDataManagement') }}</span>
+            </template>
+            <el-sub-menu index="/engineering-data/bom-list">
+              <template #title>
+                <span>{{ $t('menu.bomList') }}</span>
+              </template>
+              <el-menu-item index="/engineering-data/bom-list/boms">{{ $t('menu.bomListManagement') }}</el-menu-item>
+            </el-sub-menu>
+          </el-sub-menu>
+
           <el-sub-menu index="/system" v-if="authStore.hasRole('ADMIN')">
             <template #title>
               <el-icon><Setting /></el-icon>
@@ -125,6 +138,7 @@ import {
   ArrowDown,
   SwitchButton,
   Document,
+  Tools,
 } from '@element-plus/icons-vue'
 import { useAuthStore } from '@/stores/auth'
 import { useLocaleStore } from '@/stores/locale'
