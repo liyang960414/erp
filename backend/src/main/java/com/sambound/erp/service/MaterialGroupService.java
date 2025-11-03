@@ -4,6 +4,7 @@ import com.sambound.erp.dto.MaterialGroupDTO;
 import com.sambound.erp.entity.MaterialGroup;
 import com.sambound.erp.exception.BusinessException;
 import com.sambound.erp.repository.MaterialGroupRepository;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -19,18 +20,21 @@ public class MaterialGroupService {
         this.materialGroupRepository = materialGroupRepository;
     }
 
+    @Cacheable(cacheNames = "materialGroups", key = "'all'")
     public List<MaterialGroupDTO> getAllMaterialGroups() {
         return materialGroupRepository.findAll().stream()
                 .map(this::toDTO)
                 .toList();
     }
 
+    @Cacheable(cacheNames = "materialGroups", key = "#id")
     public MaterialGroupDTO getMaterialGroupById(Long id) {
         MaterialGroup materialGroup = materialGroupRepository.findById(id)
                 .orElseThrow(() -> new BusinessException("物料组不存在"));
         return toDTO(materialGroup);
     }
 
+    @Cacheable(cacheNames = "materialGroups", key = "'code:' + #code")
     public MaterialGroupDTO getMaterialGroupByCode(String code) {
         MaterialGroup materialGroup = materialGroupRepository.findByCode(code)
                 .orElseThrow(() -> new BusinessException("物料组不存在"));

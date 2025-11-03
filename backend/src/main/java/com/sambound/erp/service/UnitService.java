@@ -8,6 +8,8 @@ import com.sambound.erp.entity.UnitGroup;
 import com.sambound.erp.exception.BusinessException;
 import com.sambound.erp.repository.UnitGroupRepository;
 import com.sambound.erp.repository.UnitRepository;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
@@ -28,6 +30,7 @@ public class UnitService {
         this.unitGroupRepository = unitGroupRepository;
     }
 
+    @Cacheable(cacheNames = "units", key = "'all'")
     public List<UnitDTO> getAllUnits() {
         return unitRepository.findAllWithUnitGroup().stream()
                 .map(this::toDTO)
@@ -39,18 +42,21 @@ public class UnitService {
                 .map(this::toDTO);
     }
 
+    @Cacheable(cacheNames = "units", key = "'group:' + #groupId")
     public List<UnitDTO> getUnitsByGroupId(Long groupId) {
         return unitRepository.findByUnitGroupId(groupId).stream()
                 .map(this::toDTO)
                 .toList();
     }
 
+    @Cacheable(cacheNames = "units", key = "#id")
     public UnitDTO getUnitById(Long id) {
         Unit unit = unitRepository.findByIdWithUnitGroup(id)
                 .orElseThrow(() -> new BusinessException("单位不存在"));
         return toDTO(unit);
     }
 
+    @Cacheable(cacheNames = "units", key = "'code:' + #code")
     public UnitDTO getUnitByCode(String code) {
         Unit unit = unitRepository.findByCode(code)
                 .orElseThrow(() -> new BusinessException("单位不存在"));
@@ -58,6 +64,7 @@ public class UnitService {
     }
 
     @Transactional
+    @CacheEvict(cacheNames = "units", allEntries = true)
     public UnitDTO createUnit(CreateUnitRequest request) {
         if (unitRepository.existsByCode(request.code())) {
             throw new BusinessException("单位编码已存在");
@@ -78,6 +85,7 @@ public class UnitService {
     }
 
     @Transactional
+    @CacheEvict(cacheNames = "units", allEntries = true)
     public UnitDTO updateUnit(Long id, UpdateUnitRequest request) {
         Unit unit = unitRepository.findById(id)
                 .orElseThrow(() -> new BusinessException("单位不存在"));
@@ -120,6 +128,7 @@ public class UnitService {
     }
 
     @Transactional
+    @CacheEvict(cacheNames = "units", allEntries = true)
     public void deleteUnit(Long id) {
         if (!unitRepository.existsById(id)) {
             throw new BusinessException("单位不存在");
@@ -128,6 +137,7 @@ public class UnitService {
     }
 
     @Transactional
+    @CacheEvict(cacheNames = "units", allEntries = true)
     public Unit findOrCreateByCode(String code, String name, UnitGroup unitGroup) {
         // 确保 UnitGroup 已经持久化并分配了 ID
         if (unitGroup.getId() == null) {

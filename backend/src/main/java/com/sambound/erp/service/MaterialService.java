@@ -8,6 +8,8 @@ import com.sambound.erp.exception.BusinessException;
 import com.sambound.erp.repository.MaterialRepository;
 import com.sambound.erp.repository.MaterialGroupRepository;
 import com.sambound.erp.repository.UnitRepository;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -29,24 +31,28 @@ public class MaterialService {
         this.unitRepository = unitRepository;
     }
 
+    @Cacheable(cacheNames = "materials", key = "'all'")
     public List<MaterialDTO> getAllMaterials() {
         return materialRepository.findAll().stream()
                 .map(this::toDTO)
                 .toList();
     }
 
+    @Cacheable(cacheNames = "materials", key = "#id")
     public MaterialDTO getMaterialById(Long id) {
         Material material = materialRepository.findById(id)
                 .orElseThrow(() -> new BusinessException("物料不存在"));
         return toDTO(material);
     }
 
+    @Cacheable(cacheNames = "materials", key = "'code:' + #code")
     public MaterialDTO getMaterialByCode(String code) {
         Material material = materialRepository.findByCode(code)
                 .orElseThrow(() -> new BusinessException("物料不存在"));
         return toDTO(material);
     }
 
+    @Cacheable(cacheNames = "materials", key = "'group:' + #materialGroupId")
     public List<MaterialDTO> getMaterialsByGroupId(Long materialGroupId) {
         return materialRepository.findByMaterialGroupId(materialGroupId).stream()
                 .map(this::toDTO)
@@ -54,6 +60,7 @@ public class MaterialService {
     }
 
     @Transactional
+    @CacheEvict(cacheNames = "materials", allEntries = true)
     public Material findOrCreateByCode(String code, String name, String materialGroupCode, String baseUnitCode) {
         // 查找物料组
         MaterialGroup materialGroup = materialGroupRepository.findByCode(materialGroupCode)
@@ -85,6 +92,7 @@ public class MaterialService {
     }
 
     @Transactional
+    @CacheEvict(cacheNames = "materials", allEntries = true)
     public Material findOrCreateByCode(String code, String name, String specification,
                                       String mnemonicCode, String oldNumber, String description,
                                       String materialGroupCode, String baseUnitCode) {

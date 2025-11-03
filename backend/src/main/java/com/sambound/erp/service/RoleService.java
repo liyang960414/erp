@@ -12,6 +12,8 @@ import com.sambound.erp.repository.RoleRepository;
 import com.sambound.erp.repository.UserRepository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
@@ -46,12 +48,14 @@ public class RoleService {
                 .map(this::convertToRoleResponse);
     }
 
+    @Cacheable(cacheNames = "roles", key = "'all'")
     public List<RoleResponse> getAllRolesList() {
         return roleRepository.findAll().stream()
                 .map(this::convertToRoleResponse)
                 .collect(Collectors.toList());
     }
 
+    @Cacheable(cacheNames = "roles", key = "#id")
     public RoleResponse getRoleById(Long id) {
         Role role = roleRepository.findById(id)
                 .orElseThrow(() -> new BusinessException("角色不存在"));
@@ -59,6 +63,7 @@ public class RoleService {
     }
 
     @Transactional
+    @CacheEvict(cacheNames = "roles", allEntries = true)
     public RoleResponse createRole(CreateRoleRequest request) {
         logger.debug("创建角色：{}", request.name());
         
@@ -87,6 +92,7 @@ public class RoleService {
     }
 
     @Transactional
+    @CacheEvict(cacheNames = "roles", allEntries = true)
     public RoleResponse updateRole(Long id, UpdateRoleRequest request) {
         logger.debug("更新角色：ID {}", id);
         
@@ -112,6 +118,7 @@ public class RoleService {
     }
 
     @Transactional
+    @CacheEvict(cacheNames = "roles", allEntries = true)
     public void deleteRole(Long id) {
         logger.debug("删除角色：ID {}", id);
         

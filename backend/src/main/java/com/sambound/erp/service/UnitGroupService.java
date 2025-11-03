@@ -6,6 +6,8 @@ import com.sambound.erp.dto.UpdateUnitGroupRequest;
 import com.sambound.erp.entity.UnitGroup;
 import com.sambound.erp.exception.BusinessException;
 import com.sambound.erp.repository.UnitGroupRepository;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -21,18 +23,21 @@ public class UnitGroupService {
         this.unitGroupRepository = unitGroupRepository;
     }
 
+    @Cacheable(cacheNames = "unitGroups", key = "'all'")
     public List<UnitGroupDTO> getAllUnitGroups() {
         return unitGroupRepository.findAll().stream()
                 .map(this::toDTO)
                 .toList();
     }
 
+    @Cacheable(cacheNames = "unitGroups", key = "#id")
     public UnitGroupDTO getUnitGroupById(Long id) {
         UnitGroup unitGroup = unitGroupRepository.findById(id)
                 .orElseThrow(() -> new BusinessException("单位组不存在"));
         return toDTO(unitGroup);
     }
 
+    @Cacheable(cacheNames = "unitGroups", key = "'code:' + #code")
     public UnitGroupDTO getUnitGroupByCode(String code) {
         UnitGroup unitGroup = unitGroupRepository.findByCode(code)
                 .orElseThrow(() -> new BusinessException("单位组不存在"));
@@ -40,6 +45,7 @@ public class UnitGroupService {
     }
 
     @Transactional
+    @CacheEvict(cacheNames = "unitGroups", allEntries = true)
     public UnitGroupDTO createUnitGroup(CreateUnitGroupRequest request) {
         if (unitGroupRepository.existsByCode(request.code())) {
             throw new BusinessException("单位组编码已存在");
@@ -56,6 +62,7 @@ public class UnitGroupService {
     }
 
     @Transactional
+    @CacheEvict(cacheNames = "unitGroups", allEntries = true)
     public UnitGroupDTO updateUnitGroup(Long id, UpdateUnitGroupRequest request) {
         UnitGroup unitGroup = unitGroupRepository.findById(id)
                 .orElseThrow(() -> new BusinessException("单位组不存在"));
@@ -72,6 +79,7 @@ public class UnitGroupService {
     }
 
     @Transactional
+    @CacheEvict(cacheNames = "unitGroups", allEntries = true)
     public void deleteUnitGroup(Long id) {
         if (!unitGroupRepository.existsById(id)) {
             throw new BusinessException("单位组不存在");
@@ -80,6 +88,7 @@ public class UnitGroupService {
     }
 
     @Transactional
+    @CacheEvict(cacheNames = "unitGroups", allEntries = true)
     public UnitGroup findOrCreateByCode(String code, String name) {
         // 使用 PostgreSQL 的 ON CONFLICT DO UPDATE 语法实现原子性的插入或获取操作
         // DO UPDATE 确保总是返回一行，避免死锁问题

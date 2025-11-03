@@ -33,16 +33,19 @@ public class UserManagementService {
     private final RoleRepository roleRepository;
     private final PasswordEncoder passwordEncoder;
     private final AuditLogService auditLogService;
+    private final UserService userService;
 
     public UserManagementService(
             UserRepository userRepository,
             RoleRepository roleRepository,
             PasswordEncoder passwordEncoder,
-            AuditLogService auditLogService) {
+            AuditLogService auditLogService,
+            UserService userService) {
         this.userRepository = userRepository;
         this.roleRepository = roleRepository;
         this.passwordEncoder = passwordEncoder;
         this.auditLogService = auditLogService;
+        this.userService = userService;
     }
 
     public Page<UserResponse> getAllUsers(Pageable pageable) {
@@ -88,6 +91,10 @@ public class UserManagementService {
         }
 
         User savedUser = userRepository.save(user);
+        
+        // 清除用户缓存
+        userService.evictUserCacheByUsername(savedUser.getUsername());
+        
         logger.info("用户 {} 创建成功，ID: {}", savedUser.getUsername(), savedUser.getId());
         return convertToUserResponse(savedUser);
     }
@@ -133,6 +140,11 @@ public class UserManagementService {
         }
 
         User savedUser = userRepository.save(user);
+        
+        // 清除用户缓存
+        userService.evictUserCache(savedUser.getId());
+        userService.evictUserCacheByUsername(savedUser.getUsername());
+        
         logger.info("用户 {} 更新成功", savedUser.getUsername());
         return convertToUserResponse(savedUser);
     }
@@ -143,6 +155,11 @@ public class UserManagementService {
         User user = userRepository.findById(id)
                 .orElseThrow(() -> new BusinessException("用户不存在"));
         String username = user.getUsername();
+        
+        // 清除用户缓存
+        userService.evictUserCache(id);
+        userService.evictUserCacheByUsername(username);
+        
         userRepository.delete(user);
         logger.info("用户 {} 删除成功", username);
     }
@@ -154,6 +171,11 @@ public class UserManagementService {
                 .orElseThrow(() -> new BusinessException("用户不存在"));
         user.setPassword(passwordEncoder.encode(newPassword));
         userRepository.save(user);
+        
+        // 清除用户缓存（密码更改后需要重新认证）
+        userService.evictUserCache(id);
+        userService.evictUserCacheByUsername(user.getUsername());
+        
         logger.info("用户 {} 密码修改成功", user.getUsername());
     }
 

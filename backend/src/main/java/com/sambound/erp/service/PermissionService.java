@@ -3,6 +3,7 @@ package com.sambound.erp.service;
 import com.sambound.erp.dto.PermissionResponse;
 import com.sambound.erp.entity.Permission;
 import com.sambound.erp.repository.PermissionRepository;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
@@ -26,12 +27,14 @@ public class PermissionService {
                 .map(this::convertToPermissionResponse);
     }
 
+    @Cacheable(cacheNames = "permissions", key = "'all'")
     public List<PermissionResponse> getAllPermissionsList() {
         return permissionRepository.findAll().stream()
                 .map(this::convertToPermissionResponse)
                 .collect(Collectors.toList());
     }
 
+    @Cacheable(cacheNames = "permissions", key = "#id")
     public PermissionResponse getPermissionById(Long id) {
         Permission permission = permissionRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("权限不存在"));
