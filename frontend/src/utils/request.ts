@@ -72,28 +72,30 @@ request.interceptors.response.use(
           break
         case 403:
           // 如果是认证相关的403错误，也需要退出登录
+          const token = localStorage.getItem('token')
           const resData = res.detail || res.title || ''
-          if (resData.includes('认证') || resData.includes('登录') || resData.includes('权限异常')) {
-            if (!isHandlingAuthError) {
-              isHandlingAuthError = true
-              message = resData || '账户权限异常，请重新登录'
-              
-              // 显示提示信息
-              ElMessage.warning(message)
-              
-              // 动态导入auth store避免循环依赖
-              const { useAuthStore } = await import('@/stores/auth')
-              const authStore = useAuthStore()
-              
-              // 调用logout方法统一清理登录状态
-              await authStore.logout()
-              
-              // 跳转到登录页
-              router.push('/login').finally(() => {
-                isHandlingAuthError = false
-              })
-            }
-          } else {
+          
+          // 如果有 token 但收到 403 错误，大概率是 token 失效，应该退出登录
+          if (token && !isHandlingAuthError) {
+            isHandlingAuthError = true
+            message = resData || '登录已失效，请重新登录'
+            
+            // 显示提示信息
+            ElMessage.warning(message)
+            
+            // 动态导入auth store避免循环依赖
+            const { useAuthStore } = await import('@/stores/auth')
+            const authStore = useAuthStore()
+            
+            // 调用logout方法统一清理登录状态
+            await authStore.logout()
+            
+            // 跳转到登录页
+            router.push('/login').finally(() => {
+              isHandlingAuthError = false
+            })
+          } else if (!token) {
+            // 没有 token 时的 403，是正常的权限不足
             message = resData || '没有权限访问，请联系管理员'
           }
           break
