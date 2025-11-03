@@ -10,7 +10,7 @@ import java.util.List;
 import java.util.Optional;
 
 @Repository
-public interface MaterialRepository extends JpaRepository<Material, Long> {
+public interface MaterialRepository extends JpaRepository<Material, Long>, MaterialRepositoryCustom {
     Optional<Material> findByCode(String code);
     boolean existsByCode(String code);
     List<Material> findByMaterialGroupId(Long materialGroupId);
@@ -41,5 +41,15 @@ public interface MaterialRepository extends JpaRepository<Material, Long> {
         @Param("materialGroupId") Long materialGroupId,
         @Param("baseUnitId") Long baseUnitId
     );
+    
+    /**
+     * 物料批量插入数据
+     */
+    record MaterialBatchData(
+        String code,
+        String name,
+        Long materialGroupId,
+        Long baseUnitId
+    ) {}
 }
 

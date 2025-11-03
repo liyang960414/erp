@@ -6,40 +6,31 @@
 
 ### 初始化脚本
 
-#### 1. `migration/V1__init_schema.sql` - 表结构脚本
-- **用途**: 创建所有数据表
-- **内容**: 表结构、索引、注释
-- **表名**: users, roles, permissions, user_roles, role_permissions, audit_logs
-
-#### 2. `migration/V2__init_data.sql` - 初始数据脚本
-- **用途**: 插入默认数据
-- **内容**: 权限、角色、管理员用户
-- **安全**: 使用ON CONFLICT避免重复插入
-
-#### 3. `init_all.sql` - 完整初始化脚本（推荐）
+#### 1. `init_all.sql` - 完整初始化脚本（推荐）⭐
 - **用途**: 一次性完成所有表结构和数据的初始化
-- **内容**: 合并V1和V2的功能，支持事务
-- **优点**: 单一文件，支持回滚，适合快速初始化
+- **内容**: 完整的表结构、索引、初始数据、注释
+- **优点**: 单一文件，支持事务回滚，适合快速初始化
+- **包含**: 用户、角色、权限、审计日志、单位、物料等所有表
 
 ### 维护脚本
 
-#### 4. `drop_all_tables.sql` - 删除所有表
+#### 2. `drop_all_tables.sql` - 删除所有表
 - **用途**: 完全删除数据库表和数据
 - **警告**: ⚠️ 会删除所有数据，请谨慎使用！
 
-#### 5. `recreate_database.sh` - 重建数据库（Linux/Mac）
+#### 3. `recreate_database.sh` - 重建数据库（Linux/Mac）
 - **用途**: 完全重建数据库的自动化脚本
 - **功能**: 删除→创建→导入结构→导入数据
 - **环境**: Linux/Mac/Unix
 
-#### 6. `recreate_database.bat` - 重建数据库（Windows）
+#### 4. `recreate_database.bat` - 重建数据库（Windows）
 - **用途**: Windows版本的数据库重建脚本
 - **功能**: 同上
 - **环境**: Windows
 
-#### 7. `migration/V3__add_audit_logs.sql` - 审计日志表脚本
-- **用途**: 仅添加审计日志表（已合并到V1，保留用于参考）
-- **状态**: 已废弃，请使用V1__init_schema.sql
+#### 5. `QUERY_EXAMPLES.sql` - 查询示例脚本
+- **用途**: 提供常用SQL查询示例
+- **内容**: 统计、分析、维护等查询示例
 
 ## 使用方式
 
@@ -65,14 +56,9 @@ psql -h localhost -p 5432 -U postgres -d erp_db
 psql -h localhost -p 5432 -U postgres -d erp_db
 ```
 
-#### 2. 执行表结构脚本
+#### 2. 执行完整初始化脚本
 ```sql
-\i src/main/resources/db/migration/V1__init_schema.sql
-```
-
-#### 3. 执行初始数据脚本
-```sql
-\i src/main/resources/db/migration/V2__init_data.sql
+\i src/main/resources/db/init_all.sql
 ```
 
 ### 方式三：使用自动化脚本（推荐）
@@ -104,9 +90,8 @@ recreate_database.bat
 ### 方式四：使用psql命令行
 
 ```bash
-# 连接并执行脚本
-psql -h localhost -p 5432 -U postgres -d erp_db -f V1__init_schema.sql
-psql -h localhost -p 5432 -U postgres -d erp_db -f V2__init_data.sql
+# 连接并执行完整初始化脚本
+psql -h localhost -p 5432 -U postgres -d erp_db -f init_all.sql
 ```
 
 ### 方式五：使用Spring Boot自动初始化（开发环境）
@@ -137,6 +122,16 @@ role_permissions (角色权限关联)
 permissions (权限)
 
 audit_logs (审计日志表 - 独立表)
+
+unit_groups (单位组)
+  ↓ (一对多)
+units (单位)
+  ↓ (一对多)
+unit_conversions (单位转换)
+
+material_groups (物料组 - 树形结构)
+  ↓ (一对多)
+materials (物料)
 ```
 
 ### 表说明
@@ -149,6 +144,29 @@ audit_logs (审计日志表 - 独立表)
 | user_roles | 用户角色关联 | 初始2条 |
 | role_permissions | 角色权限关联 | 初始多条 |
 | audit_logs | 审计日志表 | 初始为空 |
+| unit_groups | 单位组表 | 初始为空 |
+| units | 单位表 | 初始为空 |
+| unit_conversions | 单位转换表 | 初始为空 |
+| material_groups | 物料组表（支持树形结构） | 初始为空 |
+| materials | 物料表 | 初始为空 |
+
+### 重要字段说明
+
+#### materials 表（物料表）
+- **name**: TEXT 类型，支持任意长度
+- **specification**: TEXT 类型，支持任意长度
+- **mnemonic_code**: TEXT 类型，支持任意长度
+- **description**: TEXT 类型，支持任意长度
+- **code**: VARCHAR(50) 类型，物料编码（唯一）
+- **old_number**: VARCHAR(50) 类型，旧编号
+
+#### material_groups 表（物料组表）
+- **name**: TEXT 类型，支持任意长度
+- **description**: VARCHAR(200) 类型，描述
+- **code**: VARCHAR(50) 类型，物料组编码（唯一）
+- **parent_id**: BIGINT 类型，父级物料组ID（支持树形结构）
+
+**注意**：物料表和物料组表的文本字段使用 TEXT 类型而非 VARCHAR，以支持长文本数据导入。
 
 ## 默认数据
 
@@ -214,7 +232,7 @@ audit_logs (审计日志表 - 独立表)
 脚本使用`DROP TABLE IF EXISTS`和`ON CONFLICT`，可以安全重复执行。
 
 ### 3. 如何修改默认数据？
-编辑`V2__init_data.sql`文件，修改后重新执行。
+编辑`init_all.sql`文件中的初始数据部分，修改后重新执行。
 
 ### 4. 生产环境如何使用？
 **不要在生产环境使用这些脚本！**
@@ -261,6 +279,13 @@ psql -h localhost -p 5432 -U postgres erp_db < backup.sql
    - 备份重要数据
 
 ## 版本历史
+
+### v3.1 (2024-12-XX)
+- 添加物料管理相关表（materials, material_groups）
+- 添加单位管理相关表（units, unit_groups, unit_conversions）
+- 物料表和物料组表的文本字段使用 TEXT 类型支持长文本
+- 更新实体类映射以匹配数据库结构
+- 修复物料导入时的字段长度限制问题
 
 ### v3.0 (2024-12-20)
 - 添加审计日志表（audit_logs）

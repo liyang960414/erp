@@ -10,7 +10,7 @@ import java.util.List;
 import java.util.Optional;
 
 @Repository
-public interface MaterialGroupRepository extends JpaRepository<MaterialGroup, Long> {
+public interface MaterialGroupRepository extends JpaRepository<MaterialGroup, Long>, MaterialGroupRepositoryCustom {
     Optional<MaterialGroup> findByCode(String code);
     boolean existsByCode(String code);
     
@@ -54,5 +54,10 @@ public interface MaterialGroupRepository extends JpaRepository<MaterialGroup, Lo
      */
     @Query("SELECT mg FROM MaterialGroup mg WHERE mg.code IN :codes")
     List<MaterialGroup> findByCodeIn(@Param("codes") List<String> codes);
+    
+    /**
+     * 物料组批量插入数据
+     */
+    record MaterialGroupBatchData(String code, String name, String description, Long parentId) {}
 }
 

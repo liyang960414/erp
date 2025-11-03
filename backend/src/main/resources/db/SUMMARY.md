@@ -6,13 +6,11 @@
 
 | 文件名 | 类型 | 说明 |
 |--------|------|------|
-| `init_all.sql` | SQL | **完整初始化脚本（推荐）** |
-| `migration/V1__init_schema.sql` | SQL | 创建表结构和索引 |
-| `migration/V2__init_data.sql` | SQL | 插入初始数据 |
-| `migration/V3__add_audit_logs.sql` | SQL | 审计表脚本（已废弃） |
+| `init_all.sql` | SQL | **完整初始化脚本（推荐）⭐** |
 | `drop_all_tables.sql` | SQL | 删除所有表 |
 | `recreate_database.sh` | Shell | Linux/Mac自动化重建脚本 |
 | `recreate_database.bat` | Batch | Windows自动化重建脚本 |
+| `QUERY_EXAMPLES.sql` | SQL | 查询示例脚本 |
 | `README.md` | 文档 | 详细使用说明 |
 | `SUMMARY.md` | 文档 | 本文件 |
 
@@ -47,18 +45,7 @@ chmod +x recreate_database.sh
 psql -h localhost -p 5432 -U postgres -d erp_db
 
 # 在psql中执行
-\i migration/V1__init_schema.sql
-\i migration/V2__init_data.sql
-```
-
-### 方式4: 使用psql命令行
-
-```bash
-# 执行建表脚本
-psql -h localhost -U postgres -d erp_db -f migration/V1__init_schema.sql
-
-# 执行数据脚本
-psql -h localhost -U postgres -d erp_db -f migration/V2__init_data.sql
+\i init_all.sql
 ```
 
 ## 📊 数据库结构
@@ -77,6 +64,16 @@ role_permissions (角色权限关联)
 permissions (权限)
 
 audit_logs (审计日志表 - 独立表)
+
+unit_groups (单位组)
+  ↓ (一对多)
+units (单位)
+  ↓ (一对多)
+unit_conversions (单位转换)
+
+material_groups (物料组 - 树形结构)
+  ↓ (一对多)
+materials (物料)
 ```
 
 ### 表列表
@@ -89,6 +86,21 @@ audit_logs (审计日志表 - 独立表)
 | user_roles | 用户角色关联 | (user_id, role_id) |
 | role_permissions | 角色权限关联 | (role_id, permission_id) |
 | audit_logs | 审计日志表 | id |
+| unit_groups | 单位组表 | id |
+| units | 单位表 | id |
+| unit_conversions | 单位转换表 | id |
+| material_groups | 物料组表（支持树形结构） | id |
+| materials | 物料表 | id |
+
+### 重要字段类型说明
+
+**materials 表**：
+- 文本字段（name, specification, mnemonic_code, description）使用 **TEXT** 类型
+- 支持任意长度的数据导入，避免 VARCHAR 长度限制
+
+**material_groups 表**：
+- name 字段使用 **TEXT** 类型
+- 支持长物料组名称
 
 ## 🔐 默认账户
 
@@ -117,14 +129,9 @@ recreate_database.bat   # Windows
 psql -h localhost -U postgres -d erp_db -f drop_all_tables.sql
 ```
 
-### 只重建表结构
+### 只重建数据库
 ```bash
-psql -h localhost -U postgres -d erp_db -f migration/V1__init_schema.sql
-```
-
-### 重新插入初始数据
-```bash
-psql -h localhost -U postgres -d erp_db -f migration/V2__init_data.sql
+psql -h localhost -U postgres -d erp_db -f init_all.sql
 ```
 
 ### 备份数据库
@@ -140,7 +147,7 @@ psql -h localhost -U postgres -d erp_db < backup_20240101_120000.sql
 ## 📝 脚本说明
 
 ### init_all.sql
-- **一次性完整初始化脚本（推荐）**
+- **一次性完整初始化脚本（推荐）⭐**
 - 删除所有现有表
 - 创建所有表结构和索引
 - 插入所有初始数据
@@ -149,33 +156,16 @@ psql -h localhost -U postgres -d erp_db < backup_20240101_120000.sql
 **特性**:
 - 事务支持，可回滚
 - 单一文件，使用简单
-- 包含完整的表注释
+- 包含完整的表注释和列注释
 - 自动验证初始化结果
 
-### V1__init_schema.sql
-- 创建所有表结构（含审计日志表）
-- 创建索引
-- 添加外键约束
-- 添加表注释和列注释
-
-**特性**:
-- 使用 `BIGSERIAL` 自动生成ID
-- 使用 `TIMESTAMP` 记录时间
-- 支持级联删除
-- 完整的索引优化
-- 包含audit_logs审计表
-
-### V2__init_data.sql
-- 插入12个权限
-- 插入3个角色
-- 插入2个用户
-- 配置角色权限关系
-- 配置用户角色关系
-
-**特性**:
-- 使用 `ON CONFLICT DO NOTHING` 避免重复插入
-- 密码使用BCrypt加密
-- 包含验证查询
+**包含内容**:
+- 权限系统：users, roles, permissions, user_roles, role_permissions
+- 审计系统：audit_logs
+- 单位管理：unit_groups, units, unit_conversions
+- 物料管理：material_groups, materials
+- 所有索引和外键约束
+- 默认管理员账户（admin/admin123）和测试账户（testuser/admin123）
 
 ### drop_all_tables.sql
 - 删除所有表
@@ -194,13 +184,13 @@ psql -h localhost -U postgres -d erp_db < backup_20240101_120000.sql
 
 ### 添加新表
 
-1. 在 `V1__init_schema.sql` 中添加CREATE TABLE语句
+1. 在 `init_all.sql` 中添加CREATE TABLE语句
 2. 添加索引和注释
 3. 更新文档
 
 ### 添加初始数据
 
-1. 在 `V2__init_data.sql` 中添加INSERT语句
+1. 在 `init_all.sql` 中添加INSERT语句
 2. 使用 `ON CONFLICT DO NOTHING`
 3. 添加验证查询
 
@@ -216,7 +206,7 @@ spring:
 
 2. **生产环境**: 创建迁移脚本
 ```sql
--- V3__add_new_column.sql
+-- 在现有init_all.sql中添加，或创建新的迁移脚本
 ALTER TABLE users ADD COLUMN phone VARCHAR(20);
 ```
 
@@ -277,6 +267,13 @@ ALTER TABLE users ADD COLUMN phone VARCHAR(20);
 - [快速开始指南](../../QUICKSTART.md)
 
 ## 🔄 版本历史
+
+### v3.1 (2024-12-XX)
+- **新增**: 物料管理相关表（materials, material_groups）
+- **新增**: 单位管理相关表（units, unit_groups, unit_conversions）
+- **修复**: 物料导入时的字段长度限制问题
+- **优化**: 使用 TEXT 类型支持长文本数据导入
+- **更新**: 实体类映射以匹配数据库结构
 
 ### v3.0 (2024-12-20)
 - **新增**: 审计日志表（audit_logs）

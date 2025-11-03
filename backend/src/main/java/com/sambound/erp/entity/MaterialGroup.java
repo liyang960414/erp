@@ -25,7 +25,7 @@ public class MaterialGroup {
     @Column(unique = true, nullable = false, length = 50)
     private String code;
 
-    @Column(nullable = false, length = 100)
+    @Column(nullable = false, columnDefinition = "TEXT")
     private String name;
 
     @Column(length = 200)
