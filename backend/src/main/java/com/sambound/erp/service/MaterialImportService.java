@@ -628,14 +628,14 @@ public class MaterialImportService {
                         MaterialBatchData batchData = codeToBatchData.get(data.code());
                         MaterialExcelRow excelRow = batchData.excelRow();
                         
-                        String materialGroupCode = excelRow.getMaterialGroupCode().trim();
-                        String baseUnitCode = excelRow.getBaseUnitCode().trim();
+                        String materialGroupCode = excelRow.getMaterialGroupCode();
+                        String baseUnitCode = excelRow.getBaseUnitCode();
                         
-                        if (material.getMaterialGroup() == null) {
-                            material.setMaterialGroup(materialGroupCache.get(materialGroupCode));
+                        if (material.getMaterialGroup() == null && materialGroupCode != null && !materialGroupCode.trim().isEmpty()) {
+                            material.setMaterialGroup(materialGroupCache.get(materialGroupCode.trim()));
                         }
-                        if (material.getBaseUnit() == null) {
-                            material.setBaseUnit(unitCache.get(baseUnitCode));
+                        if (material.getBaseUnit() == null && baseUnitCode != null && !baseUnitCode.trim().isEmpty()) {
+                            material.setBaseUnit(unitCache.get(baseUnitCode.trim()));
                         }
                         
                         // 检查是否需要更新字段
