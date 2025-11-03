@@ -25,19 +25,19 @@ public class Material {
     @Column(unique = true, nullable = false, length = 50)
     private String code;
 
-    @Column(nullable = false, length = 200)
+    @Column(nullable = false, columnDefinition = "TEXT")
     private String name;
 
-    @Column(length = 500)
+    @Column(columnDefinition = "TEXT")
     private String specification;
 
-    @Column(name = "mnemonic_code", length = 50)
+    @Column(name = "mnemonic_code", columnDefinition = "TEXT")
     private String mnemonicCode;
 
     @Column(name = "old_number", length = 50)
     private String oldNumber;
 
-    @Column(length = 1000)
+    @Column(columnDefinition = "TEXT")
     private String description;
 
     @ManyToOne(fetch = FetchType.LAZY)
