@@ -75,5 +75,16 @@ public class MaterialController {
         MaterialDTO material = materialService.getMaterialById(id);
         return ResponseEntity.ok(ApiResponse.success(material));
     }
+
+    /**
+     * 搜索物料（根据编码或名称模糊匹配）
+     */
+    @GetMapping("/search")
+    public ResponseEntity<ApiResponse<List<MaterialDTO>>> searchMaterials(
+            @RequestParam String keyword,
+            @RequestParam(defaultValue = "20") int limit) {
+        List<MaterialDTO> materials = materialService.searchMaterials(keyword, limit);
+        return ResponseEntity.ok(ApiResponse.success(materials));
+    }
 }
 

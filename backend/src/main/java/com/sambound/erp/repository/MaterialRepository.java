@@ -54,6 +54,22 @@ public interface MaterialRepository extends JpaRepository<Material, Long>, Mater
     );
     
     /**
+     * 根据物料编码或名称模糊查询物料（用于搜索）
+     * 使用PostgreSQL的ILIKE进行大小写不敏感的模糊匹配
+     * 
+     * @param keyword 搜索关键词（编码或名称）
+     * @param pageable 分页参数
+     * @return 物料列表
+     */
+    @Query(value = "SELECT * FROM materials " +
+           "WHERE code ILIKE :keyword OR name ILIKE :keyword " +
+           "ORDER BY code " +
+           "LIMIT :limit OFFSET :offset", nativeQuery = true)
+    List<Material> searchByCodeOrName(@Param("keyword") String keyword, 
+                                     @Param("limit") int limit, 
+                                     @Param("offset") long offset);
+    
+    /**
      * 物料批量插入数据
      */
     record MaterialBatchData(

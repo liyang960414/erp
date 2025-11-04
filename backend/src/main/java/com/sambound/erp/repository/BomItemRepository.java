@@ -32,6 +32,16 @@ public interface BomItemRepository extends JpaRepository<BomItem, Long> {
     List<BomItem> findByBomIdWithDetails(@Param("bomId") Long bomId);
     
     /**
+     * 根据BOM ID和子物料ID查找BOM明细项（用于反查时获取用量信息）
+     */
+    @Query("SELECT item FROM BomItem item " +
+           "LEFT JOIN FETCH item.childMaterial " +
+           "LEFT JOIN FETCH item.childUnit " +
+           "WHERE item.bom.id = :bomId AND item.childMaterial.id = :childMaterialId")
+    List<BomItem> findByBomIdAndChildMaterialId(@Param("bomId") Long bomId, 
+                                                  @Param("childMaterialId") Long childMaterialId);
+    
+    /**
      * 删除指定BOM的所有明细项
      */
     void deleteByBomId(Long bomId);

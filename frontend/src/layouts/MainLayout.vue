@@ -102,6 +102,9 @@
               <el-menu-item index="/engineering-data/bom-list/boms">{{
                 $t('menu.bomListManagement')
               }}</el-menu-item>
+              <el-menu-item index="/engineering-data/bom-list/query">
+                物料清单查询
+              </el-menu-item>
             </el-sub-menu>
           </el-sub-menu>
 

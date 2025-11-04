@@ -47,5 +47,23 @@ public interface BillOfMaterialRepository extends JpaRepository<BillOfMaterial, 
            "LEFT JOIN FETCH bom.material " +
            "ORDER BY bom.material.code, bom.version")
     List<BillOfMaterial> findAllWithMaterial();
+    
+    /**
+     * 根据物料编码查询所有版本的BOM
+     */
+    @Query("SELECT bom FROM BillOfMaterial bom " +
+           "LEFT JOIN FETCH bom.material " +
+           "WHERE bom.material.code = :materialCode " +
+           "ORDER BY bom.version")
+    List<BillOfMaterial> findByMaterialCode(@Param("materialCode") String materialCode);
+    
+    /**
+     * 根据子物料ID查询使用该物料作为子项的所有BOM
+     */
+    @Query("SELECT DISTINCT bom FROM BillOfMaterial bom " +
+           "LEFT JOIN FETCH bom.material " +
+           "JOIN BomItem item ON item.bom.id = bom.id " +
+           "WHERE item.childMaterial.id = :childMaterialId")
+    List<BillOfMaterial> findByChildMaterialId(@Param("childMaterialId") Long childMaterialId);
 }
 

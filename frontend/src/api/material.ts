@@ -26,4 +26,11 @@ export const materialApi = {
       timeout: 600000, // 10分钟超时，因为大文件导入可能耗时较长
     })
   },
+
+  // 搜索物料（根据编码或名称模糊匹配）
+  searchMaterials(keyword: string, limit: number = 20): Promise<Material[]> {
+    return request.get('/materials/search', {
+      params: { keyword, limit },
+    })
+  },
 }

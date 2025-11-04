@@ -86,6 +86,12 @@ const router = createRouter({
           component: () => import('@/views/engineering-data/bom-list/BomManagementView.vue'),
           meta: { title: '物料清单列表', requiresAuth: true },
         },
+        {
+          path: 'engineering-data/bom-list/query',
+          name: 'bomQuery',
+          component: () => import('@/views/engineering-data/bom-list/BomQueryView.vue'),
+          meta: { title: '物料清单查询', requiresAuth: true },
+        },
       ],
     },
   ],

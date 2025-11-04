@@ -8,6 +8,8 @@ import com.sambound.erp.exception.BusinessException;
 import com.sambound.erp.repository.MaterialRepository;
 import com.sambound.erp.repository.MaterialGroupRepository;
 import com.sambound.erp.repository.UnitRepository;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -49,6 +51,23 @@ public class MaterialService {
 
     public List<MaterialDTO> getMaterialsByGroupId(Long materialGroupId) {
         return materialRepository.findByMaterialGroupId(materialGroupId).stream()
+                .map(this::toDTO)
+                .toList();
+    }
+
+    /**
+     * 根据关键词搜索物料（编码或名称模糊匹配）
+     * 
+     * @param keyword 搜索关键词
+     * @param limit 返回结果数量限制（默认20）
+     * @return 物料列表
+     */
+    public List<MaterialDTO> searchMaterials(String keyword, int limit) {
+        if (keyword == null || keyword.trim().isEmpty()) {
+            return List.of();
+        }
+        String searchKeyword = "%" + keyword.trim() + "%";
+        return materialRepository.searchByCodeOrName(searchKeyword, limit, 0).stream()
                 .map(this::toDTO)
                 .toList();
     }

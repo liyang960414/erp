@@ -93,3 +93,29 @@ export interface UpdateBomItemRequest {
   childBomVersion?: string
   memo?: string | null
 }
+
+/**
+ * BOM查询结果节点（支持树形结构）
+ */
+export interface BomQueryNode {
+  materialId: number
+  materialCode: string
+  materialName: string
+  materialSpecification: string | null // 物料型号
+  materialGroupCode: string | null
+  materialGroupName: string | null
+  bomId: number | null
+  bomVersion: string | null
+  bomName: string | null
+  sequence?: number | null
+  numerator?: number | null
+  denominator?: number | null
+  scrapRate?: number | null
+  childBomVersion?: string | null
+  childUnitCode?: string | null // 子项单位编码
+  childUnitName?: string | null // 子项单位名称
+  children: BomQueryNode[]
+  // 计算用量相关字段（前端计算）
+  calculatedQuantity?: number | null // 计算出的需求数量
+  parentQuantity?: number | null // 父物料的需求数量
+}

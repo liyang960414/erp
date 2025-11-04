@@ -3,6 +3,7 @@ package com.sambound.erp.controller;
 import com.sambound.erp.dto.ApiResponse;
 import com.sambound.erp.dto.BillOfMaterialDTO;
 import com.sambound.erp.dto.BomImportResponse;
+import com.sambound.erp.dto.BomQueryDTO;
 import com.sambound.erp.dto.CreateBomRequest;
 import com.sambound.erp.dto.UpdateBomRequest;
 import com.sambound.erp.service.BillOfMaterialService;
@@ -110,6 +111,38 @@ public class BillOfMaterialController {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .body(ApiResponse.error("导入失败: " + e.getMessage()));
         }
+    }
+
+    /**
+     * 根据物料编码获取该物料的所有BOM版本列表
+     */
+    @GetMapping("/material-code/{materialCode}/versions")
+    public ResponseEntity<ApiResponse<List<BillOfMaterialDTO>>> getBomVersionsByMaterialCode(
+            @PathVariable String materialCode) {
+        List<BillOfMaterialDTO> boms = bomService.getBomVersionsByMaterialCode(materialCode);
+        return ResponseEntity.ok(ApiResponse.success(boms));
+    }
+
+    /**
+     * BOM正查：根据物料编码和版本，递归查询所有子物料及其BOM
+     */
+    @GetMapping("/query/forward")
+    public ResponseEntity<ApiResponse<BomQueryDTO>> queryBomForward(
+            @RequestParam String materialCode,
+            @RequestParam String version) {
+        BomQueryDTO result = bomService.queryBomForward(materialCode, version);
+        return ResponseEntity.ok(ApiResponse.success(result));
+    }
+
+    /**
+     * BOM反查：根据物料编码和版本（可选），递归查询所有父级物料及其BOM
+     */
+    @GetMapping("/query/backward")
+    public ResponseEntity<ApiResponse<List<BomQueryDTO>>> queryBomBackward(
+            @RequestParam String materialCode,
+            @RequestParam(required = false) String version) {
+        List<BomQueryDTO> result = bomService.queryBomBackward(materialCode, version);
+        return ResponseEntity.ok(ApiResponse.success(result));
     }
 }
 
