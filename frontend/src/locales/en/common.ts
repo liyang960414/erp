@@ -27,4 +27,8 @@ export default {
   createTime: 'Created Time',
   updateTime: 'Updated Time',
   noPermission: 'You do not have permission to access this page',
+  close: 'Close',
+  closeTab: 'Close Tab',
+  closeOtherTabs: 'Close Other Tabs',
+  closeAllTabs: 'Close All Tabs',
 }

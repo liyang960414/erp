@@ -1,6 +1,7 @@
 import { createRouter, createWebHistory } from 'vue-router'
 import { ElMessage } from 'element-plus'
 import { useAuthStore } from '@/stores/auth'
+import { useTabsStore } from '@/stores/tabs'
 import MainLayout from '@/layouts/MainLayout.vue'
 import LoginView from '@/views/auth/LoginView.vue'
 
@@ -93,6 +94,7 @@ const router = createRouter({
 // 路由守卫
 router.beforeEach(async (to, from, next) => {
   const authStore = useAuthStore()
+  const tabsStore = useTabsStore()
 
   // 如果没有初始化用户信息，尝试从localStorage恢复
   if (!authStore.user && authStore.token) {
@@ -103,6 +105,7 @@ router.beforeEach(async (to, from, next) => {
 
   if (requiresAuth && !authStore.isAuthenticated) {
     // 需要认证但未登录，跳转到登录页
+    tabsStore.clearTabs()
     next('/login')
   } else if (to.path === '/login' && authStore.isAuthenticated) {
     // 已登录访问登录页，跳转到首页
@@ -125,6 +128,21 @@ router.beforeEach(async (to, from, next) => {
     }
   } else {
     next()
+  }
+})
+
+// 路由后置守卫 - 添加标签页并同步激活状态
+router.afterEach((to) => {
+  const tabsStore = useTabsStore()
+  // 如果是需要认证的路由且不是登录页，添加到标签页
+  const requiresAuth = to.matched.some((record) => record.meta.requiresAuth)
+  if (requiresAuth && to.path !== '/login') {
+    // 先添加标签(如果不存在)
+    tabsStore.addTab(to)
+    // 然后确保激活状态与当前路由同步
+    if (tabsStore.activeTab !== to.path) {
+      tabsStore.setActiveTab(to.path)
+    }
   }
 })
 

@@ -122,6 +122,8 @@
 
       <!-- 主内容区 -->
       <el-main class="main-content">
+        <!-- 标签栏 -->
+        <TabsBar />
         <div class="main-content-wrapper">
           <router-view />
         </div>
@@ -131,7 +133,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, ref } from 'vue'
+import { computed, ref, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useI18n } from 'vue-i18n'
 import { ElMessage, ElMessageBox } from 'element-plus'
@@ -148,16 +150,24 @@ import {
 } from '@element-plus/icons-vue'
 import { useAuthStore } from '@/stores/auth'
 import { useLocaleStore } from '@/stores/locale'
+import { useTabsStore } from '@/stores/tabs'
+import TabsBar from '@/components/TabsBar.vue'
 import type { LocaleType } from '@/locales'
 
 const route = useRoute()
 const router = useRouter()
 const authStore = useAuthStore()
 const localeStore = useLocaleStore()
+const tabsStore = useTabsStore()
 const { t } = useI18n()
 
 const activeMenu = computed(() => route.path)
 const currentLocale = ref<LocaleType>(localeStore.currentLocale)
+
+// 初始化标签页
+onMounted(() => {
+  tabsStore.initTabs()
+})
 
 const handleLocaleChange = (locale: LocaleType) => {
   localeStore.changeLocale(locale)
@@ -174,6 +184,7 @@ const handleCommand = async (command: string) => {
     })
 
     await authStore.logout()
+    tabsStore.clearTabs()
     ElMessage.success(t('auth.logoutSuccess'))
     router.push('/login')
   }

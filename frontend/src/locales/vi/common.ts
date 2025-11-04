@@ -27,4 +27,8 @@ export default {
   createTime: 'Thời gian tạo',
   updateTime: 'Thời gian cập nhật',
   noPermission: 'Bạn không có quyền truy cập trang này',
+  close: 'Đóng',
+  closeTab: 'Đóng Thẻ',
+  closeOtherTabs: 'Đóng Các Thẻ Khác',
+  closeAllTabs: 'Đóng Tất Cả Thẻ',
 }

@@ -28,4 +28,7 @@ export default {
   updateTime: '更新时间',
   noPermission: '没有权限访问该页面',
   close: '关闭',
+  closeTab: '关闭标签',
+  closeOtherTabs: '关闭其他标签',
+  closeAllTabs: '关闭所有标签',
 }

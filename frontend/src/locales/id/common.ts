@@ -27,4 +27,8 @@ export default {
   createTime: 'Waktu Dibuat',
   updateTime: 'Waktu Diperbarui',
   noPermission: 'Anda tidak memiliki izin untuk mengakses halaman ini',
+  close: 'Tutup',
+  closeTab: 'Tutup Tab',
+  closeOtherTabs: 'Tutup Tab Lainnya',
+  closeAllTabs: 'Tutup Semua Tab',
 }
