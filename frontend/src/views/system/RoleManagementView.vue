@@ -13,40 +13,31 @@
 
       <!-- 角色表格 -->
       <div class="table-container">
-        <el-table
-          v-loading="loading"
-          :data="roles"
-          style="width: 100%"
-          border
-        >
-        <el-table-column prop="id" label="ID" width="80" />
-        <el-table-column prop="name" label="角色名称" width="150" />
-        <el-table-column prop="description" label="描述" />
-        <el-table-column prop="permissions" label="权限" min-width="300">
-          <template #default="{ row }">
-            <el-tag
-              v-for="perm in row.permissions"
-              :key="perm.id"
-              style="margin-right: 5px; margin-bottom: 5px"
-              size="small"
-            >
-              {{ perm.name }}
-            </el-tag>
-            <span v-if="!row.permissions || row.permissions.length === 0" style="color: #999">
-              暂无权限
-            </span>
-          </template>
-        </el-table-column>
-        <el-table-column label="操作" width="150" fixed="right">
-          <template #default="{ row }">
-            <el-button type="primary" size="small" @click="handleEdit(row)">
-              编辑
-            </el-button>
-            <el-button type="danger" size="small" @click="handleDelete(row)">
-              删除
-            </el-button>
-          </template>
-        </el-table-column>
+        <el-table v-loading="loading" :data="roles" style="width: 100%" border>
+          <el-table-column prop="id" label="ID" width="80" />
+          <el-table-column prop="name" label="角色名称" width="150" />
+          <el-table-column prop="description" label="描述" />
+          <el-table-column prop="permissions" label="权限" min-width="300">
+            <template #default="{ row }">
+              <el-tag
+                v-for="perm in row.permissions"
+                :key="perm.id"
+                style="margin-right: 5px; margin-bottom: 5px"
+                size="small"
+              >
+                {{ perm.name }}
+              </el-tag>
+              <span v-if="!row.permissions || row.permissions.length === 0" style="color: #999">
+                暂无权限
+              </span>
+            </template>
+          </el-table-column>
+          <el-table-column label="操作" width="150" fixed="right">
+            <template #default="{ row }">
+              <el-button type="primary" size="small" @click="handleEdit(row)"> 编辑 </el-button>
+              <el-button type="danger" size="small" @click="handleDelete(row)"> 删除 </el-button>
+            </template>
+          </el-table-column>
         </el-table>
       </div>
 
@@ -65,11 +56,7 @@
     </el-card>
 
     <!-- 角色表单对话框 -->
-    <RoleFormDialog
-      v-model="dialogVisible"
-      :role="currentRole"
-      @success="loadRoles"
-    />
+    <RoleFormDialog v-model="dialogVisible" :role="currentRole" @success="loadRoles" />
   </div>
 </template>
 
@@ -79,7 +66,7 @@ import { ElMessage, ElMessageBox } from 'element-plus'
 import { Plus } from '@element-plus/icons-vue'
 import { roleApi } from '@/api/role'
 import type { Role } from '@/types/role'
-import RoleFormDialog from '@/components/RoleFormDialog.vue'
+import RoleFormDialog from './components/RoleFormDialog.vue'
 
 const loading = ref(false)
 const roles = ref<Role[]>([])
@@ -105,7 +92,7 @@ const loadRoles = async () => {
       sortBy: 'id',
       sortDir: 'ASC',
     })
-    
+
     roles.value = response.content
     pagination.value.total = response.totalElements
   } catch (error) {
@@ -127,15 +114,11 @@ const handleEdit = (role: Role) => {
 
 const handleDelete = async (role: Role) => {
   try {
-    await ElMessageBox.confirm(
-      `确定要删除角色 "${role.name}" 吗？`,
-      '删除确认',
-      {
-        confirmButtonText: '确定',
-        cancelButtonText: '取消',
-        type: 'warning',
-      }
-    )
+    await ElMessageBox.confirm(`确定要删除角色 "${role.name}" 吗？`, '删除确认', {
+      confirmButtonText: '确定',
+      cancelButtonText: '取消',
+      type: 'warning',
+    })
 
     await roleApi.deleteRole(role.id)
     ElMessage.success('删除成功')

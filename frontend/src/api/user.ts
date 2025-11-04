@@ -37,4 +37,3 @@ export const userApi = {
     return request.put(`/users/${id}/password`, newPassword)
   },
 }
-

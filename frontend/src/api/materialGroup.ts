@@ -12,5 +12,3 @@ export const materialGroupApi = {
     return request.get(`/material-groups/${id}`)
   },
 }
-
-

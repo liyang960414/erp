@@ -12,12 +12,12 @@ export const useAuthStore = defineStore('auth', () => {
   // 计算属性
   const isAuthenticated = computed(() => !!token.value)
   const hasRole = computed(() => (roleName: string) => {
-    return user.value?.roles?.some(role => role.name === roleName) || false
+    return user.value?.roles?.some((role) => role.name === roleName) || false
   })
   const hasPermission = computed(() => (permissionName: string) => {
     if (!user.value) return false
-    return user.value.roles.some(role =>
-      role.permissions?.some(perm => perm.name === permissionName)
+    return user.value.roles.some((role) =>
+      role.permissions?.some((perm) => perm.name === permissionName),
     )
   })
 
@@ -28,24 +28,24 @@ export const useAuthStore = defineStore('auth', () => {
       const response = await authApi.login(loginData)
       token.value = response.token
       localStorage.setItem('token', response.token)
-      
+
       // 保存用户基本信息
       const basicUser: Partial<UserInfo> = {
         id: response.userId,
         username: response.username,
         email: response.email,
         fullName: response.fullName,
-        roles: response.roles.map(name => ({ 
-          id: 0, 
-          name, 
-          description: '' 
+        roles: response.roles.map((name) => ({
+          id: 0,
+          name,
+          description: '',
         })),
       }
       localStorage.setItem('user', JSON.stringify(basicUser))
-      
+
       // 获取完整用户信息
       await fetchUserInfo()
-      
+
       ElMessage.success('登录成功')
       return true
     } catch (error) {
@@ -59,21 +59,21 @@ export const useAuthStore = defineStore('auth', () => {
   // 获取用户信息
   async function fetchUserInfo() {
     if (!token.value) return
-    
+
     try {
       user.value = await authApi.getCurrentUser()
       localStorage.setItem('user', JSON.stringify(user.value))
     } catch (error: any) {
       console.error('获取用户信息失败:', error)
       const status = error?.response?.status
-      
+
       // 401和403错误已在请求拦截器中统一处理（会自动调用logout和跳转）
       if (status === 401 || status === 403) {
         // 直接调用logout清除状态（请求拦截器已经处理了跳转）
         await logout()
         return
       }
-      
+
       // 其他错误，尝试使用已保存的用户信息
       const storedUser = localStorage.getItem('user')
       if (storedUser) {
@@ -96,7 +96,7 @@ export const useAuthStore = defineStore('auth', () => {
     user.value = null
     localStorage.removeItem('token')
     localStorage.removeItem('user')
-    
+
     // 尝试调用登出API，但不阻塞退出流程
     try {
       await authApi.logout()
@@ -131,4 +131,3 @@ export const useAuthStore = defineStore('auth', () => {
     initUser,
   }
 })
-

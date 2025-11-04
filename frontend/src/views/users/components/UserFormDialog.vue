@@ -5,12 +5,7 @@
     width="600px"
     @close="handleClose"
   >
-    <el-form
-      ref="formRef"
-      :model="form"
-      :rules="rules"
-      label-width="100px"
-    >
+    <el-form ref="formRef" :model="form" :rules="rules" label-width="100px">
       <el-form-item :label="$t('user.username')" prop="username">
         <el-input
           v-model="form.username"
@@ -47,12 +42,7 @@
           :placeholder="$t('user.selectRoles')"
           style="width: 100%"
         >
-          <el-option
-            v-for="role in allRoles"
-            :key="role.id"
-            :label="role.name"
-            :value="role.name"
-          >
+          <el-option v-for="role in allRoles" :key="role.id" :label="role.name" :value="role.name">
             <span>{{ role.name }}</span>
             <span style="color: #999; font-size: 12px; margin-left: 10px">
               {{ role.description }}
@@ -75,10 +65,10 @@
 import { ref, reactive, watch, onMounted, computed } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { ElMessage, type FormInstance, type FormRules } from 'element-plus'
-import { userApi } from '@/api/user'
-import { roleApi } from '@/api/role'
-import type { User } from '@/types/user'
-import type { Role } from '@/types/role'
+import { userApi } from '@/api/user.ts'
+import { roleApi } from '@/api/role.ts'
+import type { User } from '@/types/user.ts'
+import type { Role } from '@/types/role.ts'
 
 const { t } = useI18n()
 
@@ -129,17 +119,21 @@ const visible = computed({
   set: (val) => emit('update:modelValue', val),
 })
 
-watch(() => props.user, (user) => {
-  if (user) {
-    form.username = user.username
-    form.email = user.email
-    form.fullName = user.fullName || ''
-    form.enabled = user.enabled
-    form.roleNames = user.roles.map(r => r.name)
-  } else {
-    resetForm()
-  }
-}, { immediate: true })
+watch(
+  () => props.user,
+  (user) => {
+    if (user) {
+      form.username = user.username
+      form.email = user.email
+      form.fullName = user.fullName || ''
+      form.enabled = user.enabled
+      form.roleNames = user.roles.map((r) => r.name)
+    } else {
+      resetForm()
+    }
+  },
+  { immediate: true },
+)
 
 onMounted(() => {
   loadRoles()
@@ -186,7 +180,7 @@ const handleSubmit = async () => {
           await userApi.createUser(form)
           ElMessage.success(t('user.createSuccess'))
         }
-        
+
         emit('success')
         handleClose()
       } catch (error) {
@@ -199,11 +193,9 @@ const handleSubmit = async () => {
 }
 </script>
 
-
 <style scoped>
 :deep(.el-select-dropdown__item) {
   height: auto;
   padding: 8px 20px;
 }
 </style>
-

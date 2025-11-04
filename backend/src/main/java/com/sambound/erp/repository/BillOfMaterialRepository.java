@@ -18,6 +18,11 @@ public interface BillOfMaterialRepository extends JpaRepository<BillOfMaterial, 
     List<BillOfMaterial> findByMaterialId(Long materialId);
     
     /**
+     * 根据多个父项物料ID批量查找所有版本的BOM
+     */
+    List<BillOfMaterial> findByMaterialIdIn(List<Long> materialIds);
+    
+    /**
      * 根据父项物料ID和版本号查找BOM
      */
     Optional<BillOfMaterial> findByMaterialIdAndVersion(Long materialId, String version);

@@ -32,49 +32,44 @@
 
       <!-- 用户表格 -->
       <div class="table-container">
-        <el-table
-          v-loading="loading"
-          :data="users"
-          style="width: 100%"
-          border
-        >
-        <el-table-column prop="id" label="ID" width="80" />
-        <el-table-column :label="$t('user.username')" prop="username" width="150" />
-        <el-table-column :label="$t('user.email')" prop="email" width="200" />
-        <el-table-column :label="$t('user.fullName')" prop="fullName" />
-        <el-table-column :label="$t('user.roles')" prop="roles" width="150">
-          <template #default="{ row }">
-            <el-tag
-              v-for="role in row.roles"
-              :key="role.id"
-              style="margin-right: 5px"
-              type="primary"
-              size="small"
-            >
-              {{ role.name }}
-            </el-tag>
-          </template>
-        </el-table-column>
-        <el-table-column :label="$t('user.status')" prop="enabled" width="100">
-          <template #default="{ row }">
-            <el-tag :type="row.enabled ? 'success' : 'danger'" size="small">
-              {{ row.enabled ? $t('user.enable') : $t('user.disable') }}
-            </el-tag>
-          </template>
-        </el-table-column>
-        <el-table-column :label="$t('common.actions')" width="250" fixed="right">
-          <template #default="{ row }">
-            <el-button type="primary" size="small" @click="handleEdit(row)">
-              {{ $t('common.edit') }}
-            </el-button>
-            <el-button type="warning" size="small" @click="handleToggleStatus(row)">
-              {{ row.enabled ? $t('user.disable') : $t('user.enable') }}
-            </el-button>
-            <el-button type="danger" size="small" @click="handleDelete(row)">
-              {{ $t('common.delete') }}
-            </el-button>
-          </template>
-        </el-table-column>
+        <el-table v-loading="loading" :data="users" style="width: 100%" border>
+          <el-table-column prop="id" label="ID" width="80" />
+          <el-table-column :label="$t('user.username')" prop="username" width="150" />
+          <el-table-column :label="$t('user.email')" prop="email" width="200" />
+          <el-table-column :label="$t('user.fullName')" prop="fullName" />
+          <el-table-column :label="$t('user.roles')" prop="roles" width="150">
+            <template #default="{ row }">
+              <el-tag
+                v-for="role in row.roles"
+                :key="role.id"
+                style="margin-right: 5px"
+                type="primary"
+                size="small"
+              >
+                {{ role.name }}
+              </el-tag>
+            </template>
+          </el-table-column>
+          <el-table-column :label="$t('user.status')" prop="enabled" width="100">
+            <template #default="{ row }">
+              <el-tag :type="row.enabled ? 'success' : 'danger'" size="small">
+                {{ row.enabled ? $t('user.enable') : $t('user.disable') }}
+              </el-tag>
+            </template>
+          </el-table-column>
+          <el-table-column :label="$t('common.actions')" width="250" fixed="right">
+            <template #default="{ row }">
+              <el-button type="primary" size="small" @click="handleEdit(row)">
+                {{ $t('common.edit') }}
+              </el-button>
+              <el-button type="warning" size="small" @click="handleToggleStatus(row)">
+                {{ row.enabled ? $t('user.disable') : $t('user.enable') }}
+              </el-button>
+              <el-button type="danger" size="small" @click="handleDelete(row)">
+                {{ $t('common.delete') }}
+              </el-button>
+            </template>
+          </el-table-column>
         </el-table>
       </div>
 
@@ -93,11 +88,7 @@
     </el-card>
 
     <!-- 用户表单对话框 -->
-    <UserFormDialog
-      v-model="dialogVisible"
-      :user="currentUser"
-      @success="loadUsers"
-    />
+    <UserFormDialog v-model="dialogVisible" :user="currentUser" @success="loadUsers" />
   </div>
 </template>
 
@@ -108,7 +99,7 @@ import { ElMessage, ElMessageBox } from 'element-plus'
 import { Plus, Search } from '@element-plus/icons-vue'
 import { userApi } from '@/api/user'
 import type { User } from '@/types/user'
-import UserFormDialog from '@/components/UserFormDialog.vue'
+import UserFormDialog from './components/UserFormDialog.vue'
 
 const { t } = useI18n()
 
@@ -137,7 +128,7 @@ const loadUsers = async () => {
       sortBy: 'id',
       sortDir: 'DESC',
     })
-    
+
     users.value = response.content
     pagination.value.total = response.totalElements
   } catch (error) {
@@ -181,7 +172,7 @@ const handleDelete = async (user: User) => {
         confirmButtonText: t('common.confirm'),
         cancelButtonText: t('common.cancel'),
         type: 'warning',
-      }
+      },
     )
 
     await userApi.deleteUser(user.id)
@@ -262,4 +253,3 @@ const handleDelete = async (user: User) => {
   }
 }
 </style>
-

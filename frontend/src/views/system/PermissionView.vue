@@ -7,15 +7,10 @@
 
       <!-- 权限表格 -->
       <div class="table-container">
-        <el-table
-          v-loading="loading"
-          :data="permissions"
-          style="width: 100%"
-          border
-        >
-        <el-table-column prop="id" label="ID" width="80" />
-        <el-table-column prop="name" label="权限名称" width="200" />
-        <el-table-column prop="description" label="描述" />
+        <el-table v-loading="loading" :data="permissions" style="width: 100%" border>
+          <el-table-column prop="id" label="ID" width="80" />
+          <el-table-column prop="name" label="权限名称" width="200" />
+          <el-table-column prop="description" label="描述" />
         </el-table>
       </div>
 
@@ -62,7 +57,7 @@ const loadPermissions = async () => {
       sortBy: 'id',
       sortDir: 'ASC',
     })
-    
+
     permissions.value = response.content
     pagination.value.total = response.totalElements
   } catch (error) {

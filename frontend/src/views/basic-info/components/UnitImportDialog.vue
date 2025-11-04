@@ -1,10 +1,5 @@
 <template>
-  <el-dialog
-    v-model="dialogVisible"
-    title="导入单位"
-    width="600px"
-    @close="handleClose"
-  >
+  <el-dialog v-model="dialogVisible" title="导入单位" width="600px" @close="handleClose">
     <el-upload
       ref="uploadRef"
       :auto-upload="false"
@@ -15,16 +10,12 @@
       drag
     >
       <el-icon class="el-icon--upload"><upload-filled /></el-icon>
-      <div class="el-upload__text">
-        将文件拖到此处，或<em>点击上传</em>
-      </div>
+      <div class="el-upload__text">将文件拖到此处，或<em>点击上传</em></div>
       <template #tip>
-        <div class="el-upload__tip">
-          支持Excel文件（.xlsx或.xls），且不超过10MB
-        </div>
+        <div class="el-upload__tip">支持Excel文件（.xlsx或.xls），且不超过10MB</div>
       </template>
     </el-upload>
-    
+
     <div v-if="importResult" class="import-result" style="margin-top: 20px">
       <el-alert
         :type="importResult.failureCount === 0 ? 'success' : 'warning'"
@@ -44,7 +35,7 @@
         </el-collapse>
       </div>
     </div>
-    
+
     <template #footer>
       <el-button @click="handleClose">关闭</el-button>
       <el-button
@@ -63,8 +54,8 @@
 import { ref, computed } from 'vue'
 import { ElMessage, type UploadFile, type UploadInstance } from 'element-plus'
 import { UploadFilled } from '@element-plus/icons-vue'
-import { unitApi } from '@/api/unit'
-import type { UnitImportResponse } from '@/types/unit'
+import { unitApi } from '@/api/unit.ts'
+import type { UnitImportResponse } from '@/types/unit.ts'
 
 interface Props {
   modelValue: boolean
@@ -110,12 +101,12 @@ const handleImport = async () => {
     ElMessage.warning('请先选择文件')
     return
   }
-  
+
   importing.value = true
   try {
     const result = await unitApi.importUnits(selectedFile.value)
     importResult.value = result
-    
+
     if (result.failureCount === 0) {
       ElMessage.success('导入成功')
       emit('success')
@@ -146,4 +137,3 @@ const handleClose = () => {
   margin-top: 20px;
 }
 </style>
-

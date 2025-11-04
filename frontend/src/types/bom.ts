@@ -93,4 +93,3 @@ export interface UpdateBomItemRequest {
   childBomVersion?: string
   memo?: string | null
 }
-

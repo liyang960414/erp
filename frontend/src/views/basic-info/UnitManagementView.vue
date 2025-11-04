@@ -31,72 +31,63 @@
           border
           row-key="groupCode"
         >
-        <el-table-column type="expand">
-          <template #default="{ row }">
-            <div class="unit-group-details">
-              <el-table :data="row.units" border size="small" max-height="400">
-                <el-table-column prop="code" label="单位编码" width="150" />
-                <el-table-column prop="name" label="单位名称" />
-                <el-table-column label="状态" width="100">
-                  <template #default="{ row: unit }">
-                    <el-tag :type="unit.enabled ? 'success' : 'danger'" size="small">
-                      {{ unit.enabled ? '启用' : '禁用' }}
-                    </el-tag>
-                  </template>
-                </el-table-column>
-                <el-table-column label="操作" width="200" fixed="right">
-                  <template #default="{ row: unit }">
-                    <el-button type="primary" size="small" @click="handleEditUnit(unit)">
-                      编辑
-                    </el-button>
-                    <el-button type="danger" size="small" @click="handleDeleteUnit(unit)">
-                      删除
-                    </el-button>
-                  </template>
-                </el-table-column>
-              </el-table>
-            </div>
-          </template>
-        </el-table-column>
-        <el-table-column prop="groupName" label="单位组名称" />
-        <el-table-column prop="groupCode" label="单位组编码" width="150" />
-        <el-table-column label="单位数量" width="120">
-          <template #default="{ row }">
-            <el-tag type="info">{{ row.units.length }}</el-tag>
-          </template>
-        </el-table-column>
+          <el-table-column type="expand">
+            <template #default="{ row }">
+              <div class="unit-group-details">
+                <el-table :data="row.units" border size="small" max-height="400">
+                  <el-table-column prop="code" label="单位编码" width="150" />
+                  <el-table-column prop="name" label="单位名称" />
+                  <el-table-column label="状态" width="100">
+                    <template #default="{ row: unit }">
+                      <el-tag :type="unit.enabled ? 'success' : 'danger'" size="small">
+                        {{ unit.enabled ? '启用' : '禁用' }}
+                      </el-tag>
+                    </template>
+                  </el-table-column>
+                  <el-table-column label="操作" width="200" fixed="right">
+                    <template #default="{ row: unit }">
+                      <el-button type="primary" size="small" @click="handleEditUnit(unit)">
+                        编辑
+                      </el-button>
+                      <el-button type="danger" size="small" @click="handleDeleteUnit(unit)">
+                        删除
+                      </el-button>
+                    </template>
+                  </el-table-column>
+                </el-table>
+              </div>
+            </template>
+          </el-table-column>
+          <el-table-column prop="groupName" label="单位组名称" />
+          <el-table-column prop="groupCode" label="单位组编码" width="150" />
+          <el-table-column label="单位数量" width="120">
+            <template #default="{ row }">
+              <el-tag type="info">{{ row.units.length }}</el-tag>
+            </template>
+          </el-table-column>
         </el-table>
 
         <!-- 全部显示模式 -->
-        <el-table
-          v-else
-          v-loading="loading"
-          :data="units"
-          style="width: 100%"
-          border
-          row-key="id"
-        >
-        <el-table-column prop="code" label="单位编码" width="150" />
-        <el-table-column prop="name" label="单位名称" />
-        <el-table-column prop="unitGroup.name" label="单位组名称" width="150" />
-        <el-table-column prop="unitGroup.code" label="单位组编码" width="150" />
-        <el-table-column label="状态" width="100">
-          <template #default="{ row }">
-            <el-tag :type="row.enabled ? 'success' : 'danger'" size="small">
-              {{ row.enabled ? '启用' : '禁用' }}
-            </el-tag>
-          </template>
-        </el-table-column>
-        <el-table-column label="操作" width="200" fixed="right">
-          <template #default="{ row }">
-            <el-button type="primary" size="small" @click="handleEditUnit(row)">
-              编辑
-            </el-button>
-            <el-button type="danger" size="small" @click="handleDeleteUnit(row)">
-              删除
-            </el-button>
-          </template>
-        </el-table-column>
+        <el-table v-else v-loading="loading" :data="units" style="width: 100%" border row-key="id">
+          <el-table-column prop="code" label="单位编码" width="150" />
+          <el-table-column prop="name" label="单位名称" />
+          <el-table-column prop="unitGroup.name" label="单位组名称" width="150" />
+          <el-table-column prop="unitGroup.code" label="单位组编码" width="150" />
+          <el-table-column label="状态" width="100">
+            <template #default="{ row }">
+              <el-tag :type="row.enabled ? 'success' : 'danger'" size="small">
+                {{ row.enabled ? '启用' : '禁用' }}
+              </el-tag>
+            </template>
+          </el-table-column>
+          <el-table-column label="操作" width="200" fixed="right">
+            <template #default="{ row }">
+              <el-button type="primary" size="small" @click="handleEditUnit(row)"> 编辑 </el-button>
+              <el-button type="danger" size="small" @click="handleDeleteUnit(row)">
+                删除
+              </el-button>
+            </template>
+          </el-table-column>
         </el-table>
       </div>
     </el-card>
@@ -121,8 +112,8 @@ import { Plus, Upload } from '@element-plus/icons-vue'
 import { unitApi } from '@/api/unit'
 import { unitGroupApi } from '@/api/unitGroup'
 import type { Unit, UnitGroup } from '@/types/unit'
-import UnitFormDialog from '@/components/UnitFormDialog.vue'
-import UnitImportDialog from '@/components/UnitImportDialog.vue'
+import UnitFormDialog from './components/UnitFormDialog.vue'
+import UnitImportDialog from './components/UnitImportDialog.vue'
 
 interface GroupedUnit {
   groupCode: string
@@ -140,7 +131,7 @@ const displayMode = ref<'grouped' | 'flat'>('grouped')
 
 const groupedUnits = computed<GroupedUnit[]>(() => {
   const groups = new Map<string, GroupedUnit>()
-  
+
   units.value.forEach((unit) => {
     const groupCode = unit.unitGroup.code
     if (!groups.has(groupCode)) {
@@ -152,10 +143,8 @@ const groupedUnits = computed<GroupedUnit[]>(() => {
     }
     groups.get(groupCode)!.units.push(unit)
   })
-  
-  return Array.from(groups.values()).sort((a, b) => 
-    a.groupCode.localeCompare(b.groupCode)
-  )
+
+  return Array.from(groups.values()).sort((a, b) => a.groupCode.localeCompare(b.groupCode))
 })
 
 const loadUnits = async () => {
@@ -189,16 +178,12 @@ const handleEditUnit = (unit: Unit) => {
 
 const handleDeleteUnit = async (unit: Unit) => {
   try {
-    await ElMessageBox.confirm(
-      `确定要删除单位 "${unit.name}" 吗？`,
-      '确认删除',
-      {
-        confirmButtonText: '确定',
-        cancelButtonText: '取消',
-        type: 'warning',
-      }
-    )
-    
+    await ElMessageBox.confirm(`确定要删除单位 "${unit.name}" 吗？`, '确认删除', {
+      confirmButtonText: '确定',
+      cancelButtonText: '取消',
+      type: 'warning',
+    })
+
     await unitApi.deleteUnit(unit.id)
     ElMessage.success('删除成功')
     loadUnits()
@@ -302,4 +287,3 @@ onMounted(() => {
   }
 }
 </style>
-

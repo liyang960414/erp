@@ -59,4 +59,3 @@ export const auditLogApi = {
     return request.get<PageResponse<AuditLog>>(`/audit-logs/module/${module}`, { params })
   },
 }
-

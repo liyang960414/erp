@@ -37,4 +37,3 @@ export const roleApi = {
     return request.delete(`/roles/${id}`)
   },
 }
-

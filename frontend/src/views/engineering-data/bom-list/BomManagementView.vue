@@ -5,16 +5,16 @@
         <div class="card-header">
           <span>物料清单列表</span>
           <div class="header-actions">
-            <el-button
-              v-if="authStore.hasRole('ADMIN')"
-              type="success"
-              @click="handleImport"
-            >
-              <el-icon><Upload /></el-icon>
+            <el-button v-if="authStore.hasRole('ADMIN')" type="success" @click="handleImport">
+              <el-icon>
+                <Upload />
+              </el-icon>
               导入Excel/CSV
             </el-button>
             <el-button type="primary" @click="handleLoadAll">
-              <el-icon><Refresh /></el-icon>
+              <el-icon>
+                <Refresh />
+              </el-icon>
               刷新
             </el-button>
           </div>
@@ -31,11 +31,15 @@
           @clear="handleSearch"
         >
           <template #prefix>
-            <el-icon><Search /></el-icon>
+            <el-icon>
+              <Search />
+            </el-icon>
           </template>
         </el-input>
         <el-button type="primary" @click="handleSearch">
-          <el-icon><Search /></el-icon>
+          <el-icon>
+            <Search />
+          </el-icon>
           搜索
         </el-button>
         <el-button @click="handleReset">重置</el-button>
@@ -56,7 +60,12 @@
           row-key="id"
         >
           <el-table-column prop="materialCode" label="父项物料编码" width="180" />
-          <el-table-column prop="materialName" label="父项物料名称" min-width="200" show-overflow-tooltip />
+          <el-table-column
+            prop="materialName"
+            label="父项物料名称"
+            min-width="200"
+            show-overflow-tooltip
+          />
           <el-table-column prop="materialGroupName" label="物料组" width="150" />
           <el-table-column prop="version" label="BOM版本" width="100" />
           <el-table-column prop="category" label="BOM分类" width="120" />
@@ -100,10 +109,7 @@
     </el-card>
 
     <!-- 导入对话框 -->
-    <BomImportDialog
-      v-model="importDialogVisible"
-      @import-success="handleImportSuccess"
-    />
+    <BomImportDialog v-model="importDialogVisible" @import-success="handleImportSuccess" />
 
     <!-- 详情对话框 -->
     <BomDetailDialog
@@ -120,8 +126,8 @@ import { ElMessage, ElMessageBox } from 'element-plus'
 import { Search, Upload, Refresh } from '@element-plus/icons-vue'
 import { useAuthStore } from '@/stores/auth'
 import { bomApi } from '@/api/bom'
-import BomImportDialog from '@/components/BomImportDialog.vue'
-import BomDetailDialog from '@/components/BomDetailDialog.vue'
+import BomImportDialog from './components/BomImportDialog.vue'
+import BomDetailDialog from './components/BomDetailDialog.vue'
 import type { BillOfMaterial } from '@/types/bom'
 
 const authStore = useAuthStore()
@@ -136,7 +142,7 @@ const currentBom = ref<BillOfMaterial | null>(null)
 
 const pagination = ref({
   page: 1,
-  size: 20
+  size: 20,
 })
 
 // 过滤后的BOM列表
@@ -144,7 +150,7 @@ const filteredBoms = computed(() => {
   if (!searchKeyword.value.trim()) {
     return boms.value
   }
-  
+
   const keyword = searchKeyword.value.toLowerCase()
   return boms.value.filter((bom) => {
     return (
@@ -193,16 +199,16 @@ const handleViewDetail = async (bom: BillOfMaterial) => {
 // 删除BOM
 const handleDelete = async (bom: BillOfMaterial) => {
   try {
-    await ElMessageBox.confirm(
+    ElMessageBox.confirm(
       `确定要删除BOM "${bom.materialCode} (${bom.version})" 吗？此操作不可恢复！`,
       '确认删除',
       {
         confirmButtonText: '确定',
         cancelButtonText: '取消',
-        type: 'warning'
-      }
+        type: 'warning',
+      },
     )
-    
+
     await bomApi.deleteBom(bom.id)
     ElMessage.success('删除成功')
     await handleLoadAll()
@@ -308,4 +314,3 @@ onMounted(() => {
   justify-content: flex-end;
 }
 </style>
-

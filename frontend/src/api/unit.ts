@@ -1,10 +1,5 @@
 import request from '@/utils/request'
-import type {
-  Unit,
-  CreateUnitRequest,
-  UpdateUnitRequest,
-  UnitImportResponse,
-} from '@/types/unit'
+import type { Unit, CreateUnitRequest, UpdateUnitRequest, UnitImportResponse } from '@/types/unit'
 
 export const unitApi = {
   // 获取所有单位
@@ -49,4 +44,3 @@ export const unitApi = {
     })
   },
 }
-

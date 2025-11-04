@@ -39,4 +39,3 @@ export default {
   moduleRoleManagement: '角色管理',
   modulePermissionManagement: '权限管理',
 }
-

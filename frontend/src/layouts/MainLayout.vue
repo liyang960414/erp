@@ -31,14 +31,14 @@
           </span>
           <template #dropdown>
             <el-dropdown-menu>
-            <el-dropdown-item command="profile">
-              <el-icon><User /></el-icon>
-              {{ $t('auth.profile') }}
-            </el-dropdown-item>
-            <el-dropdown-item divided command="logout">
-              <el-icon><SwitchButton /></el-icon>
-              {{ $t('auth.logout') }}
-            </el-dropdown-item>
+              <el-dropdown-item command="profile">
+                <el-icon><User /></el-icon>
+                {{ $t('auth.profile') }}
+              </el-dropdown-item>
+              <el-dropdown-item divided command="logout">
+                <el-icon><SwitchButton /></el-icon>
+                {{ $t('auth.logout') }}
+              </el-dropdown-item>
             </el-dropdown-menu>
           </template>
         </el-dropdown>
@@ -85,7 +85,9 @@
               <span>{{ $t('menu.basicInfoManagement') }}</span>
             </template>
             <el-menu-item index="/basic-info/units">{{ $t('menu.unitManagement') }}</el-menu-item>
-            <el-menu-item index="/basic-info/materials">{{ $t('menu.materialManagement') }}</el-menu-item>
+            <el-menu-item index="/basic-info/materials">{{
+              $t('menu.materialManagement')
+            }}</el-menu-item>
           </el-sub-menu>
 
           <el-sub-menu index="/engineering-data">
@@ -97,7 +99,9 @@
               <template #title>
                 <span>{{ $t('menu.bomList') }}</span>
               </template>
-              <el-menu-item index="/engineering-data/bom-list/boms">{{ $t('menu.bomListManagement') }}</el-menu-item>
+              <el-menu-item index="/engineering-data/bom-list/boms">{{
+                $t('menu.bomListManagement')
+              }}</el-menu-item>
             </el-sub-menu>
           </el-sub-menu>
 
@@ -108,7 +112,9 @@
             </template>
             <el-menu-item index="/system/settings">{{ $t('menu.basicSettings') }}</el-menu-item>
             <el-menu-item index="/system/roles">{{ $t('menu.roleManagement') }}</el-menu-item>
-            <el-menu-item index="/system/permissions">{{ $t('menu.permissionManagement') }}</el-menu-item>
+            <el-menu-item index="/system/permissions">{{
+              $t('menu.permissionManagement')
+            }}</el-menu-item>
             <el-menu-item index="/system/audit-logs">{{ $t('menu.auditLogs') }}</el-menu-item>
           </el-sub-menu>
         </el-menu>
@@ -203,7 +209,7 @@ const handleCommand = async (command: string) => {
   margin: 0;
   font-size: 20px;
   font-weight: 600;
-  color: #409EFF;
+  color: #409eff;
   line-height: 1.5;
 }
 
@@ -297,7 +303,6 @@ const handleCommand = async (command: string) => {
 }
 
 :deep(.el-avatar) {
-  background-color: #409EFF;
+  background-color: #409eff;
 }
 </style>
-

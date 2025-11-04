@@ -5,46 +5,26 @@
     width="600px"
     @close="handleClose"
   >
-    <el-form
-      ref="formRef"
-      :model="form"
-      :rules="rules"
-      label-width="120px"
-    >
+    <el-form ref="formRef" :model="form" :rules="rules" label-width="120px">
       <!-- 编辑模式下显示只读信息 -->
       <template v-if="unit">
         <el-form-item label="单位编码">
-          <el-input
-            v-model="form.code"
-            disabled
-            placeholder="单位编码"
-          />
+          <el-input v-model="form.code" disabled placeholder="单位编码" />
         </el-form-item>
-        
+
         <el-form-item label="单位组">
-          <el-input
-            :value="unit.unitGroup.name"
-            disabled
-            placeholder="单位组"
-          />
+          <el-input :value="unit.unitGroup.name" disabled placeholder="单位组" />
         </el-form-item>
       </template>
-      
+
       <!-- 新增模式下显示可编辑字段 -->
       <template v-else>
         <el-form-item label="单位编码" prop="code">
-          <el-input
-            v-model="form.code"
-            placeholder="请输入单位编码"
-          />
+          <el-input v-model="form.code" placeholder="请输入单位编码" />
         </el-form-item>
-        
+
         <el-form-item label="单位组" prop="unitGroupId">
-          <el-select
-            v-model="form.unitGroupId"
-            placeholder="请选择单位组"
-            style="width: 100%"
-          >
+          <el-select v-model="form.unitGroupId" placeholder="请选择单位组" style="width: 100%">
             <el-option
               v-for="group in unitGroups"
               :key="group.id"
@@ -54,14 +34,11 @@
           </el-select>
         </el-form-item>
       </template>
-      
+
       <el-form-item label="单位名称" prop="name">
-        <el-input
-          v-model="form.name"
-          placeholder="请输入单位名称"
-        />
+        <el-input v-model="form.name" placeholder="请输入单位名称" />
       </el-form-item>
-      
+
       <!-- 转换率编辑（仅编辑模式） -->
       <template v-if="unit">
         <el-form-item label="转换率" prop="conversionRate">
@@ -89,24 +66,18 @@
           </div>
         </el-form-item>
       </template>
-      
+
       <!-- 编辑模式下隐藏状态开关 -->
       <template v-if="!unit">
         <el-form-item label="状态">
-          <el-switch
-            v-model="form.enabled"
-            active-text="启用"
-            inactive-text="禁用"
-          />
+          <el-switch v-model="form.enabled" active-text="启用" inactive-text="禁用" />
         </el-form-item>
       </template>
     </el-form>
-    
+
     <template #footer>
       <el-button @click="handleClose">取消</el-button>
-      <el-button type="primary" @click="handleSubmit" :loading="submitting">
-        确定
-      </el-button>
+      <el-button type="primary" @click="handleSubmit" :loading="submitting"> 确定 </el-button>
     </template>
   </el-dialog>
 </template>
@@ -114,8 +85,8 @@
 <script setup lang="ts">
 import { ref, reactive, watch, computed } from 'vue'
 import { ElMessage, type FormInstance, type FormRules } from 'element-plus'
-import { unitApi } from '@/api/unit'
-import type { Unit, UnitGroup, CreateUnitRequest, UpdateUnitRequest } from '@/types/unit'
+import { unitApi } from '@/api/unit.ts'
+import type { Unit, UnitGroup, CreateUnitRequest, UpdateUnitRequest } from '@/types/unit.ts'
 
 interface Props {
   modelValue: boolean
@@ -157,9 +128,7 @@ const rules: FormRules = {
     { required: true, message: '请输入单位名称', trigger: 'blur' },
     { max: 100, message: '单位名称长度不能超过100个字符', trigger: 'blur' },
   ],
-  unitGroupId: [
-    { required: true, message: '请选择单位组', trigger: 'change' },
-  ],
+  unitGroupId: [{ required: true, message: '请选择单位组', trigger: 'change' }],
 }
 
 const resetForm = () => {
@@ -187,7 +156,7 @@ watch(
       resetForm()
     }
   },
-  { immediate: true }
+  { immediate: true },
 )
 
 const handleClose = () => {
@@ -197,10 +166,10 @@ const handleClose = () => {
 
 const handleSubmit = async () => {
   if (!formRef.value) return
-  
+
   await formRef.value.validate(async (valid) => {
     if (!valid) return
-    
+
     submitting.value = true
     try {
       if (props.unit) {
@@ -208,7 +177,7 @@ const handleSubmit = async () => {
         const updateData: UpdateUnitRequest = {
           name: form.name,
         }
-        
+
         // 如果有设置转换率则传递
         if (form.conversionNumerator !== undefined && form.conversionDenominator !== undefined) {
           if (form.conversionDenominator <= 0) {
@@ -218,7 +187,7 @@ const handleSubmit = async () => {
           updateData.conversionNumerator = Number(form.conversionNumerator)
           updateData.conversionDenominator = Number(form.conversionDenominator)
         }
-        
+
         await unitApi.updateUnit(props.unit.id, updateData)
         ElMessage.success('更新成功')
       } else {
@@ -242,5 +211,3 @@ const handleSubmit = async () => {
   })
 }
 </script>
-
-

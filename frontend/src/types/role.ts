@@ -21,4 +21,3 @@ export interface UpdateRoleRequest {
   description?: string
   permissionNames?: string[]
 }
-

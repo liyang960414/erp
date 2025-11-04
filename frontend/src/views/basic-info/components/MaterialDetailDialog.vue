@@ -1,10 +1,5 @@
 <template>
-  <el-dialog
-    v-model="dialogVisible"
-    title="物料详情"
-    width="700px"
-    @close="handleClose"
-  >
+  <el-dialog v-model="dialogVisible" title="物料详情" width="700px" @close="handleClose">
     <el-descriptions :column="2" border v-if="material">
       <el-descriptions-item label="物料编码">
         {{ material.code }}
@@ -58,7 +53,7 @@
 
 <script setup lang="ts">
 import { ref, computed } from 'vue'
-import type { Material } from '@/types/material'
+import type { Material } from '@/types/material.ts'
 
 interface Props {
   modelValue: boolean
@@ -96,18 +91,15 @@ const formatDateTime = (dateStr: string) => {
 // 获取物料属性的标签类型
 const getErpClsIdTagType = (erpClsId: string): string => {
   const typeMap: Record<string, string> = {
-    '费用': 'warning',
-    '外购': 'info',
-    '委外': 'success',
-    '虚拟': 'danger',
-    '资产': 'primary',
-    '自制': 'success',
+    费用: 'warning',
+    外购: 'info',
+    委外: 'success',
+    虚拟: 'danger',
+    资产: 'primary',
+    自制: 'success',
   }
   return typeMap[erpClsId] || 'info'
 }
 </script>
 
-<style scoped>
-</style>
-
-
+<style scoped></style>

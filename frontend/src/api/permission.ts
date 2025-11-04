@@ -27,4 +27,3 @@ export const permissionApi = {
     return request.get(`/permissions/${id}`)
   },
 }
-

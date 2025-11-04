@@ -18,7 +18,7 @@
               style="width: 150px"
             />
           </el-form-item>
-          
+
           <el-form-item :label="$t('audit.action')">
             <el-select
               v-model="searchForm.action"
@@ -98,56 +98,57 @@
 
       <!-- 审计日志表格 -->
       <div class="table-container">
-        <el-table
-          v-loading="loading"
-          :data="auditLogs"
-          style="width: 100%"
-          border
-          stripe
-        >
-        <el-table-column prop="id" label="ID" width="80" />
-        <el-table-column :label="$t('audit.username')" prop="username" width="120" />
-        <el-table-column :label="$t('audit.action')" prop="action" width="150">
-          <template #default="{ row }">
-            <el-tag :type="getActionTagType(row.action)" size="small">
-              {{ getActionText(row.action) }}
-            </el-tag>
-          </template>
-        </el-table-column>
-        <el-table-column :label="$t('audit.module')" prop="module" width="120">
-          <template #default="{ row }">
-            <el-tag type="info" size="small">
-              {{ getModuleText(row.module) }}
-            </el-tag>
-          </template>
-        </el-table-column>
-        <el-table-column :label="$t('audit.resourceType')" prop="resourceType" width="120" />
-        <el-table-column :label="$t('audit.description')" prop="description" min-width="200" show-overflow-tooltip />
-        <el-table-column :label="$t('audit.status')" prop="status" width="100">
-          <template #default="{ row }">
-            <el-tag :type="row.status === 'SUCCESS' ? 'success' : 'danger'" size="small">
-              {{ row.status === 'SUCCESS' ? $t('audit.statusSuccess') : $t('audit.statusFailure') }}
-            </el-tag>
-          </template>
-        </el-table-column>
-        <el-table-column :label="$t('audit.ipAddress')" prop="ipAddress" width="140" />
-        <el-table-column :label="$t('audit.createdAt')" prop="createdAt" width="180">
-          <template #default="{ row }">
-            {{ formatDateTime(row.createdAt) }}
-          </template>
-        </el-table-column>
-        <el-table-column :label="$t('common.actions')" width="100" fixed="right">
-          <template #default="{ row }">
-            <el-button
-              v-if="row.status === 'FAILURE' && row.errorMessage"
-              type="warning"
-              size="small"
-              @click="handleViewError(row)"
-            >
-              {{ $t('audit.viewError') }}
-            </el-button>
-          </template>
-        </el-table-column>
+        <el-table v-loading="loading" :data="auditLogs" style="width: 100%" border stripe>
+          <el-table-column prop="id" label="ID" width="80" />
+          <el-table-column :label="$t('audit.username')" prop="username" width="120" />
+          <el-table-column :label="$t('audit.action')" prop="action" width="150">
+            <template #default="{ row }">
+              <el-tag :type="getActionTagType(row.action)" size="small">
+                {{ getActionText(row.action) }}
+              </el-tag>
+            </template>
+          </el-table-column>
+          <el-table-column :label="$t('audit.module')" prop="module" width="120">
+            <template #default="{ row }">
+              <el-tag type="info" size="small">
+                {{ getModuleText(row.module) }}
+              </el-tag>
+            </template>
+          </el-table-column>
+          <el-table-column :label="$t('audit.resourceType')" prop="resourceType" width="120" />
+          <el-table-column
+            :label="$t('audit.description')"
+            prop="description"
+            min-width="200"
+            show-overflow-tooltip
+          />
+          <el-table-column :label="$t('audit.status')" prop="status" width="100">
+            <template #default="{ row }">
+              <el-tag :type="row.status === 'SUCCESS' ? 'success' : 'danger'" size="small">
+                {{
+                  row.status === 'SUCCESS' ? $t('audit.statusSuccess') : $t('audit.statusFailure')
+                }}
+              </el-tag>
+            </template>
+          </el-table-column>
+          <el-table-column :label="$t('audit.ipAddress')" prop="ipAddress" width="140" />
+          <el-table-column :label="$t('audit.createdAt')" prop="createdAt" width="180">
+            <template #default="{ row }">
+              {{ formatDateTime(row.createdAt) }}
+            </template>
+          </el-table-column>
+          <el-table-column :label="$t('common.actions')" width="100" fixed="right">
+            <template #default="{ row }">
+              <el-button
+                v-if="row.status === 'FAILURE' && row.errorMessage"
+                type="warning"
+                size="small"
+                @click="handleViewError(row)"
+              >
+                {{ $t('audit.viewError') }}
+              </el-button>
+            </template>
+          </el-table-column>
         </el-table>
       </div>
 
@@ -166,11 +167,7 @@
     </el-card>
 
     <!-- 错误详情对话框 -->
-    <el-dialog
-      v-model="errorDialogVisible"
-      :title="$t('audit.errorDetails')"
-      width="600px"
-    >
+    <el-dialog v-model="errorDialogVisible" :title="$t('audit.errorDetails')" width="600px">
       <el-input
         v-model="errorMessage"
         type="textarea"
@@ -228,7 +225,7 @@ const loadAuditLogs = async () => {
       sortDir: 'DESC',
       ...searchForm.value,
     })
-    
+
     auditLogs.value = response.content
     pagination.value.total = response.totalElements
   } catch (error) {

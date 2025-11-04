@@ -29,4 +29,3 @@ export const authApi = {
     return Promise.resolve()
   },
 }
-

@@ -5,17 +5,9 @@
     width="700px"
     @close="handleClose"
   >
-    <el-form
-      ref="formRef"
-      :model="form"
-      :rules="rules"
-      label-width="100px"
-    >
+    <el-form ref="formRef" :model="form" :rules="rules" label-width="100px">
       <el-form-item v-if="!isEdit" :label="$t('role.roleName')" prop="name">
-        <el-input
-          v-model="form.name"
-          :placeholder="$t('role.enterRoleName')"
-        />
+        <el-input v-model="form.name" :placeholder="$t('role.enterRoleName')" />
       </el-form-item>
 
       <el-form-item v-else :label="$t('role.roleName')">
@@ -72,9 +64,9 @@
 import { ref, reactive, watch, onMounted, computed } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { ElMessage, type FormInstance, type FormRules } from 'element-plus'
-import { roleApi } from '@/api/role'
-import { permissionApi } from '@/api/permission'
-import type { Role } from '@/types/role'
+import { roleApi } from '@/api/role.ts'
+import { permissionApi } from '@/api/permission.ts'
+import type { Role } from '@/types/role.ts'
 
 const { t } = useI18n()
 
@@ -118,30 +110,34 @@ const visible = computed({
 // 按模块分组权限
 const groupedPermissions = computed(() => {
   const groups = new Map<string, any[]>()
-  
-  allPermissions.value.forEach(perm => {
+
+  allPermissions.value.forEach((perm) => {
     const module = perm.name.split(':')[0] || t('role.other')
     if (!groups.has(module)) {
       groups.set(module, [])
     }
     groups.get(module)!.push(perm)
   })
-  
+
   return Array.from(groups.entries()).map(([module, permissions]) => ({
     module,
     permissions,
   }))
 })
 
-watch(() => props.role, (role) => {
-  if (role) {
-    currentRoleName.value = role.name
-    form.description = role.description || ''
-    form.permissionNames = role.permissions.map(p => p.name)
-  } else {
-    resetForm()
-  }
-}, { immediate: true })
+watch(
+  () => props.role,
+  (role) => {
+    if (role) {
+      currentRoleName.value = role.name
+      form.description = role.description || ''
+      form.permissionNames = role.permissions.map((p) => p.name)
+    } else {
+      resetForm()
+    }
+  },
+  { immediate: true },
+)
 
 onMounted(() => {
   loadPermissions()
@@ -183,7 +179,7 @@ const handleSubmit = async () => {
           await roleApi.createRole(form)
           ElMessage.success(t('role.createSuccess'))
         }
-        
+
         emit('success')
         handleClose()
       } catch (error) {
@@ -202,4 +198,3 @@ const handleSubmit = async () => {
   padding: 8px 20px;
 }
 </style>
-

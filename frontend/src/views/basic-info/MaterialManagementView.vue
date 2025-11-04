@@ -5,11 +5,7 @@
         <div class="card-header">
           <span>物料管理</span>
           <div class="header-actions">
-            <el-button
-              type="primary"
-              :disabled="displayMode === 'flat'"
-              @click="handleLoadAll"
-            >
+            <el-button type="primary" :disabled="displayMode === 'flat'" @click="handleLoadAll">
               <el-icon><List /></el-icon>
               全部
             </el-button>
@@ -21,11 +17,7 @@
               <el-icon><Folder /></el-icon>
               分组显示
             </el-button>
-            <el-button
-              v-if="authStore.hasRole('ADMIN')"
-              type="success"
-              @click="handleImport"
-            >
+            <el-button v-if="authStore.hasRole('ADMIN')" type="success" @click="handleImport">
               <el-icon><Upload /></el-icon>
               导入Excel
             </el-button>
@@ -35,7 +27,7 @@
 
       <!-- 搜索栏 -->
       <div v-if="displayMode === 'flat' && materials.length > 0" class="search-bar">
-          <el-input
+        <el-input
           v-model="searchKeyword"
           placeholder="搜索物料编码、名称、规格、属性、物料组、单位..."
           clearable
@@ -69,7 +61,12 @@
         >
           <el-table-column prop="code" label="物料编码" width="150" />
           <el-table-column prop="name" label="物料名称" min-width="200" />
-          <el-table-column prop="specification" label="规格" min-width="150" show-overflow-tooltip />
+          <el-table-column
+            prop="specification"
+            label="规格"
+            min-width="150"
+            show-overflow-tooltip
+          />
           <el-table-column label="物料属性" width="100">
             <template #default="{ row }">
               <el-tag v-if="row.erpClsId" size="small" :type="getErpClsIdTagType(row.erpClsId)">
@@ -134,10 +131,19 @@
                 >
                   <el-table-column prop="code" label="物料编码" width="150" />
                   <el-table-column prop="name" label="物料名称" min-width="200" />
-                  <el-table-column prop="specification" label="规格" min-width="150" show-overflow-tooltip />
+                  <el-table-column
+                    prop="specification"
+                    label="规格"
+                    min-width="150"
+                    show-overflow-tooltip
+                  />
                   <el-table-column label="物料属性" width="100">
                     <template #default="{ row }">
-                      <el-tag v-if="row.erpClsId" size="small" :type="getErpClsIdTagType(row.erpClsId)">
+                      <el-tag
+                        v-if="row.erpClsId"
+                        size="small"
+                        :type="getErpClsIdTagType(row.erpClsId)"
+                      >
                         {{ row.erpClsId }}
                       </el-tag>
                       <span v-else>-</span>
@@ -168,16 +174,10 @@
     </el-card>
 
     <!-- 物料详情对话框 -->
-    <MaterialDetailDialog
-      v-model="detailDialogVisible"
-      :material="currentMaterial"
-    />
+    <MaterialDetailDialog v-model="detailDialogVisible" :material="currentMaterial" />
 
     <!-- Excel导入对话框 -->
-    <MaterialImportDialog
-      v-model="importDialogVisible"
-      @success="handleImportSuccess"
-    />
+    <MaterialImportDialog v-model="importDialogVisible" @success="handleImportSuccess" />
   </div>
 </template>
 
@@ -190,8 +190,8 @@ import { materialGroupApi } from '@/api/materialGroup'
 import { useAuthStore } from '@/stores/auth'
 import type { Material } from '@/types/material'
 import type { MaterialGroup } from '@/types/materialGroup'
-import MaterialDetailDialog from '@/components/MaterialDetailDialog.vue'
-import MaterialImportDialog from '@/components/MaterialImportDialog.vue'
+import MaterialDetailDialog from './components/MaterialDetailDialog.vue'
+import MaterialImportDialog from './components/MaterialImportDialog.vue'
 
 const authStore = useAuthStore()
 
@@ -217,7 +217,7 @@ const filteredMaterials = computed(() => {
   if (!searchKeyword.value.trim()) {
     return materials.value
   }
-  
+
   const keyword = searchKeyword.value.toLowerCase()
   return materials.value.filter((material) => {
     return (
@@ -243,7 +243,7 @@ const handleLoadAll = async () => {
   if (displayMode.value === 'flat' && dataLoaded.value) {
     return
   }
-  
+
   displayMode.value = 'flat'
   loading.value = true
   try {
@@ -262,7 +262,7 @@ const handleLoadGrouped = async () => {
   if (displayMode.value === 'grouped' && materialGroups.value.length > 0) {
     return
   }
-  
+
   displayMode.value = 'grouped'
   loading.value = true
   try {
@@ -275,7 +275,6 @@ const handleLoadGrouped = async () => {
     loading.value = false
   }
 }
-
 
 // 查看详情
 const handleViewDetail = async (material: Material) => {
@@ -333,12 +332,12 @@ const handleImportSuccess = () => {
 // 获取物料属性的标签类型
 const getErpClsIdTagType = (erpClsId: string): string => {
   const typeMap: Record<string, string> = {
-    '费用': 'warning',
-    '外购': 'info',
-    '委外': 'success',
-    '虚拟': 'danger',
-    '资产': 'primary',
-    '自制': 'success',
+    费用: 'warning',
+    外购: 'info',
+    委外: 'success',
+    虚拟: 'danger',
+    资产: 'primary',
+    自制: 'success',
   }
   return typeMap[erpClsId] || 'info'
 }
@@ -346,9 +345,14 @@ const getErpClsIdTagType = (erpClsId: string): string => {
 // 处理表格展开
 const handleTableExpand = (row: MaterialGroup, expandedRows: MaterialGroup[]) => {
   // 如果展开且该物料组的数据尚未加载，则加载数据
-  if (expandedRows.includes(row) && !groupMaterialsMap.value[row.id] && !loadingMaterials.value[row.id]) {
+  if (
+    expandedRows.includes(row) &&
+    !groupMaterialsMap.value[row.id] &&
+    !loadingMaterials.value[row.id]
+  ) {
     loadingMaterials.value[row.id] = true
-    materialApi.getMaterialsByGroupId(row.id)
+    materialApi
+      .getMaterialsByGroupId(row.id)
       .then((materials) => {
         groupMaterialsMap.value[row.id] = materials
       })

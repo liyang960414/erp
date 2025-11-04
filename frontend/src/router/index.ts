@@ -99,7 +99,7 @@ router.beforeEach(async (to, from, next) => {
     authStore.initUser()
   }
 
-  const requiresAuth = to.matched.some(record => record.meta.requiresAuth)
+  const requiresAuth = to.matched.some((record) => record.meta.requiresAuth)
 
   if (requiresAuth && !authStore.isAuthenticated) {
     // 需要认证但未登录，跳转到登录页

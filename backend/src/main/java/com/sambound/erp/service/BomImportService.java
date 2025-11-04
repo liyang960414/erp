@@ -31,6 +31,7 @@ public class BomImportService {
     private static final Logger logger = LoggerFactory.getLogger(BomImportService.class);
     private static final int MAX_ERROR_COUNT = 1000;
     private static final int BATCH_QUERY_CHUNK_SIZE = 1000;
+    private static final int BOM_BATCH_SIZE = 500; // 每批处理的BOM数量
 
     private final BillOfMaterialRepository bomRepository;
     private final BomItemRepository bomItemRepository;
@@ -94,11 +95,15 @@ public class BomImportService {
             if ((data.getBillHead() != null && !data.getBillHead().trim().isEmpty()) ||
                 (data.getMaterialCode() != null && !data.getMaterialCode().trim().isEmpty())) {
                 // 创建新的BOM头
+                // 版本可以为空，如果为空则使用实体类的默认值
+                String version = null;
+                if (data.getVersion() != null && !data.getVersion().trim().isEmpty()) {
+                    version = data.getVersion().trim();
+                }
                 currentHeader = new BomHeader(
                         rowNum,
                         data.getMaterialCode() != null ? data.getMaterialCode().trim() : null,
-                        data.getVersion() != null && !data.getVersion().trim().isEmpty() 
-                                ? data.getVersion().trim() : "V000",
+                        version,
                         data.getName(),
                         data.getCategory(),
                         data.getUsage(),
@@ -141,201 +146,87 @@ public class BomImportService {
                 );
             }
 
+            long startTime = System.currentTimeMillis();
+
             // 按BOM头分组
             Map<BomHeader, List<BomItemData>> bomGroups = new LinkedHashMap<>();
             for (BomData data : bomDataList) {
                 bomGroups.computeIfAbsent(data.header, k -> new ArrayList<>()).add(data.item);
             }
 
-            logger.info("找到 {} 个BOM，开始导入到数据库", bomGroups.size());
+            int totalBomCount = bomGroups.size();
+            int totalItemCount = bomDataList.size();
+            logger.info("找到 {} 个BOM，{} 条明细，开始导入到数据库", totalBomCount, totalItemCount);
 
             List<BomImportResponse.ImportError> bomErrors = new ArrayList<>();
             List<BomImportResponse.ImportError> itemErrors = new ArrayList<>();
             AtomicInteger bomSuccessCount = new AtomicInteger(0);
             AtomicInteger itemSuccessCount = new AtomicInteger(0);
-            AtomicInteger itemTotalCount = new AtomicInteger(0);
 
             // 预加载物料和单位数据
             Map<String, Material> materialCache = new HashMap<>();
             Map<String, Unit> unitCache = new HashMap<>();
             preloadMaterialsAndUnits(bomGroups, materialCache, unitCache);
 
-            // 导入每个BOM
-            for (Map.Entry<BomHeader, List<BomItemData>> entry : bomGroups.entrySet()) {
-                BomHeader header = entry.getKey();
-                List<BomItemData> items = entry.getValue();
+            // 预先批量查询所有已存在的BOM
+            Map<String, BillOfMaterial> existingBomMap = preloadExistingBoms(bomGroups, materialCache);
 
+            // 将BOM分组转换为列表以便批量处理
+            List<Map.Entry<BomHeader, List<BomItemData>>> bomList = new ArrayList<>(bomGroups.entrySet());
+
+            // 批量导入BOM
+            for (int i = 0; i < bomList.size(); i += BOM_BATCH_SIZE) {
+                int end = Math.min(i + BOM_BATCH_SIZE, bomList.size());
+                List<Map.Entry<BomHeader, List<BomItemData>>> batch = bomList.subList(i, end);
+                int batchIndex = (i / BOM_BATCH_SIZE) + 1;
+                int totalBatches = (bomList.size() + BOM_BATCH_SIZE - 1) / BOM_BATCH_SIZE;
+
+                logger.info("处理批次 {}/{}，BOM数量: {}", batchIndex, totalBatches, batch.size());
+                long batchStartTime = System.currentTimeMillis();
+
+                // 每个批次使用独立事务
                 try {
-                    // 验证父项物料
-                    Material parentMaterial = materialCache.get(header.materialCode);
-                    if (parentMaterial == null) {
-                        if (bomErrors.size() < MAX_ERROR_COUNT) {
-                            bomErrors.add(new BomImportResponse.ImportError(
-                                    "BOM", header.rowNumber, "FMATERIALID",
-                                    "父项物料不存在: " + header.materialCode));
-                        }
-                        continue;
-                    }
+                    BatchImportResult result = transactionTemplate.execute(status -> {
+                        return importBatchBoms(batch, materialCache, unitCache, existingBomMap, itemErrors);
+                    });
 
-                    // 验证父项物料属性：只有自制和委外类型的物料可以创建BOM
-                    if (!isValidBomMaterialType(parentMaterial.getErpClsId())) {
-                        if (bomErrors.size() < MAX_ERROR_COUNT) {
-                            bomErrors.add(new BomImportResponse.ImportError(
-                                    "BOM", header.rowNumber, "FMATERIALID",
-                                    String.format("只有自制和委外类型的物料可以创建BOM，物料 %s 的属性为: %s",
-                                            header.materialCode,
-                                            parentMaterial.getErpClsId() != null ? parentMaterial.getErpClsId() : "未设置")));
-                        }
-                        continue;
-                    }
-
-                    // 检查BOM是否已存在
-                    Optional<BillOfMaterial> existingBom = bomRepository.findByMaterialIdAndVersion(
-                            parentMaterial.getId(), header.version);
-
-                    BillOfMaterial bom;
-                    if (existingBom.isPresent()) {
-                        bom = existingBom.get();
-                        // 删除现有明细项（如果需要更新）
-                        bomItemRepository.deleteByBomId(bom.getId());
-                        logger.debug("更新已存在的BOM: 物料={}, 版本={}", header.materialCode, header.version);
-                    } else {
-                        // 创建新的BOM
-                        bom = BillOfMaterial.builder()
-                                .material(parentMaterial)
-                                .version(header.version)
-                                .name(header.name)
-                                .category(header.category)
-                                .usage(header.usage)
-                                .description(header.description)
-                                .build();
-                        bom = bomRepository.save(bom);
-                    }
-
-                    bomSuccessCount.incrementAndGet();
-
-                    // 导入明细项
-                    int sequence = 1;
-                    for (BomItemData itemData : items) {
-                        itemTotalCount.incrementAndGet();
-
-                        try {
-                            Material childMaterial = materialCache.get(itemData.childMaterialCode);
-                            if (childMaterial == null) {
-                                if (itemErrors.size() < MAX_ERROR_COUNT) {
-                                    itemErrors.add(new BomImportResponse.ImportError(
-                                            "BOM明细", itemData.rowNumber, "FMATERIALIDCHILD",
-                                            "子项物料不存在: " + itemData.childMaterialCode));
-                                }
-                                continue;
-                            }
-
-                            Unit childUnit;
-                            if (itemData.childUnitCode != null) {
-                                childUnit = unitCache.get(itemData.childUnitCode);
-                                if (childUnit == null) {
-                                    if (itemErrors.size() < MAX_ERROR_COUNT) {
-                                        itemErrors.add(new BomImportResponse.ImportError(
-                                                "BOM明细", itemData.rowNumber, "FCHILDUNITID",
-                                                "子项单位不存在: " + itemData.childUnitCode));
-                                    }
-                                    continue;
-                                }
-                            } else {
-                                // 使用子项物料的基础单位
-                                childUnit = childMaterial.getBaseUnit();
-                            }
-
-                            Integer seq = itemData.sequence != null ? itemData.sequence : sequence++;
-
-                            BigDecimal numerator = BigDecimal.ONE;
-                            if (itemData.numerator != null && !itemData.numerator.trim().isEmpty()) {
-                                try {
-                                    numerator = new BigDecimal(itemData.numerator.trim());
-                                } catch (NumberFormatException e) {
-                                    logger.warn("用量分子格式错误: {}, 使用默认值1", itemData.numerator);
-                                }
-                            }
-
-                            BigDecimal denominator = BigDecimal.ONE;
-                            if (itemData.denominator != null && !itemData.denominator.trim().isEmpty()) {
-                                try {
-                                    denominator = new BigDecimal(itemData.denominator.trim());
-                                } catch (NumberFormatException e) {
-                                    logger.warn("用量分母格式错误: {}, 使用默认值1", itemData.denominator);
-                                }
-                            }
-
-                            BigDecimal scrapRate = null;
-                            if (itemData.scrapRate != null && !itemData.scrapRate.trim().isEmpty()) {
-                                try {
-                                    scrapRate = new BigDecimal(itemData.scrapRate.trim());
-                                } catch (NumberFormatException e) {
-                                    logger.warn("损耗率格式错误: {}", itemData.scrapRate);
-                                }
-                            }
-
-                            // 处理子项BOM版本：如果导入文件中未配置，保持为null，不设置默认值
-                            String childBomVersion = (itemData.childBomVersion != null && !itemData.childBomVersion.trim().isEmpty())
-                                    ? itemData.childBomVersion.trim() : null;
-
-                            // 只有在明确配置了子项BOM版本时，才验证子项物料属性
-                            if (childBomVersion != null) {
-                                if (!isValidBomMaterialType(childMaterial.getErpClsId())) {
-                                    if (itemErrors.size() < MAX_ERROR_COUNT) {
-                                        itemErrors.add(new BomImportResponse.ImportError(
-                                                "BOM明细", itemData.rowNumber, "FBOMID",
-                                                String.format("只有自制和委外类型的物料可以设置子项BOM版本，物料 %s 的属性为: %s",
-                                                        itemData.childMaterialCode,
-                                                        childMaterial.getErpClsId() != null ? childMaterial.getErpClsId() : "未设置")));
-                                    }
-                                    continue;
-                                }
-                            }
-
-                            BomItem bomItem = BomItem.builder()
-                                    .bom(bom)
-                                    .sequence(seq)
-                                    .childMaterial(childMaterial)
-                                    .childUnit(childUnit)
-                                    .numerator(numerator)
-                                    .denominator(denominator)
-                                    .scrapRate(scrapRate)
-                                    .childBomVersion(childBomVersion)
-                                    .memo(itemData.memo)
-                                    .build();
-
-                            bomItemRepository.save(bomItem);
-                            itemSuccessCount.incrementAndGet();
-                        } catch (Exception e) {
-                            logger.error("导入BOM明细失败: 行{}", itemData.rowNumber, e);
-                            if (itemErrors.size() < MAX_ERROR_COUNT) {
-                                itemErrors.add(new BomImportResponse.ImportError(
-                                        "BOM明细", itemData.rowNumber, null,
-                                        "导入失败: " + e.getMessage()));
-                            }
-                        }
+                    if (result != null) {
+                        bomSuccessCount.addAndGet(result.bomSuccessCount);
+                        itemSuccessCount.addAndGet(result.itemSuccessCount);
                     }
                 } catch (Exception e) {
-                    logger.error("导入BOM失败: 物料={}, 版本={}", header.materialCode, header.version, e);
-                    if (bomErrors.size() < MAX_ERROR_COUNT) {
-                        bomErrors.add(new BomImportResponse.ImportError(
-                                "BOM", header.rowNumber, null,
-                                "导入失败: " + e.getMessage()));
+                    logger.error("批次 {} 导入失败", batchIndex, e);
+                    // 记录批次级别的错误
+                    for (Map.Entry<BomHeader, List<BomItemData>> entry : batch) {
+                        if (bomErrors.size() < MAX_ERROR_COUNT) {
+                            bomErrors.add(new BomImportResponse.ImportError(
+                                    "BOM", entry.getKey().rowNumber, null,
+                                    "批次导入失败: " + e.getMessage()));
+                        }
                     }
                 }
+
+                long batchDuration = System.currentTimeMillis() - batchStartTime;
+                logger.info("批次 {}/{} 完成，耗时: {}ms，平均: {}ms/BOM",
+                        batchIndex, totalBatches, batchDuration,
+                        batch.size() > 0 ? batchDuration / batch.size() : 0);
             }
+
+            long totalDuration = System.currentTimeMillis() - startTime;
+            logger.info("BOM导入完成：总耗时 {}ms，BOM总计 {} 条，成功 {} 条，失败 {} 条；明细总计 {} 条，成功 {} 条，失败 {} 条",
+                    totalDuration, totalBomCount, bomSuccessCount.get(), totalBomCount - bomSuccessCount.get(),
+                    totalItemCount, itemSuccessCount.get(), totalItemCount - itemSuccessCount.get());
 
             return new BomImportResponse(
                     new BomImportResponse.BomImportResult(
-                            bomGroups.size(),
+                            totalBomCount,
                             bomSuccessCount.get(),
-                            bomGroups.size() - bomSuccessCount.get(),
+                            totalBomCount - bomSuccessCount.get(),
                             bomErrors),
                     new BomImportResponse.BomItemImportResult(
-                            itemTotalCount.get(),
+                            totalItemCount,
                             itemSuccessCount.get(),
-                            itemTotalCount.get() - itemSuccessCount.get(),
+                            totalItemCount - itemSuccessCount.get(),
                             itemErrors)
             );
         }
@@ -381,16 +272,246 @@ public class BomImportService {
         }
 
         /**
-         * 判断物料属性是否为有效的BOM物料类型（自制或委外）
-         * 只支持中文名称："自制"、"委外"
+         * 预先批量查询所有已存在的BOM
          */
-        private boolean isValidBomMaterialType(String erpClsId) {
-            if (erpClsId == null) {
-                return false;
+        private Map<String, BillOfMaterial> preloadExistingBoms(
+                Map<BomHeader, List<BomItemData>> bomGroups,
+                Map<String, Material> materialCache) {
+
+            Map<String, BillOfMaterial> existingBomMap = new HashMap<>();
+            
+            // 收集所有需要查询的(materialId, version)组合
+            Set<String> bomKeys = new HashSet<>();
+            for (Map.Entry<BomHeader, List<BomItemData>> entry : bomGroups.entrySet()) {
+                BomHeader header = entry.getKey();
+                Material material = materialCache.get(header.materialCode);
+                if (material != null) {
+                    String versionToUse = header.version != null ? header.version : "V000";
+                    String bomKey = material.getId() + ":" + versionToUse;
+                    bomKeys.add(bomKey);
+                }
             }
-            String trimmed = erpClsId.trim();
-            return trimmed.equals("自制") || trimmed.equals("委外");
+
+            if (bomKeys.isEmpty()) {
+                return existingBomMap;
+            }
+
+            // 收集所有物料ID
+            Set<Long> materialIds = new HashSet<>();
+            for (Map.Entry<BomHeader, List<BomItemData>> entry : bomGroups.entrySet()) {
+                BomHeader header = entry.getKey();
+                Material material = materialCache.get(header.materialCode);
+                if (material != null) {
+                    materialIds.add(material.getId());
+                }
+            }
+
+            // 批量查询所有相关BOM（按物料ID批量查询）
+            List<Long> materialIdList = new ArrayList<>(materialIds);
+            for (int i = 0; i < materialIdList.size(); i += BATCH_QUERY_CHUNK_SIZE) {
+                int end = Math.min(i + BATCH_QUERY_CHUNK_SIZE, materialIdList.size());
+                List<Long> chunk = materialIdList.subList(i, end);
+                List<BillOfMaterial> boms = bomRepository.findByMaterialIdIn(chunk);
+                
+                // 建立映射
+                for (BillOfMaterial bom : boms) {
+                    String bomKey = bom.getMaterial().getId() + ":" + bom.getVersion();
+                    existingBomMap.put(bomKey, bom);
+                }
+            }
+
+            logger.debug("预加载已存在的BOM: {} 个", existingBomMap.size());
+            return existingBomMap;
         }
+
+        /**
+         * 批量导入BOM（在事务内执行）
+         */
+        private BatchImportResult importBatchBoms(
+                List<Map.Entry<BomHeader, List<BomItemData>>> batch,
+                Map<String, Material> materialCache,
+                Map<String, Unit> unitCache,
+                Map<String, BillOfMaterial> existingBomMap,
+                List<BomImportResponse.ImportError> itemErrors) {
+
+            int bomSuccessCount = 0;
+            int itemSuccessCount = 0;
+            
+            // 收集所有需要保存的BOM和明细项
+            List<BillOfMaterial> bomsToSave = new ArrayList<>();
+            Map<BillOfMaterial, List<BomItem>> bomItemsMap = new LinkedHashMap<>();
+            
+            for (Map.Entry<BomHeader, List<BomItemData>> entry : batch) {
+                BomHeader header = entry.getKey();
+                List<BomItemData> items = entry.getValue();
+                
+                try {
+                    // 验证父项物料
+                    Material parentMaterial = materialCache.get(header.materialCode);
+                    if (parentMaterial == null) {
+                        logger.warn("父项物料不存在: {}", header.materialCode);
+                        continue;
+                    }
+
+                    // 检查BOM是否已存在
+                    String versionToUse = header.version != null ? header.version : "V000";
+                    String bomKey = parentMaterial.getId() + ":" + versionToUse;
+                    BillOfMaterial bom = existingBomMap.get(bomKey);
+                    
+                    if (bom == null) {
+                        // 创建新的BOM
+                        BillOfMaterial.BillOfMaterialBuilder builder = BillOfMaterial.builder()
+                                .material(parentMaterial)
+                                .name(header.name)
+                                .category(header.category)
+                                .usage(header.usage)
+                                .description(header.description);
+                        if (header.version != null) {
+                            builder.version(header.version);
+                        }
+                        bom = builder.build();
+                        bomsToSave.add(bom);
+                    } else {
+                        // 删除现有明细项（如果需要更新）
+                        bomItemRepository.deleteByBomId(bom.getId());
+                    }
+
+                    // 处理明细项
+                    List<BomItem> bomItems = new ArrayList<>();
+                    int sequence = 1;
+                    
+                    for (BomItemData itemData : items) {
+                        try {
+                            Material childMaterial = materialCache.get(itemData.childMaterialCode);
+                            if (childMaterial == null) {
+                                if (itemErrors.size() < MAX_ERROR_COUNT) {
+                                    itemErrors.add(new BomImportResponse.ImportError(
+                                            "BOM明细", itemData.rowNumber, "FMATERIALIDCHILD",
+                                            "子项物料不存在: " + itemData.childMaterialCode));
+                                }
+                                continue;
+                            }
+
+                            Unit childUnit;
+                            if (itemData.childUnitCode != null) {
+                                childUnit = unitCache.get(itemData.childUnitCode);
+                                if (childUnit == null) {
+                                    if (itemErrors.size() < MAX_ERROR_COUNT) {
+                                        itemErrors.add(new BomImportResponse.ImportError(
+                                                "BOM明细", itemData.rowNumber, "FCHILDUNITID",
+                                                "子项单位不存在: " + itemData.childUnitCode));
+                                    }
+                                    continue;
+                                }
+                            } else {
+                                childUnit = childMaterial.getBaseUnit();
+                            }
+
+                            Integer seq = itemData.sequence != null ? itemData.sequence : sequence++;
+
+                            BigDecimal numerator = BigDecimal.ONE;
+                            if (itemData.numerator != null && !itemData.numerator.trim().isEmpty()) {
+                                try {
+                                    String numeratorStr = itemData.numerator.trim().replace(",", "");
+                                    numerator = new BigDecimal(numeratorStr);
+                                } catch (NumberFormatException e) {
+                                    logger.warn("用量分子格式错误: {}, 使用默认值1", itemData.numerator);
+                                }
+                            }
+
+                            BigDecimal denominator = BigDecimal.ONE;
+                            if (itemData.denominator != null && !itemData.denominator.trim().isEmpty()) {
+                                try {
+                                    String denominatorStr = itemData.denominator.trim().replace(",", "");
+                                    denominator = new BigDecimal(denominatorStr);
+                                } catch (NumberFormatException e) {
+                                    logger.warn("用量分母格式错误: {}, 使用默认值1", itemData.denominator);
+                                }
+                            }
+
+                            BigDecimal scrapRate = null;
+                            if (itemData.scrapRate != null && !itemData.scrapRate.trim().isEmpty()) {
+                                try {
+                                    String scrapRateStr = itemData.scrapRate.trim().replace(",", "");
+                                    scrapRate = new BigDecimal(scrapRateStr);
+                                } catch (NumberFormatException e) {
+                                    logger.warn("损耗率格式错误: {}", itemData.scrapRate);
+                                }
+                            }
+
+                            String childBomVersion = (itemData.childBomVersion != null && !itemData.childBomVersion.trim().isEmpty())
+                                    ? itemData.childBomVersion.trim() : null;
+
+                            BomItem bomItem = BomItem.builder()
+                                    .bom(bom)
+                                    .sequence(seq)
+                                    .childMaterial(childMaterial)
+                                    .childUnit(childUnit)
+                                    .numerator(numerator)
+                                    .denominator(denominator)
+                                    .scrapRate(scrapRate)
+                                    .childBomVersion(childBomVersion)
+                                    .memo(itemData.memo)
+                                    .build();
+
+                            bomItems.add(bomItem);
+                        } catch (Exception e) {
+                            logger.error("导入BOM明细失败: 行{}", itemData.rowNumber, e);
+                            if (itemErrors.size() < MAX_ERROR_COUNT) {
+                                itemErrors.add(new BomImportResponse.ImportError(
+                                        "BOM明细", itemData.rowNumber, null,
+                                        "导入失败: " + e.getMessage()));
+                            }
+                        }
+                    }
+
+                    if (!bomItems.isEmpty()) {
+                        bomItemsMap.put(bom, bomItems);
+                    }
+                    
+                    if (bom.getId() == null) {
+                        bomSuccessCount++;
+                    } else {
+                        bomSuccessCount++; // 更新也算成功
+                    }
+                } catch (Exception e) {
+                    logger.error("导入BOM失败: 物料={}, 版本={}", header.materialCode, header.version, e);
+                    // 错误已在itemErrors中记录
+                }
+            }
+
+            // 批量保存BOM
+            if (!bomsToSave.isEmpty()) {
+                bomRepository.saveAll(bomsToSave);
+            }
+
+            // 批量保存所有明细项
+            List<BomItem> allBomItems = new ArrayList<>();
+            for (Map.Entry<BillOfMaterial, List<BomItem>> entry : bomItemsMap.entrySet()) {
+                allBomItems.addAll(entry.getValue());
+            }
+            
+            if (!allBomItems.isEmpty()) {
+                bomItemRepository.saveAll(allBomItems);
+                itemSuccessCount = allBomItems.size();
+            }
+
+            return new BatchImportResult(bomSuccessCount, itemSuccessCount);
+        }
+
+        /**
+         * 批量导入结果
+         */
+        private static class BatchImportResult {
+            final int bomSuccessCount;
+            final int itemSuccessCount;
+
+            BatchImportResult(int bomSuccessCount, int itemSuccessCount) {
+                this.bomSuccessCount = bomSuccessCount;
+                this.itemSuccessCount = itemSuccessCount;
+            }
+        }
+
     }
 
     private record BomHeader(

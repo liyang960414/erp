@@ -1,10 +1,5 @@
 <template>
-  <el-dialog
-    v-model="dialogVisible"
-    title="BOM详情"
-    width="1200px"
-    @close="handleClose"
-  >
+  <el-dialog v-model="dialogVisible" title="BOM详情" width="1200px" @close="handleClose">
     <div v-if="bom">
       <!-- BOM头信息 -->
       <el-descriptions :column="2" border style="margin-bottom: 20px">
@@ -47,15 +42,16 @@
       <el-divider>BOM明细</el-divider>
       <el-table :data="bom.items || []" border style="width: 100%" max-height="400">
         <el-table-column type="index" label="序号" width="60" />
-        <el-table-column prop="sequence" label="项次" width="80" />
         <el-table-column prop="childMaterialCode" label="子项物料编码" width="180" />
-        <el-table-column prop="childMaterialName" label="子项物料名称" min-width="200" show-overflow-tooltip />
-        <el-table-column prop="childUnitCode" label="子项单位编码" width="120" />
+        <el-table-column
+          prop="childMaterialName"
+          label="子项物料名称"
+          min-width="200"
+          show-overflow-tooltip
+        />
         <el-table-column prop="childUnitName" label="子项单位名称" width="120" />
         <el-table-column label="用量" width="120">
-          <template #default="{ row }">
-            {{ row.numerator }} / {{ row.denominator }}
-          </template>
+          <template #default="{ row }"> {{ row.numerator }} / {{ row.denominator }} </template>
         </el-table-column>
         <el-table-column prop="scrapRate" label="损耗率%" width="100">
           <template #default="{ row }">
@@ -112,6 +108,4 @@ const formatDateTime = (dateStr: string) => {
 }
 </script>
 
-<style scoped>
-</style>
-
+<style scoped></style>

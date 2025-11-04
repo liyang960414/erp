@@ -27,4 +27,3 @@ export const unitGroupApi = {
     return request.delete(`/unit-groups/${id}`)
   },
 }
-

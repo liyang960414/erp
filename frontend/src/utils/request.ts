@@ -21,7 +21,7 @@ request.interceptors.request.use(
   },
   (error: AxiosError) => {
     return Promise.reject(error)
-  }
+  },
 )
 
 // 响应拦截器
@@ -39,7 +39,7 @@ request.interceptors.response.use(
   },
   async (error: AxiosError) => {
     let message = '请求失败'
-    
+
     if (error.response) {
       const status = error.response.status
       const res = error.response.data as any
@@ -53,17 +53,17 @@ request.interceptors.response.use(
           if (!isHandlingAuthError) {
             isHandlingAuthError = true
             message = '登录已失效，请重新登录'
-            
+
             // 显示提示信息
             ElMessage.warning(message)
-            
+
             // 动态导入auth store避免循环依赖
             const { useAuthStore } = await import('@/stores/auth')
             const authStore = useAuthStore()
-            
+
             // 调用logout方法统一清理登录状态
             await authStore.logout()
-            
+
             // 跳转到登录页
             router.push('/login').finally(() => {
               isHandlingAuthError = false
@@ -74,22 +74,22 @@ request.interceptors.response.use(
           // 如果是认证相关的403错误，也需要退出登录
           const token = localStorage.getItem('token')
           const resData = res.detail || res.title || ''
-          
+
           // 如果有 token 但收到 403 错误，大概率是 token 失效，应该退出登录
           if (token && !isHandlingAuthError) {
             isHandlingAuthError = true
             message = resData || '登录已失效，请重新登录'
-            
+
             // 显示提示信息
             ElMessage.warning(message)
-            
+
             // 动态导入auth store避免循环依赖
             const { useAuthStore } = await import('@/stores/auth')
             const authStore = useAuthStore()
-            
+
             // 调用logout方法统一清理登录状态
             await authStore.logout()
-            
+
             // 跳转到登录页
             router.push('/login').finally(() => {
               isHandlingAuthError = false
@@ -119,21 +119,22 @@ request.interceptors.response.use(
       if (error.code === 'ECONNABORTED' || error.message?.includes('timeout')) {
         message = '请求超时，请稍后重试'
       } else {
-      message = '网络连接失败，请检查网络'
+        message = '网络连接失败，请检查网络'
       }
     } else {
       message = error.message || '请求配置错误'
     }
 
     // 只在非401/403认证错误时显示错误消息（认证错误已在上面处理并显示了warning）
-    if (error.response?.status !== 401 && 
-        !(error.response?.status === 403 && isHandlingAuthError)) {
+    if (
+      error.response?.status !== 401 &&
+      !(error.response?.status === 403 && isHandlingAuthError)
+    ) {
       ElMessage.error(message)
     }
-    
+
     return Promise.reject(error)
-  }
+  },
 )
 
 export default request
-

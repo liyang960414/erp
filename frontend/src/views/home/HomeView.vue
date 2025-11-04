@@ -6,11 +6,13 @@
           <span>{{ $t('common.welcome') }} {{ $t('auth.loginTitle') }}</span>
         </div>
       </template>
-      
+
       <div class="welcome-content">
-        <h2>{{ $t('common.hello') }}，{{ authStore.user?.fullName || authStore.user?.username }}</h2>
+        <h2>
+          {{ $t('common.hello') }}，{{ authStore.user?.fullName || authStore.user?.username }}
+        </h2>
         <p>{{ $t('auth.loginSubtitle') }}</p>
-        
+
         <div class="user-info">
           <el-descriptions :column="2" border>
             <el-descriptions-item :label="$t('user.username')">
@@ -30,7 +32,9 @@
               </el-tag>
             </el-descriptions-item>
             <el-descriptions-item :label="$t('user.status')">
-              <el-tag v-if="authStore.user?.enabled" type="success">{{ $t('common.enabled') }}</el-tag>
+              <el-tag v-if="authStore.user?.enabled" type="success">{{
+                $t('common.enabled')
+              }}</el-tag>
               <el-tag v-else type="danger">{{ $t('common.disabled') }}</el-tag>
             </el-descriptions-item>
           </el-descriptions>
@@ -81,7 +85,7 @@ onMounted(async () => {
   .home-container {
     padding: 0;
   }
-  
+
   .welcome-card {
     box-shadow: 0 2px 12px rgba(0, 0, 0, 0.08);
   }
@@ -101,4 +105,3 @@ onMounted(async () => {
   margin-top: 30px;
 }
 </style>
-
