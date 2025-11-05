@@ -44,6 +44,12 @@
   </div>
 </template>
 
+<script lang="ts">
+export default {
+  name: 'home',
+}
+</script>
+
 <script setup lang="ts">
 import { onMounted } from 'vue'
 import { useAuthStore } from '@/stores/auth'

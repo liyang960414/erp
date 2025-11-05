@@ -181,6 +181,12 @@
   </div>
 </template>
 
+<script lang="ts">
+export default {
+  name: 'materials',
+}
+</script>
+
 <script setup lang="ts">
 import { ref, computed } from 'vue'
 import { ElMessage } from 'element-plus'

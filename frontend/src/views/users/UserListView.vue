@@ -92,8 +92,14 @@
   </div>
 </template>
 
+<script lang="ts">
+export default {
+  name: 'userList',
+}
+</script>
+
 <script setup lang="ts">
-import { ref, onMounted } from 'vue'
+import { ref, onMounted, onActivated } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { Plus, Search } from '@element-plus/icons-vue'
@@ -115,8 +121,19 @@ const pagination = ref({
   total: 0,
 })
 
+// 首次加载标志
+const isFirstLoad = ref(true)
+
 onMounted(() => {
-  loadUsers()
+  if (isFirstLoad.value) {
+    loadUsers()
+    isFirstLoad.value = false
+  }
+})
+
+// 组件被激活时（从缓存中恢复），不重新加载数据
+onActivated(() => {
+  // 只在首次加载时执行，后续切换回来不重新加载
 })
 
 const loadUsers = async () => {

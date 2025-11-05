@@ -128,7 +128,11 @@
         <!-- 标签栏 -->
         <TabsBar />
         <div class="main-content-wrapper">
-          <router-view />
+          <router-view v-slot="{ Component }">
+            <keep-alive>
+              <component :is="Component" />
+            </keep-alive>
+          </router-view>
         </div>
       </el-main>
     </el-container>
@@ -166,6 +170,37 @@ const { t } = useI18n()
 
 const activeMenu = computed(() => route.path)
 const currentLocale = ref<LocaleType>(localeStore.currentLocale)
+
+// 计算需要缓存的组件名称（基于当前打开的标签页的路由名称）
+// 注意：keep-alive 的 include 匹配的是组件的 name 选项，而不是路由名称
+const cachedViews = computed(() => {
+  const names = tabsStore.tabs
+    .map(tab => {
+      // 尝试从路由解析名称
+      try {
+        const resolved = router.resolve(tab.path)
+        const matchedRoute = resolved.matched[resolved.matched.length - 1]
+        const routeName = matchedRoute?.name?.toString()
+        
+        // 如果标签页存储了 name，优先使用（因为可能已经处理过）
+        if (tab.name && tab.name !== tab.path) {
+          return tab.name
+        }
+        
+        return routeName || null
+      } catch {
+        return null
+      }
+    })
+    .filter((name): name is string => Boolean(name))
+  
+  // 调试：打印缓存的组件名称
+  if (import.meta.env.DEV) {
+    console.log('Keep-alive cached views:', names)
+  }
+  
+  return names
+})
 
 // 初始化标签页
 onMounted(() => {

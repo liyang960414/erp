@@ -120,8 +120,14 @@
   </div>
 </template>
 
+<script lang="ts">
+export default {
+  name: 'boms',
+}
+</script>
+
 <script setup lang="ts">
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed, onMounted, onActivated } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { Search, Upload, Refresh } from '@element-plus/icons-vue'
 import { useAuthStore } from '@/stores/auth'
@@ -258,8 +264,19 @@ const handleUpdateSuccess = () => {
   handleLoadAll()
 }
 
+// 首次加载标志
+const isFirstLoad = ref(true)
+
 onMounted(() => {
-  handleLoadAll()
+  if (isFirstLoad.value) {
+    handleLoadAll()
+    isFirstLoad.value = false
+  }
+})
+
+// 组件被激活时（从缓存中恢复），不重新加载数据
+onActivated(() => {
+  // 只在首次加载时执行，后续切换回来不重新加载
 })
 </script>
 

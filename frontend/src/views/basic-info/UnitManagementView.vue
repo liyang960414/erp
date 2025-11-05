@@ -105,8 +105,14 @@
   </div>
 </template>
 
+<script lang="ts">
+export default {
+  name: 'units',
+}
+</script>
+
 <script setup lang="ts">
-import { ref, onMounted, computed } from 'vue'
+import { ref, onMounted, onActivated, computed } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { Plus, Upload } from '@element-plus/icons-vue'
 import { unitApi } from '@/api/unit'
@@ -198,9 +204,21 @@ const handleImport = () => {
   importDialogVisible.value = true
 }
 
+// 首次加载标志
+const isFirstLoad = ref(true)
+
 onMounted(() => {
-  loadUnits()
-  loadUnitGroups()
+  if (isFirstLoad.value) {
+    loadUnits()
+    loadUnitGroups()
+    isFirstLoad.value = false
+  }
+})
+
+// 组件被激活时（从缓存中恢复），不重新加载数据
+onActivated(() => {
+  // 只在首次加载时执行，后续切换回来不重新加载
+  // 如果需要刷新数据，可以在这里添加逻辑
 })
 </script>
 

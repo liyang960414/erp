@@ -261,6 +261,12 @@
   </div>
 </template>
 
+<script lang="ts">
+export default {
+  name: 'bomQuery',
+}
+</script>
+
 <script setup lang="ts">
 import { ref, watch, nextTick } from 'vue'
 import { ElMessage } from 'element-plus'
