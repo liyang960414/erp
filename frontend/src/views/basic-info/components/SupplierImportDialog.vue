@@ -155,11 +155,11 @@ const handleImport = async () => {
     progressStatus.value = 'success'
     progressMessage.value = '导入完成'
 
-    importResult.value = result.data
+    importResult.value = result
 
-    if (result.data.supplierResult.failureCount === 0) {
+    if (result.supplierResult.failureCount === 0) {
       ElMessage.success(
-        `导入成功！共导入 ${result.data.supplierResult.successCount} 条供应商`,
+        `导入成功！共导入 ${result.supplierResult.successCount} 条供应商`,
       )
       emit('success')
       setTimeout(() => {
@@ -167,7 +167,7 @@ const handleImport = async () => {
       }, 2000)
     } else {
       ElMessage.warning(
-        `导入完成！成功 ${result.data.supplierResult.successCount} 条，失败 ${result.data.supplierResult.failureCount} 条`,
+        `导入完成！成功 ${result.supplierResult.successCount} 条，失败 ${result.supplierResult.failureCount} 条`,
       )
     }
   } catch (error: any) {

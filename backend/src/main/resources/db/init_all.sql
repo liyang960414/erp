@@ -480,6 +480,9 @@ INSERT INTO permissions (name, description) VALUES
 -- 销售订单权限
 ('sale_order:read', '查看销售订单'),
 ('sale_order:import', '导入销售订单'),
+-- 采购订单权限
+('purchase_order:read', '查看采购订单'),
+('purchase_order:import', '导入采购订单'),
 -- 供应商权限
 ('supplier:import', '导入供应商'),
 -- 系统权限
@@ -524,6 +527,7 @@ WHERE r.name = 'MANAGER'
         'user:read', 'product:read', 'product:write', 'product:delete',
         'order:read', 'order:write', 'order:delete', 
         'sale_order:read', 'sale_order:import',
+        'purchase_order:read', 'purchase_order:import',
         'supplier:import',
         'system:read'
     );
