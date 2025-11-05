@@ -69,7 +69,7 @@ logging:
   level:
     # 使用环境变量避免循环引用
     root: ${LOG_LEVEL_ROOT:INFO}
-    com.sambound.erp: ${LOG_LEVEL_APP:DEBUG}
+    com.sambound.erp: ${LOG_LEVEL_APP:INFO}
     com.zaxxer.hikari: ${LOG_LEVEL_HIKARI:INFO}
   file:
     # 直接使用环境变量，避免循环引用。如需配置可通过环境变量 LOGGING_FILE_NAME 设置

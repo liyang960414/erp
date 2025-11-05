@@ -3,6 +3,12 @@
     <!-- 顶部导航栏 -->
     <el-header class="header">
       <div class="header-left">
+        <el-button
+          :icon="isCollapsed ? Expand : Fold"
+          class="collapse-btn"
+          text
+          @click="toggleCollapse"
+        />
         <h2 class="logo">{{ $t('auth.loginTitle') }}</h2>
       </div>
       <div class="header-right">
@@ -47,9 +53,10 @@
 
     <el-container>
       <!-- 侧边栏 -->
-      <el-aside width="240px" class="aside">
+      <el-aside :width="isCollapsed ? '80px' : '200px'" class="aside">
         <el-menu
           :default-active="activeMenu"
+          :collapse="isCollapsed"
           router
           class="sidebar-menu"
           background-color="#304156"
@@ -161,6 +168,8 @@ import {
   SwitchButton,
   Document,
   Tools,
+  Fold,
+  Expand,
 } from '@element-plus/icons-vue'
 import { useAuthStore } from '@/stores/auth'
 import { useLocaleStore } from '@/stores/locale'
@@ -177,6 +186,20 @@ const { t } = useI18n()
 
 const activeMenu = computed(() => route.path)
 const currentLocale = ref<LocaleType>(localeStore.currentLocale)
+
+// 菜单折叠状态
+const STORAGE_KEY = 'sidebar-collapsed'
+const getInitialCollapseState = (): boolean => {
+  const saved = localStorage.getItem(STORAGE_KEY)
+  return saved ? JSON.parse(saved) : false
+}
+const isCollapsed = ref<boolean>(getInitialCollapseState())
+
+// 切换折叠状态
+const toggleCollapse = () => {
+  isCollapsed.value = !isCollapsed.value
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(isCollapsed.value))
+}
 
 // 计算需要缓存的组件名称（基于当前打开的标签页的路由名称）
 // 注意：keep-alive 的 include 匹配的是组件的 name 选项，而不是路由名称
@@ -259,6 +282,17 @@ const handleCommand = async (command: string) => {
 .header-left {
   display: flex;
   align-items: center;
+  gap: 12px;
+}
+
+.collapse-btn {
+  font-size: 18px;
+  color: #606266;
+  transition: color 0.3s;
+}
+
+.collapse-btn:hover {
+  color: #409eff;
 }
 
 .logo {
@@ -315,6 +349,7 @@ const handleCommand = async (command: string) => {
   background-color: #304156;
   overflow: hidden; /* 禁止侧边栏滚动 */
   flex-shrink: 0; /* 防止侧边栏被压缩 */
+  transition: width 0.3s ease;
 }
 
 .sidebar-menu {
@@ -324,12 +359,48 @@ const handleCommand = async (command: string) => {
   overflow-y: auto; /* 菜单内容可以滚动 */
 }
 
-/* 桌面端适配 - 侧边栏宽度优化 */
-@media (min-width: 1024px) {
-  .aside {
-    width: 240px !important;
-  }
+/* 菜单项样式优化 */
+:deep(.el-menu-item),
+:deep(.el-sub-menu__title) {
+  padding-left: 20px !important;
+  font-size: 14px;
+  height: 48px;
+  line-height: 48px;
 }
+
+:deep(.el-menu-item .el-icon),
+:deep(.el-sub-menu__title .el-icon) {
+  margin-right: 8px;
+  font-size: 18px;
+}
+
+:deep(.el-sub-menu .el-menu-item) {
+  padding-left: 50px !important;
+  height: 44px;
+  line-height: 44px;
+}
+
+:deep(.el-menu-item.is-active) {
+  background-color: #263445 !important;
+}
+
+:deep(.el-menu-item:hover),
+:deep(.el-sub-menu__title:hover) {
+  background-color: #263445 !important;
+}
+
+/* 折叠状态下的样式 */
+:deep(.el-menu--collapse .el-menu-item),
+:deep(.el-menu--collapse .el-sub-menu__title) {
+  padding-left: 20px !important;
+  text-align: center;
+}
+
+:deep(.el-menu--collapse .el-tooltip__trigger) {
+  justify-content: center;
+}
+
+/* 桌面端适配 - 侧边栏宽度已通过动态绑定控制，无需媒体查询 */
 
 .main-content {
   display: flex;

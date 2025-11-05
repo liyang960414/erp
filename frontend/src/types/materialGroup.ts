@@ -7,3 +7,4 @@ export interface MaterialGroup {
   createdAt: string
   updatedAt: string
 }
+
