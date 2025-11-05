@@ -1,10 +1,10 @@
 -- ============================================
 -- ERP系统数据库完整初始化脚本
--- 版本: 3.1
+-- 版本: 3.2
 -- 创建日期: 2024-12-20
 -- 更新日期: 2024-12-XX
 -- 说明: 一次性完成所有表结构和初始数据的初始化
--- 包含：用户、角色、权限、审计日志、单位、物料等所有表
+-- 包含：用户、角色、权限、审计日志、单位、物料、销售订单、采购订单等所有表
 -- ============================================
 
 -- 开始事务
@@ -13,6 +13,10 @@ BEGIN;
 -- ============================================
 -- 第一步：删除所有现有表（按依赖顺序）
 -- ============================================
+-- 删除采购订单相关表
+DROP TABLE IF EXISTS purchase_order_deliveries CASCADE;
+DROP TABLE IF EXISTS purchase_order_items CASCADE;
+DROP TABLE IF EXISTS purchase_orders CASCADE;
 -- 删除销售订单相关表
 DROP TABLE IF EXISTS sale_order_items CASCADE;
 DROP TABLE IF EXISTS sale_orders CASCADE;
@@ -251,6 +255,61 @@ CREATE TABLE sale_order_items (
     CONSTRAINT chk_sale_order_item_sequence CHECK (sequence > 0)
 );
 
+-- 采购订单状态枚举类型
+DO $$
+BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'purchase_order_status') THEN
+        CREATE TYPE purchase_order_status AS ENUM ('OPEN', 'CLOSED');
+    END IF;
+END $$;
+
+-- 采购订单主表
+CREATE TABLE purchase_orders (
+    id BIGSERIAL PRIMARY KEY,
+    bill_no VARCHAR(100) NOT NULL UNIQUE,
+    order_date DATE NOT NULL,
+    supplier_id BIGINT NOT NULL REFERENCES suppliers(id) ON DELETE RESTRICT,
+    status purchase_order_status NOT NULL DEFAULT 'OPEN',
+    note TEXT,
+    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
+
+-- 采购订单明细表
+CREATE TABLE purchase_order_items (
+    id BIGSERIAL PRIMARY KEY,
+    purchase_order_id BIGINT NOT NULL REFERENCES purchase_orders(id) ON DELETE CASCADE,
+    sequence INTEGER NOT NULL,
+    material_id BIGINT NOT NULL REFERENCES materials(id) ON DELETE RESTRICT,
+    bom_id BIGINT REFERENCES bill_of_materials(id) ON DELETE SET NULL,
+    material_desc TEXT,
+    unit_id BIGINT NOT NULL REFERENCES units(id) ON DELETE RESTRICT,
+    qty NUMERIC(18, 6) NOT NULL,
+    plan_confirm BOOLEAN DEFAULT FALSE,
+    sal_unit_id BIGINT REFERENCES units(id) ON DELETE SET NULL,
+    sal_qty NUMERIC(18, 6),
+    sal_join_qty NUMERIC(18, 6),
+    base_sal_join_qty NUMERIC(18, 6),
+    remarks TEXT,
+    sal_base_qty NUMERIC(18, 6),
+    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
+
+-- 采购订单交货明细表（入库详情表）
+CREATE TABLE purchase_order_deliveries (
+    id BIGSERIAL PRIMARY KEY,
+    purchase_order_item_id BIGINT NOT NULL REFERENCES purchase_order_items(id) ON DELETE CASCADE,
+    sequence INTEGER NOT NULL,
+    delivery_date DATE NOT NULL,
+    plan_qty NUMERIC(18, 6) NOT NULL,
+    supplier_delivery_date DATE,
+    pre_arrival_date DATE,
+    transport_lead_time INTEGER,
+    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
+
 -- ============================================
 -- 第三步：创建索引
 -- ============================================
@@ -321,6 +380,20 @@ CREATE INDEX idx_sale_order_items_material_id ON sale_order_items(material_id);
 CREATE INDEX idx_sale_order_items_unit_id ON sale_order_items(unit_id);
 CREATE INDEX idx_sale_order_items_sequence ON sale_order_items(sale_order_id, sequence);
 
+-- 采购订单主表索引
+CREATE INDEX idx_purchase_orders_bill_no ON purchase_orders(bill_no);
+CREATE INDEX idx_purchase_orders_supplier_id ON purchase_orders(supplier_id);
+CREATE INDEX idx_purchase_orders_order_date ON purchase_orders(order_date);
+CREATE INDEX idx_purchase_orders_status ON purchase_orders(status);
+
+-- 采购订单明细表索引
+CREATE INDEX idx_purchase_order_items_order_id ON purchase_order_items(purchase_order_id);
+CREATE INDEX idx_purchase_order_items_material_id ON purchase_order_items(material_id);
+
+-- 采购订单交货明细表索引
+CREATE INDEX idx_purchase_order_deliveries_item_id ON purchase_order_deliveries(purchase_order_item_id);
+CREATE INDEX idx_purchase_order_deliveries_delivery_date ON purchase_order_deliveries(delivery_date);
+
 -- ============================================
 -- 第四步：添加表注释和列注释
 -- ============================================
@@ -340,6 +413,9 @@ COMMENT ON TABLE customers IS '客户表';
 COMMENT ON TABLE suppliers IS '供应商表';
 COMMENT ON TABLE sale_orders IS '销售订单表';
 COMMENT ON TABLE sale_order_items IS '销售订单明细表';
+COMMENT ON TABLE purchase_orders IS '采购订单主表';
+COMMENT ON TABLE purchase_order_items IS '采购订单明细表';
+COMMENT ON TABLE purchase_order_deliveries IS '采购订单交货明细表（入库详情表）';
 
 COMMENT ON COLUMN users.id IS '用户ID';
 COMMENT ON COLUMN users.username IS '用户名（唯一）';
@@ -459,8 +535,80 @@ COMMENT ON COLUMN sale_order_items.customer_line_no IS '客户行号';
 COMMENT ON COLUMN sale_order_items.created_at IS '创建时间';
 COMMENT ON COLUMN sale_order_items.updated_at IS '更新时间';
 
+COMMENT ON COLUMN purchase_orders.id IS '采购订单ID';
+COMMENT ON COLUMN purchase_orders.bill_no IS '单据编号（唯一）';
+COMMENT ON COLUMN purchase_orders.order_date IS '采购日期';
+COMMENT ON COLUMN purchase_orders.supplier_id IS '供应商ID（供货方就是供应商）';
+COMMENT ON COLUMN purchase_orders.status IS '订单状态：OPEN-进行中，CLOSED-已关闭';
+COMMENT ON COLUMN purchase_orders.note IS '备注';
+COMMENT ON COLUMN purchase_orders.created_at IS '创建时间';
+COMMENT ON COLUMN purchase_orders.updated_at IS '更新时间';
+
+COMMENT ON COLUMN purchase_order_items.id IS '采购订单明细ID';
+COMMENT ON COLUMN purchase_order_items.purchase_order_id IS '采购订单ID';
+COMMENT ON COLUMN purchase_order_items.sequence IS '序号';
+COMMENT ON COLUMN purchase_order_items.material_id IS '物料ID';
+COMMENT ON COLUMN purchase_order_items.bom_id IS 'BOM版本ID（可为空）';
+COMMENT ON COLUMN purchase_order_items.material_desc IS '物料说明';
+COMMENT ON COLUMN purchase_order_items.unit_id IS '采购单位ID';
+COMMENT ON COLUMN purchase_order_items.qty IS '采购数量';
+COMMENT ON COLUMN purchase_order_items.plan_confirm IS '计划确认（布尔值）';
+COMMENT ON COLUMN purchase_order_items.sal_unit_id IS '销售单位ID（可为空）';
+COMMENT ON COLUMN purchase_order_items.sal_qty IS '销售数量（可为空）';
+COMMENT ON COLUMN purchase_order_items.sal_join_qty IS '销售订单关联数量（可为空）';
+COMMENT ON COLUMN purchase_order_items.base_sal_join_qty IS '销售订单关联数量-基本（可为空）';
+COMMENT ON COLUMN purchase_order_items.remarks IS '备注2';
+COMMENT ON COLUMN purchase_order_items.sal_base_qty IS '销售基本数量（可为空）';
+COMMENT ON COLUMN purchase_order_items.created_at IS '创建时间';
+COMMENT ON COLUMN purchase_order_items.updated_at IS '更新时间';
+
+COMMENT ON COLUMN purchase_order_deliveries.id IS '采购订单交货明细ID';
+COMMENT ON COLUMN purchase_order_deliveries.purchase_order_item_id IS '采购订单明细ID';
+COMMENT ON COLUMN purchase_order_deliveries.sequence IS '交货明细序号';
+COMMENT ON COLUMN purchase_order_deliveries.delivery_date IS '交货日期';
+COMMENT ON COLUMN purchase_order_deliveries.plan_qty IS '计划数量';
+COMMENT ON COLUMN purchase_order_deliveries.supplier_delivery_date IS '供应商发货日期（可为空）';
+COMMENT ON COLUMN purchase_order_deliveries.pre_arrival_date IS '预计到货日期（可为空）';
+COMMENT ON COLUMN purchase_order_deliveries.transport_lead_time IS '运输提前期（天数，可为空）';
+COMMENT ON COLUMN purchase_order_deliveries.created_at IS '创建时间';
+COMMENT ON COLUMN purchase_order_deliveries.updated_at IS '更新时间';
+
 -- ============================================
--- 第五步：插入初始数据
+-- 第五步：创建更新触发器
+-- ============================================
+
+-- 创建更新updated_at的触发器函数
+CREATE OR REPLACE FUNCTION update_purchase_order_updated_at()
+RETURNS TRIGGER AS $$
+BEGIN
+    NEW.updated_at = CURRENT_TIMESTAMP;
+    RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+-- 为采购订单主表创建触发器
+DROP TRIGGER IF EXISTS trigger_purchase_orders_updated_at ON purchase_orders;
+CREATE TRIGGER trigger_purchase_orders_updated_at
+    BEFORE UPDATE ON purchase_orders
+    FOR EACH ROW
+    EXECUTE FUNCTION update_purchase_order_updated_at();
+
+-- 为采购订单明细表创建触发器
+DROP TRIGGER IF EXISTS trigger_purchase_order_items_updated_at ON purchase_order_items;
+CREATE TRIGGER trigger_purchase_order_items_updated_at
+    BEFORE UPDATE ON purchase_order_items
+    FOR EACH ROW
+    EXECUTE FUNCTION update_purchase_order_updated_at();
+
+-- 为采购订单交货明细表创建触发器
+DROP TRIGGER IF EXISTS trigger_purchase_order_deliveries_updated_at ON purchase_order_deliveries;
+CREATE TRIGGER trigger_purchase_order_deliveries_updated_at
+    BEFORE UPDATE ON purchase_order_deliveries
+    FOR EACH ROW
+    EXECUTE FUNCTION update_purchase_order_updated_at();
+
+-- ============================================
+-- 第六步：插入初始数据
 -- ============================================
 
 -- 插入权限数据
@@ -623,7 +771,13 @@ SELECT '供应商表', COUNT(*) FROM suppliers
 UNION ALL
 SELECT '销售订单表', COUNT(*) FROM sale_orders
 UNION ALL
-SELECT '销售订单明细表', COUNT(*) FROM sale_order_items;
+SELECT '销售订单明细表', COUNT(*) FROM sale_order_items
+UNION ALL
+SELECT '采购订单表', COUNT(*) FROM purchase_orders
+UNION ALL
+SELECT '采购订单明细表', COUNT(*) FROM purchase_order_items
+UNION ALL
+SELECT '采购订单交货明细表', COUNT(*) FROM purchase_order_deliveries;
 
 SELECT 
     u.username,
@@ -673,5 +827,10 @@ COMMIT;
 \echo '  - materials (物料表)'
 \echo '  - customers (客户表)'
 \echo '  - suppliers (供应商表)'
+\echo '  - sale_orders (销售订单表)'
+\echo '  - sale_order_items (销售订单明细表)'
+\echo '  - purchase_orders (采购订单表)'
+\echo '  - purchase_order_items (采购订单明细表)'
+\echo '  - purchase_order_deliveries (采购订单交货明细表/入库详情表)'
 \echo ''
 
