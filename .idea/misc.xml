@@ -16,4 +16,18 @@
   <component name="ProjectRootManager" version="2" languageLevel="JDK_25" default="true" project-jdk-name="25" project-jdk-type="JavaSDK">
     <output url="file://$PROJECT_DIR$/out" />
   </component>
+  <component name="TypeScript">
+    <option name="useTypeScriptService" value="true" />
+    <option name="typeScriptCompiler" value="tsconfig.json" />
+  </component>
+  <component name="NodeJsLocalInterpreters">
+    <localInterpreters>
+      <local-interpreter path="$PROJECT_DIR$/frontend" />
+    </localInterpreters>
+  </component>
+  <component name="PackageJsonSettings">
+    <packageJsonPaths>
+      <path value="$PROJECT_DIR$/frontend/package.json" />
+    </packageJsonPaths>
+  </component>
 </project>

@@ -1,24 +1,124 @@
+# ============================================
+# Java / Maven 后端
+# ============================================
+# Maven 构建产物
 target/
-.mvn/wrapper/maven-wrapper.jar
+!.mvn/wrapper/maven-wrapper.properties
 !**/src/main/**/target/
 !**/src/test/**/target/
 
-### STS ###
+# Maven Wrapper JAR
+.mvn/wrapper/maven-wrapper.jar
+
+# 编译输出
+*.class
+*.jar
+*.war
+*.nar
+*.ear
+*.zip
+*.tar.gz
+*.rar
+
+# 日志文件
+*.log
+logs/
+backend/target/logs/
+target/logs/
+
+# ============================================
+# Node.js / Vue 前端
+# ============================================
+# 依赖
+node_modules/
+frontend/node_modules/
+.pnp
+.pnp.js
+
+# 构建产物
+dist/
+dist-ssr/
+frontend/dist/
+frontend/dist-ssr/
+build/
+frontend/build/
+
+# 测试覆盖率
+coverage/
+*.lcov
+.nyc_output/
+
+# 日志
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+lerna-debug.log*
+
+# TypeScript
+*.tsbuildinfo
+node_modules/.tmp/
+
+# Vite
+.vite/
+frontend/.vite/
+
+# ESLint 缓存
+.eslintcache
+frontend/.eslintcache
+
+# ============================================
+# IDE 配置文件
+# ============================================
+# IntelliJ IDEA / WebStorm
+# 策略：保留项目共享配置，排除用户特定配置
+# 先排除整个目录，然后取消排除需要共享的文件
+.idea/
+
+# 保留项目级别的共享配置
+!.idea/modules.xml
+!.idea/misc.xml
+!.idea/vcs.xml
+!.idea/compiler.xml
+!.idea/encodings.xml
+!.idea/jarRepositories.xml
+!.idea/sqldialects.xml
+!.idea/dataSources.xml
+!.idea/data_source_mapping.xml
+
+# 保留运行配置（一键打包等）
+!.idea/runConfigurations/
+!.idea/runConfigurations/*.xml
+
+# 保留模块配置文件（.iml 文件在模块目录下，不在 .idea 中）
+backend/*.iml
+frontend/*.iml
+
+# 注意：用户特定的配置已在 .idea/ 排除规则中自动排除
+# 包括：workspace.xml, tasks.xml, dictionaries/, shelf/, 
+#       dataSources.local.xml, dataSources/, sonarlint/, 
+#       inspectionProfiles/, MarsCodeWorkspaceAppSettings.xml 等
+
+# VS Code
+.vscode/
+!.vscode/extensions.json
+!.vscode/settings.json
+!.vscode/tasks.json
+!.vscode/launch.json
+
+# Eclipse
 .apt_generated
 .classpath
 .factorypath
 .project
-.settings
+.settings/
 .springBeans
-.sts4-cache
+.sts4-cache/
+bin/
+!**/src/main/**/bin/
+!**/src/test/**/bin/
 
-### IntelliJ IDEA ###
-.idea
-*.iws
-*.iml
-*.ipr
-
-### NetBeans ###
+# NetBeans
 /nbproject/private/
 /nbbuild/
 /dist/
@@ -28,5 +128,96 @@ build/
 !**/src/main/**/build/
 !**/src/test/**/build/
 
-### VS Code ###
-.vscode/
+# ============================================
+# 操作系统文件
+# ============================================
+# macOS
+.DS_Store
+.AppleDouble
+.LSOverride
+._*
+
+# Windows
+Thumbs.db
+Thumbs.db:encryptable
+ehthumbs.db
+ehthumbs_vista.db
+*.stackdump
+[Dd]esktop.ini
+$RECYCLE.BIN/
+*.cab
+*.msi
+*.msix
+*.msm
+*.msp
+*.lnk
+
+# Linux
+*~
+.fuse_hidden*
+.directory
+.Trash-*
+.nfs*
+
+# ============================================
+# 临时文件和缓存
+# ============================================
+*.swp
+*.swo
+*~
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+
+# 环境变量文件（可能包含敏感信息）
+.env
+.env.local
+.env.*.local
+*.local
+
+# ============================================
+# 测试相关
+# ============================================
+# Cypress
+cypress/videos/
+cypress/screenshots/
+cypress/downloads/
+
+# Vitest
+__screenshots__/
+.vitest/
+
+# Jest
+coverage/
+
+# ============================================
+# 其他
+# ============================================
+# 备份文件
+*.bak
+*.backup
+*.tmp
+*.temp
+
+# 压缩文件（除非是必需的）
+*.7z
+*.dmg
+*.gz
+*.iso
+*.rar
+*.tar
+
+# 依赖树文件（通常很大）
+dependency-tree.txt
+
+# 数据库文件
+*.db
+*.sqlite
+*.sqlite3
+
+# 锁文件（根据团队偏好决定是否提交）
+# package-lock.json  # 如果使用 npm，建议提交
+# yarn.lock  # 如果使用 yarn，建议提交
+# pnpm-lock.yaml  # 如果使用 pnpm，建议提交
