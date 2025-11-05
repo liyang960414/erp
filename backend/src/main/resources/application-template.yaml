@@ -2,9 +2,9 @@ spring:
   application:
     name: erp
   datasource:
-    url: jdbc:postgresql://localhost:5432/erp_db
-    username: postgres
-    password: liyang960414
+    url: jdbc:postgresql://${db.host:localhost}:${db.port:5432}/${db.name:erp_db}
+    username: ${db.username:postgres}
+    password: ${db.password:}
     driver-class-name: org.postgresql.Driver
     # HikariCP 连接池配置
     hikari:

@@ -8,13 +8,9 @@
 import { computed, onMounted } from 'vue'
 import { useAuthStore } from '@/stores/auth'
 import { useLocaleStore } from '@/stores/locale'
-// @ts-ignore - Element Plus locale files
 import zhCn from 'element-plus/dist/locale/zh-cn.mjs'
-// @ts-ignore - Element Plus locale files
 import vi from 'element-plus/dist/locale/vi.mjs'
-// @ts-ignore - Element Plus locale files
 import en from 'element-plus/dist/locale/en.mjs'
-// @ts-ignore - Element Plus locale files
 import id from 'element-plus/dist/locale/id.mjs'
 
 const authStore = useAuthStore()

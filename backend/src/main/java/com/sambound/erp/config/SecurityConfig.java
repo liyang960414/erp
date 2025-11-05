@@ -46,7 +46,12 @@ public class SecurityConfig {
                 .requestMatchers("/api/public/**").permitAll()
                 .requestMatchers("/api/dev/**").permitAll()  // 开发环境：允许访问开发工具端点
                 .requestMatchers("/api/monitor/pool/**").hasRole("ADMIN")  // 连接池监控端点仅管理员可访问
-                .anyRequest().authenticated()
+                // 静态资源允许匿名访问
+                .requestMatchers("/", "/index.html", "/assets/**", "/favicon.ico").permitAll()
+                // API 路径需要认证
+                .requestMatchers("/api/**").authenticated()
+                // 其他路径（前端路由）允许匿名访问，由前端处理认证
+                .anyRequest().permitAll()
             )
             .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
 

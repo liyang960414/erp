@@ -207,7 +207,7 @@
             class="tree-container"
           >
             <el-tree
-              :ref="(el) => setBackwardTreeRef(el, index)"
+              :ref="(el: any) => setBackwardTreeRef(el, index)"
               :data="[node]"
               :props="treeProps"
               :default-expand-all="true"
@@ -316,7 +316,7 @@ watch(
   () => {
     // 如果正查且有BOM版本，默认选择第一个；反查时清空版本选择
     if (queryForm.value.queryType === 'forward' && bomVersions.value.length > 0) {
-      queryForm.value.version = bomVersions.value[0].version
+      queryForm.value.version = bomVersions.value[0]?.version || ''
     } else {
       queryForm.value.version = ''
     }
@@ -391,7 +391,7 @@ const handleMaterialCodeChange = async (materialCode: string) => {
       bomVersions.value = await bomApi.getBomVersionsByMaterialCode(materialCode.trim())
       // 如果有BOM版本，默认选择第一个
       if (bomVersions.value.length > 0) {
-        queryForm.value.version = bomVersions.value[0].version
+        queryForm.value.version = bomVersions.value[0]?.version || ''
       } else {
         queryForm.value.version = ''
       }
@@ -641,14 +641,15 @@ const handleLocateChildMaterial = () => {
 
       // 定位到第一个找到的节点
       if (foundNodes[0]?.materialId && forwardTreeRef.value) {
+        const firstNode = foundNodes[0]
         const dataToUse = filteredForwardResult.value || forwardResult.value
-        expandToNode(forwardTreeRef.value, foundNodes[0].materialId, [dataToUse])
+        expandToNode(forwardTreeRef.value, firstNode.materialId, [dataToUse])
         
         // 滚动到节点
         setTimeout(() => {
           // 尝试多种选择器定位节点
           const nodeElement = document.querySelector(
-            `.tree-node[data-material-id="${foundNodes[0].materialId}"]`
+            `.tree-node[data-material-id="${firstNode.materialId}"]`
           ) as HTMLElement
           if (nodeElement) {
             nodeElement.scrollIntoView({ behavior: 'smooth', block: 'center' })
@@ -687,16 +688,18 @@ const handleLocateChildMaterial = () => {
       }
 
       // 定位到第一个找到的节点
-      if (foundNodes[0]?.materialId) {
+      const firstNode = foundNodes[0]
+      if (firstNode?.materialId) {
         // 找到包含该节点的树
         const dataToUse = filteredBackwardResult.value || backwardResult.value
         for (let i = 0; i < dataToUse.length; i++) {
           const treeRef = backwardTreeRefs.value[i]
-          if (treeRef && expandToNode(treeRef, foundNodes[0].materialId, [dataToUse[i]])) {
+          const nodeData = dataToUse[i]
+          if (treeRef && nodeData && expandToNode(treeRef, firstNode.materialId, [nodeData])) {
             // 滚动到节点
             setTimeout(() => {
               const nodeElement = document.querySelector(
-                `.tree-node[data-material-id="${foundNodes[0].materialId}"]`
+                `.tree-node[data-material-id="${firstNode.materialId}"]`
               ) as HTMLElement
               if (nodeElement) {
                 nodeElement.scrollIntoView({ behavior: 'smooth', block: 'center' })
@@ -895,7 +898,7 @@ const calculateQuantities = (node: BomQueryNode, parentQuantity: number): BomQue
       parentQuantity,
       node.numerator,
       node.denominator,
-      node.scrapRate
+      node.scrapRate ?? null
     )
   }
   

@@ -123,7 +123,7 @@
                   <span>加载中...</span>
                 </div>
                 <el-table
-                  v-else-if="groupMaterialsMap[row.id] && groupMaterialsMap[row.id].length > 0"
+                  v-else-if="(groupMaterialsMap[row.id]?.length ?? 0) > 0"
                   :data="groupMaterialsMap[row.id]"
                   border
                   size="small"

@@ -2,8 +2,24 @@ import axios, { type AxiosInstance, type AxiosError } from 'axios'
 import { ElMessage } from 'element-plus'
 import router from '@/router'
 
+// 确定 API base URL
+// 开发环境：使用环境变量或默认值
+// 生产环境（打包后）：使用相对路径 /api
+const getBaseURL = (): string => {
+  // 如果设置了环境变量，优先使用
+  if (import.meta.env.VITE_API_BASE_URL) {
+    return import.meta.env.VITE_API_BASE_URL
+  }
+  // 生产环境（打包后）使用相对路径
+  if (import.meta.env.PROD) {
+    return '/api'
+  }
+  // 开发环境默认值
+  return 'http://localhost:8080/api'
+}
+
 const request: AxiosInstance = axios.create({
-  baseURL: import.meta.env.VITE_API_BASE_URL || 'http://localhost:8080/api',
+  baseURL: getBaseURL(),
   timeout: 30000, // 默认30秒（文件上传接口会单独设置更长的超时时间）
 })
 

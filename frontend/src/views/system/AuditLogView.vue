@@ -226,8 +226,10 @@ const loadAuditLogs = async () => {
       ...searchForm.value,
     })
 
-    auditLogs.value = response.content
-    pagination.value.total = response.totalElements
+    // 处理响应：可能是 AxiosResponse 或直接是 PageResponse
+    const pageResponse = (response as any).data || response
+    auditLogs.value = pageResponse.content || []
+    pagination.value.total = pageResponse.totalElements || 0
   } catch (error) {
     console.error('加载审计日志失败:', error)
   } finally {
