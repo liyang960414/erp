@@ -34,8 +34,17 @@ public class UserController {
 
     // 获取当前登录用户信息
     @GetMapping("/me")
+    @org.springframework.transaction.annotation.Transactional(readOnly = true)
     public ResponseEntity<ApiResponse<User>> getCurrentUser(Principal principal) {
         User user = userService.findByUsername(principal.getName());
+        // 确保权限被初始化（触发LAZY加载）
+        if (user.getRoles() != null) {
+            user.getRoles().forEach(role -> {
+                if (role.getPermissions() != null) {
+                    role.getPermissions().size(); // 触发LAZY加载
+                }
+            });
+        }
         return ResponseEntity.ok(ApiResponse.success(user));
     }
 

@@ -17,6 +17,7 @@ BEGIN;
 DROP TABLE IF EXISTS sale_order_items CASCADE;
 DROP TABLE IF EXISTS sale_orders CASCADE;
 DROP TABLE IF EXISTS customers CASCADE;
+DROP TABLE IF EXISTS suppliers CASCADE;
 
 -- 删除BOM相关表
 DROP TABLE IF EXISTS bom_items CASCADE;
@@ -205,6 +206,18 @@ CREATE TABLE customers (
     updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
 
+-- 供应商表
+CREATE TABLE suppliers (
+    id BIGSERIAL PRIMARY KEY,
+    code VARCHAR(50) NOT NULL UNIQUE,
+    name TEXT NOT NULL,
+    short_name TEXT,
+    english_name TEXT,
+    description TEXT,
+    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
+
 -- 销售订单表
 CREATE TABLE sale_orders (
     id BIGSERIAL PRIMARY KEY,
@@ -294,6 +307,9 @@ CREATE INDEX idx_bom_items_sequence ON bom_items(bom_id, sequence);
 -- 客户表索引
 CREATE INDEX idx_customers_code ON customers(code);
 
+-- 供应商表索引
+CREATE INDEX idx_suppliers_code ON suppliers(code);
+
 -- 销售订单表索引
 CREATE INDEX idx_sale_orders_bill_no ON sale_orders(bill_no);
 CREATE INDEX idx_sale_orders_customer_id ON sale_orders(customer_id);
@@ -321,6 +337,7 @@ COMMENT ON TABLE unit_conversions IS '单位转换表';
 COMMENT ON TABLE material_groups IS '物料组表';
 COMMENT ON TABLE materials IS '物料表';
 COMMENT ON TABLE customers IS '客户表';
+COMMENT ON TABLE suppliers IS '供应商表';
 COMMENT ON TABLE sale_orders IS '销售订单表';
 COMMENT ON TABLE sale_order_items IS '销售订单明细表';
 
@@ -408,6 +425,15 @@ COMMENT ON COLUMN customers.name IS '客户名称';
 COMMENT ON COLUMN customers.created_at IS '创建时间';
 COMMENT ON COLUMN customers.updated_at IS '更新时间';
 
+COMMENT ON COLUMN suppliers.id IS '供应商ID';
+COMMENT ON COLUMN suppliers.code IS '供应商编码（唯一）';
+COMMENT ON COLUMN suppliers.name IS '供应商名称';
+COMMENT ON COLUMN suppliers.short_name IS '简称';
+COMMENT ON COLUMN suppliers.english_name IS '英文名称';
+COMMENT ON COLUMN suppliers.description IS '描述';
+COMMENT ON COLUMN suppliers.created_at IS '创建时间';
+COMMENT ON COLUMN suppliers.updated_at IS '更新时间';
+
 COMMENT ON COLUMN sale_orders.id IS '销售订单ID';
 COMMENT ON COLUMN sale_orders.bill_no IS '单据编号（唯一）';
 COMMENT ON COLUMN sale_orders.order_date IS '订单日期';
@@ -454,6 +480,8 @@ INSERT INTO permissions (name, description) VALUES
 -- 销售订单权限
 ('sale_order:read', '查看销售订单'),
 ('sale_order:import', '导入销售订单'),
+-- 供应商权限
+('supplier:import', '导入供应商'),
 -- 系统权限
 ('system:read', '查看系统设置'),
 ('system:write', '修改系统设置'),
@@ -496,6 +524,7 @@ WHERE r.name = 'MANAGER'
         'user:read', 'product:read', 'product:write', 'product:delete',
         'order:read', 'order:write', 'order:delete', 
         'sale_order:read', 'sale_order:import',
+        'supplier:import',
         'system:read'
     );
 
@@ -586,6 +615,8 @@ SELECT '物料表', COUNT(*) FROM materials
 UNION ALL
 SELECT '客户表', COUNT(*) FROM customers
 UNION ALL
+SELECT '供应商表', COUNT(*) FROM suppliers
+UNION ALL
 SELECT '销售订单表', COUNT(*) FROM sale_orders
 UNION ALL
 SELECT '销售订单明细表', COUNT(*) FROM sale_order_items;
@@ -636,5 +667,7 @@ COMMIT;
 \echo '  - unit_conversions (单位转换表)'
 \echo '  - material_groups (物料组表)'
 \echo '  - materials (物料表)'
+\echo '  - customers (客户表)'
+\echo '  - suppliers (供应商表)'
 \echo ''
 

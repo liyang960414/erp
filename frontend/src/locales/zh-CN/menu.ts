@@ -7,6 +7,7 @@ export default {
   basicInfoManagement: '基础信息管理',
   unitManagement: '单位管理',
   materialManagement: '物料管理',
+  supplierManagement: '供应商管理',
   bomManagement: 'BOM管理',
   bomList: '物料清单',
   bomListManagement: '物料清单列表',

@@ -32,6 +32,12 @@
 - **用途**: 提供常用SQL查询示例
 - **内容**: 统计、分析、维护等查询示例
 
+#### 6. `migration/` - 数据库迁移脚本目录
+- **用途**: 在现有数据库上添加新功能或修改表结构
+- **内容**: 增量迁移脚本和回滚脚本
+- **适用场景**: 生产环境升级，无需重建整个数据库
+- **特点**: 使用 `IF NOT EXISTS` 确保可重复执行，安全可靠
+
 ## 使用方式
 
 ### 方式一：使用完整初始化脚本（最简单）
@@ -94,7 +100,24 @@ recreate_database.bat
 psql -h localhost -p 5432 -U postgres -d erp_db -f init_all.sql
 ```
 
-### 方式五：使用Spring Boot自动初始化（开发环境）
+### 方式五：使用迁移脚本（生产环境推荐）⭐
+
+在现有数据库上添加新功能，使用迁移脚本：
+
+```bash
+# 执行迁移脚本（添加供应商表）
+psql -h localhost -p 5432 -U postgres -d erp_db -f migration/001_add_suppliers_table.sql
+```
+
+**优点**:
+- 不会删除现有数据
+- 可以安全地重复执行
+- 支持回滚操作
+- 适合生产环境使用
+
+**详细说明**: 请参考 [migration/README.md](migration/README.md)
+
+### 方式六：使用Spring Boot自动初始化（开发环境）
 
 如果`application.yaml`配置为：
 ```yaml

@@ -81,6 +81,12 @@ const router = createRouter({
           meta: { title: '物料管理', requiresAuth: true },
         },
         {
+          path: 'basic-info/suppliers',
+          name: 'suppliers',
+          component: () => import('@/views/basic-info/SupplierManagementView.vue'),
+          meta: { title: '供应商管理', requiresAuth: true },
+        },
+        {
           path: 'engineering-data/bom-list/boms',
           name: 'boms',
           component: () => import('@/views/engineering-data/bom-list/BomManagementView.vue'),

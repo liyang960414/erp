@@ -11,6 +11,7 @@
 | `recreate_database.sh` | Shell | Linux/Mac自动化重建脚本 |
 | `recreate_database.bat` | Batch | Windows自动化重建脚本 |
 | `QUERY_EXAMPLES.sql` | SQL | 查询示例脚本 |
+| `migration/` | 目录 | 数据库迁移脚本目录 |
 | `README.md` | 文档 | 详细使用说明 |
 | `SUMMARY.md` | 文档 | 本文件 |
 
@@ -134,6 +135,12 @@ psql -h localhost -U postgres -d erp_db -f drop_all_tables.sql
 psql -h localhost -U postgres -d erp_db -f init_all.sql
 ```
 
+### 执行迁移脚本（在现有数据库上添加新功能）
+```bash
+# 添加供应商表和相关权限
+psql -h localhost -U postgres -d erp_db -f migration/001_add_suppliers_table.sql
+```
+
 ### 备份数据库
 ```bash
 pg_dump -h localhost -U postgres erp_db > backup_$(date +%Y%m%d_%H%M%S).sql
@@ -205,9 +212,18 @@ spring:
 ```
 
 2. **生产环境**: 创建迁移脚本
-```sql
--- 在现有init_all.sql中添加，或创建新的迁移脚本
-ALTER TABLE users ADD COLUMN phone VARCHAR(20);
+   - 在 `migration/` 目录下创建迁移脚本
+   - 使用 `IF NOT EXISTS` 确保脚本可重复执行
+   - 创建对应的回滚脚本
+   - 参考 `migration/001_add_suppliers_table.sql` 作为示例
+
+示例：
+```bash
+# 执行迁移脚本
+psql -h localhost -U postgres -d erp_db -f migration/001_add_suppliers_table.sql
+
+# 如果需要回滚
+psql -h localhost -U postgres -d erp_db -f migration/001_add_suppliers_table_rollback.sql
 ```
 
 ## 🔒 安全建议
@@ -262,15 +278,25 @@ ALTER TABLE users ADD COLUMN phone VARCHAR(20);
 ## 📚 相关文档
 
 - [详细使用说明](README.md)
+- [迁移脚本说明](migration/README.md)
 - [认证系统文档](../../AUTH_README.md)
 - [API测试示例](../../API_TEST_EXAMPLES.md)
 - [快速开始指南](../../QUICKSTART.md)
 
 ## 🔄 版本历史
 
+### v3.2 (2024-12-XX)
+- **新增**: 供应商管理相关表（suppliers）
+- **新增**: 供应商导入权限（supplier:import）
+- **新增**: 数据库迁移脚本系统（migration目录）
+- **新增**: 迁移脚本 `001_add_suppliers_table.sql`
+- **新增**: 回滚脚本 `001_add_suppliers_table_rollback.sql`
+
 ### v3.1 (2024-12-XX)
 - **新增**: 物料管理相关表（materials, material_groups）
 - **新增**: 单位管理相关表（units, unit_groups, unit_conversions）
+- **新增**: 客户管理相关表（customers）
+- **新增**: 销售订单相关表（sale_orders, sale_order_items）
 - **修复**: 物料导入时的字段长度限制问题
 - **优化**: 使用 TEXT 类型支持长文本数据导入
 - **更新**: 实体类映射以匹配数据库结构

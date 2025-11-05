@@ -14,6 +14,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.List;
@@ -127,15 +128,35 @@ public class SaleOrderService {
      * 
      * 注意：目前所有提醒仅基于时间条件判断，不包含生产状态、采购状态等业务逻辑判断
      * 后续需要添加生产状态字段和采购状态判断逻辑
+     * 
+     * 优化：在数据库层面过滤符合条件的订单明细，避免查询所有数据导致性能问题
      */
     public List<OrderAlertDTO> getOrderAlerts() {
         LocalDate today = LocalDate.now();
         List<OrderAlertDTO> alerts = new ArrayList<>();
         
-        // 查询所有有验货日期或要货日期的订单明细
-        List<SaleOrderItem> allItems = saleOrderItemRepository.findAllForAlerts();
+        // 计算日期范围
+        // 采购提醒：验货期前40天（包含第40天），即验货日期在 [today, today+40] 范围内
+        // 生产提醒：临近验货期7天内（包含第7天），即验货日期在 [today, today+7] 范围内
+        // 超期告警：要货日期 < today
+        LocalDate inspectionDateStart = today;  // 验货日期范围开始（今天）
+        LocalDate inspectionDateEnd = today.plusDays(40);  // 验货日期范围结束（今天+40天）
+        LocalDateTime deliveryDateEndTime = today.atStartOfDay();  // 要货日期范围结束（今天0点，用于查询超期的）
         
-        for (SaleOrderItem item : allItems) {
+        // 在数据库层面过滤出符合条件的订单明细
+        List<SaleOrderItem> items = saleOrderItemRepository.findAlertsForDateRange(
+            inspectionDateStart, inspectionDateEnd, deliveryDateEndTime
+        );
+        
+        // 限制返回数量，避免前端渲染过多数据导致卡顿
+        int maxAlerts = 200;
+        int processedCount = 0;
+        
+        for (SaleOrderItem item : items) {
+            if (processedCount >= maxAlerts) {
+                break;
+            }
+            
             SaleOrder order = item.getSaleOrder();
             if (order == null) {
                 continue;
@@ -145,15 +166,17 @@ public class SaleOrderService {
             if (item.getInspectionDate() != null) {
                 long daysUntilInspection = ChronoUnit.DAYS.between(today, item.getInspectionDate());
                 
-                // 采购提醒：验货期前40天（包含第40天）
+                // 采购提醒：验货期前40天（包含第40天），但不在7天内
                 if (daysUntilInspection <= 40 && daysUntilInspection > 7) {
                     alerts.add(createPurchaseReminder(item, order, daysUntilInspection));
+                    processedCount++;
                 }
                 
                 // 生产提醒：临近验货期7天内（包含第7天）
                 // 注意：目前仅基于时间条件判断，后续需要添加生产状态字段判断生产是否完成
                 if (daysUntilInspection <= 7 && daysUntilInspection >= 0) {
                     alerts.add(createProductionReminder(item, order, daysUntilInspection));
+                    processedCount++;
                 }
             }
             
@@ -162,9 +185,29 @@ public class SaleOrderService {
                 long daysOverdue = ChronoUnit.DAYS.between(item.getDeliveryDate().toLocalDate(), today);
                 if (daysOverdue > 0) {
                     alerts.add(createDeliveryOverdueAlert(item, order, daysOverdue));
+                    processedCount++;
                 }
             }
         }
+        
+        // 对提醒进行排序：超期告警 > 生产提醒 > 采购提醒
+        alerts.sort((a1, a2) -> {
+            int priority1 = getAlertPriority(a1.alertType());
+            int priority2 = getAlertPriority(a2.alertType());
+            if (priority1 != priority2) {
+                return Integer.compare(priority1, priority2);
+            }
+            // 同类型按日期排序
+            if (a1.alertType() == OrderAlertDTO.AlertType.DELIVERY_OVERDUE) {
+                return a1.deliveryDate() != null && a2.deliveryDate() != null
+                    ? a1.deliveryDate().compareTo(a2.deliveryDate())
+                    : 0;
+            } else {
+                return a1.inspectionDate() != null && a2.inspectionDate() != null
+                    ? a1.inspectionDate().compareTo(a2.inspectionDate())
+                    : 0;
+            }
+        });
         
         return alerts;
     }
@@ -216,6 +259,17 @@ public class SaleOrderService {
             daysRemaining,
             message
         );
+    }
+    
+    /**
+     * 获取提醒优先级（数字越小优先级越高）
+     */
+    private int getAlertPriority(OrderAlertDTO.AlertType alertType) {
+        return switch (alertType) {
+            case DELIVERY_OVERDUE -> 1;      // 超期告警优先级最高
+            case PRODUCTION_REMINDER -> 2;   // 生产提醒次之
+            case PURCHASE_REMINDER -> 3;      // 采购提醒最低
+        };
     }
     
     /**

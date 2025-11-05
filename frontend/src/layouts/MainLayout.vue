@@ -88,6 +88,9 @@
             <el-menu-item index="/basic-info/materials">{{
               $t('menu.materialManagement')
             }}</el-menu-item>
+            <el-menu-item index="/basic-info/suppliers">{{
+              $t('menu.supplierManagement')
+            }}</el-menu-item>
           </el-sub-menu>
 
           <el-sub-menu index="/engineering-data">
