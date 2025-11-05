@@ -74,10 +74,14 @@
             <span>{{ $t('menu.productManagement') }}</span>
           </el-menu-item>
 
-          <el-menu-item index="/orders">
-            <el-icon><ShoppingBag /></el-icon>
-            <span>{{ $t('menu.orderManagement') }}</span>
-          </el-menu-item>
+          <el-sub-menu index="/orders">
+            <template #title>
+              <el-icon><ShoppingBag /></el-icon>
+              <span>{{ $t('menu.orderManagement') }}</span>
+            </template>
+            <el-menu-item index="/orders">{{ $t('menu.saleOrderManagement') }}</el-menu-item>
+            <el-menu-item index="/purchase-orders">{{ $t('menu.purchaseOrderManagement') }}</el-menu-item>
+          </el-sub-menu>
 
           <el-sub-menu index="/basic-info">
             <template #title>

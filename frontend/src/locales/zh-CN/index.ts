@@ -5,6 +5,7 @@ import role from './role'
 import route from './route'
 import menu from './menu'
 import audit from './audit'
+import purchaseOrder from './purchaseOrder'
 
 export default {
   common,
@@ -14,4 +15,5 @@ export default {
   route,
   menu,
   audit,
+  purchaseOrder,
 }

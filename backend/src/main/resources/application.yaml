@@ -44,8 +44,9 @@ spring:
     multipart:
       enabled: true
       # 使用环境变量避免循环引用
-      max-file-size: ${UPLOAD_MAX_FILE_SIZE:200MB}
-      max-request-size: ${UPLOAD_MAX_REQUEST_SIZE:200MB}
+      # 支持300M大文件导入，设置为400MB留有余量
+      max-file-size: ${UPLOAD_MAX_FILE_SIZE:400MB}
+      max-request-size: ${UPLOAD_MAX_REQUEST_SIZE:400MB}
       file-size-threshold: ${UPLOAD_FILE_SIZE_THRESHOLD:10MB}
 
 server:
@@ -56,8 +57,8 @@ server:
     accept-count: ${SERVER_TOMCAT_ACCEPT_COUNT:100}
     connection-timeout: ${SERVER_TOMCAT_CONNECTION_TIMEOUT:600000} # 10分钟连接超时
     max-connections: ${SERVER_TOMCAT_MAX_CONNECTIONS:10000}
-    max-swallow-size: ${SERVER_TOMCAT_MAX_SWALLOW_SIZE:209715200} # 200MB (字节)
-    max-http-form-post-size: ${SERVER_TOMCAT_MAX_HTTP_FORM_POST_SIZE:209715200}
+    max-swallow-size: ${SERVER_TOMCAT_MAX_SWALLOW_SIZE:419430400} # 400MB (字节)
+    max-http-form-post-size: ${SERVER_TOMCAT_MAX_HTTP_FORM_POST_SIZE:419430400}
 
 jwt:
   # 使用环境变量避免循环引用

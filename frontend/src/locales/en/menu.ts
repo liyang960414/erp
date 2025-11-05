@@ -4,6 +4,8 @@ export default {
   userList: 'User List',
   productManagement: 'Product Management',
   orderManagement: 'Order Management',
+  saleOrderManagement: 'Sale Order Management',
+  purchaseOrderManagement: 'Purchase Order Management',
   basicInfoManagement: 'Basic Information Management',
   unitManagement: 'Unit Management',
   materialManagement: 'Material Management',
