@@ -1,0 +1,5 @@
+﻿FBillHead(BD_Supplier),FNumber,FName#2052,FShortName#2052,FShortNameINEn#2052,FDescription#2052
+*单据头(序号),(单据头)编码,*(单据头)名称#中文(简体),(单据头)简称#中文(简体),(单据头)英文名称#中文(简体),(单据头)描述#中文(简体)
+194754,01.AC001,雅进有限公司,,Acctron Company limited,
+205157,01.AMSLTD,"Amtek Semiconductors(Samoa)Co.,LTD",,,
+162511,01.BAOFENG,宝丰磁电（香港）有限公司,宝丰,,

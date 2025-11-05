@@ -1,5 +1,6 @@
 import request from '@/utils/request'
 import type { SaleOrder, SaleOrderImportResponse, PageResponse, SaleOrderListResponse } from '@/types/saleOrder'
+import type { OrderAlert } from '@/types/orderAlert'
 
 export interface SaleOrderQueryParams {
   billNo?: string
@@ -29,5 +30,10 @@ export const saleOrderApi = {
     return request.post('/sale-orders/import', formData, {
       timeout: 600000, // 10分钟超时，因为大文件导入可能耗时较长
     })
+  },
+
+  // 获取订单提醒列表
+  getOrderAlerts(): Promise<OrderAlert[]> {
+    return request.get('/sale-orders/alerts')
   },
 }

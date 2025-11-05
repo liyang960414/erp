@@ -1,5 +1,6 @@
 package com.sambound.erp.service;
 
+import com.sambound.erp.dto.OrderAlertDTO;
 import com.sambound.erp.dto.SaleOrderDTO;
 import com.sambound.erp.dto.SaleOrderItemDTO;
 import com.sambound.erp.entity.SaleOrder;
@@ -13,6 +14,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
+import java.time.temporal.ChronoUnit;
+import java.util.ArrayList;
 import java.util.List;
 
 @Service
@@ -112,6 +115,130 @@ public class SaleOrderService {
                 item.getCustomerLineNo(),
                 item.getCreatedAt(),
                 item.getUpdatedAt()
+        );
+    }
+    
+    /**
+     * 获取订单提醒列表
+     * 包含三种提醒类型：
+     * 1. 采购料提醒：验货期前40天需要采购料
+     * 2. 生产提醒：临近验货期7天内如果生产未完成需要提示（目前仅基于时间条件，后续需添加生产状态判断）
+     * 3. 超期告警：要货日期超期需要告警
+     * 
+     * 注意：目前所有提醒仅基于时间条件判断，不包含生产状态、采购状态等业务逻辑判断
+     * 后续需要添加生产状态字段和采购状态判断逻辑
+     */
+    public List<OrderAlertDTO> getOrderAlerts() {
+        LocalDate today = LocalDate.now();
+        List<OrderAlertDTO> alerts = new ArrayList<>();
+        
+        // 查询所有有验货日期或要货日期的订单明细
+        List<SaleOrderItem> allItems = saleOrderItemRepository.findAllForAlerts();
+        
+        for (SaleOrderItem item : allItems) {
+            SaleOrder order = item.getSaleOrder();
+            if (order == null) {
+                continue;
+            }
+            
+            // 检查采购料提醒：验货期前40天需要采购料
+            if (item.getInspectionDate() != null) {
+                long daysUntilInspection = ChronoUnit.DAYS.between(today, item.getInspectionDate());
+                
+                // 采购提醒：验货期前40天（包含第40天）
+                if (daysUntilInspection <= 40 && daysUntilInspection > 7) {
+                    alerts.add(createPurchaseReminder(item, order, daysUntilInspection));
+                }
+                
+                // 生产提醒：临近验货期7天内（包含第7天）
+                // 注意：目前仅基于时间条件判断，后续需要添加生产状态字段判断生产是否完成
+                if (daysUntilInspection <= 7 && daysUntilInspection >= 0) {
+                    alerts.add(createProductionReminder(item, order, daysUntilInspection));
+                }
+            }
+            
+            // 检查要货日期超期告警
+            if (item.getDeliveryDate() != null) {
+                long daysOverdue = ChronoUnit.DAYS.between(item.getDeliveryDate().toLocalDate(), today);
+                if (daysOverdue > 0) {
+                    alerts.add(createDeliveryOverdueAlert(item, order, daysOverdue));
+                }
+            }
+        }
+        
+        return alerts;
+    }
+    
+    /**
+     * 创建采购料提醒
+     */
+    private OrderAlertDTO createPurchaseReminder(SaleOrderItem item, SaleOrder order, long daysRemaining) {
+        String message = String.format("验货期前%d天，需要采购料", daysRemaining);
+        return new OrderAlertDTO(
+            OrderAlertDTO.AlertType.PURCHASE_REMINDER,
+            order.getId(),
+            order.getBillNo(),
+            order.getCustomer() != null ? order.getCustomer().getName() : null,
+            order.getWoNumber(),
+            item.getId(),
+            item.getMaterial() != null ? item.getMaterial().getCode() : null,
+            item.getMaterial() != null ? item.getMaterial().getName() : null,
+            item.getQty(),
+            item.getUnit() != null ? item.getUnit().getCode() : null,
+            item.getUnit() != null ? item.getUnit().getName() : null,
+            item.getInspectionDate(),
+            item.getDeliveryDate(),
+            daysRemaining,
+            message
+        );
+    }
+    
+    /**
+     * 创建生产提醒
+     * 注意：目前仅基于时间条件判断，后续需要添加生产状态字段判断生产是否完成
+     */
+    private OrderAlertDTO createProductionReminder(SaleOrderItem item, SaleOrder order, long daysRemaining) {
+        String message = String.format("临近验货期%d天，请检查生产状态", daysRemaining);
+        return new OrderAlertDTO(
+            OrderAlertDTO.AlertType.PRODUCTION_REMINDER,
+            order.getId(),
+            order.getBillNo(),
+            order.getCustomer() != null ? order.getCustomer().getName() : null,
+            order.getWoNumber(),
+            item.getId(),
+            item.getMaterial() != null ? item.getMaterial().getCode() : null,
+            item.getMaterial() != null ? item.getMaterial().getName() : null,
+            item.getQty(),
+            item.getUnit() != null ? item.getUnit().getCode() : null,
+            item.getUnit() != null ? item.getUnit().getName() : null,
+            item.getInspectionDate(),
+            item.getDeliveryDate(),
+            daysRemaining,
+            message
+        );
+    }
+    
+    /**
+     * 创建要货日期超期告警
+     */
+    private OrderAlertDTO createDeliveryOverdueAlert(SaleOrderItem item, SaleOrder order, long daysOverdue) {
+        String message = String.format("要货日期已超期%d天", daysOverdue);
+        return new OrderAlertDTO(
+            OrderAlertDTO.AlertType.DELIVERY_OVERDUE,
+            order.getId(),
+            order.getBillNo(),
+            order.getCustomer() != null ? order.getCustomer().getName() : null,
+            order.getWoNumber(),
+            item.getId(),
+            item.getMaterial() != null ? item.getMaterial().getCode() : null,
+            item.getMaterial() != null ? item.getMaterial().getName() : null,
+            item.getQty(),
+            item.getUnit() != null ? item.getUnit().getCode() : null,
+            item.getUnit() != null ? item.getUnit().getName() : null,
+            item.getInspectionDate(),
+            item.getDeliveryDate(),
+            -daysOverdue,  // 负数表示超期天数
+            message
         );
     }
 }

@@ -34,6 +34,12 @@ spring:
       hibernate:
         dialect: org.hibernate.dialect.PostgreSQLDialect
         format_sql: ${JPA_FORMAT_SQL:true}
+        # 批量插入优化配置
+        jdbc:
+          batch_size: ${HIBERNATE_BATCH_SIZE:50}  # 批量插入大小，建议50-100
+          batch_versioned_data: true  # 支持版本化数据的批量更新
+        order_inserts: true  # 启用插入排序，提高批量插入性能
+        order_updates: true  # 启用更新排序，提高批量更新性能
   servlet:
     multipart:
       enabled: true

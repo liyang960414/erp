@@ -1,6 +1,7 @@
 package com.sambound.erp.controller;
 
 import com.sambound.erp.dto.ApiResponse;
+import com.sambound.erp.dto.OrderAlertDTO;
 import com.sambound.erp.dto.SaleOrderDTO;
 import com.sambound.erp.dto.SaleOrderImportResponse;
 import com.sambound.erp.service.SaleOrderImportService;
@@ -16,6 +17,7 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.time.LocalDate;
+import java.util.List;
 
 @RestController
 @RequestMapping("/api/sale-orders")
@@ -82,5 +84,19 @@ public class SaleOrderController {
     public ResponseEntity<ApiResponse<SaleOrderDTO>> getSaleOrderById(@PathVariable Long id) {
         SaleOrderDTO order = saleOrderService.getSaleOrderById(id);
         return ResponseEntity.ok(ApiResponse.success(order));
+    }
+    
+    /**
+     * 获取订单提醒列表
+     * 包含三种提醒类型：
+     * 1. 采购料提醒：验货期前40天需要采购料
+     * 2. 生产提醒：临近验货期7天内如果生产未完成需要提示（目前仅基于时间条件）
+     * 3. 超期告警：要货日期超期需要告警
+     */
+    @GetMapping("/alerts")
+    @PreAuthorize("hasAuthority('sale_order:read')")
+    public ResponseEntity<ApiResponse<List<OrderAlertDTO>>> getOrderAlerts() {
+        List<OrderAlertDTO> alerts = saleOrderService.getOrderAlerts();
+        return ResponseEntity.ok(ApiResponse.success(alerts));
     }
 }

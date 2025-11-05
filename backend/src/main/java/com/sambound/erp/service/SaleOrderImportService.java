@@ -28,6 +28,7 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
+import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicInteger;
 
 @Service
@@ -36,6 +37,7 @@ public class SaleOrderImportService {
     private static final Logger logger = LoggerFactory.getLogger(SaleOrderImportService.class);
     private static final int MAX_ERROR_COUNT = 1000;
     private static final int BATCH_SIZE = 100; // 每批处理的订单数量
+    private static final int MAX_CONCURRENT_BATCHES = 10; // 最大并发批次数量，避免数据库连接池耗尽
     
     private final SaleOrderRepository saleOrderRepository;
     private final SaleOrderItemRepository saleOrderItemRepository;
@@ -44,6 +46,7 @@ public class SaleOrderImportService {
     private final UnitRepository unitRepository;
     private final CustomerService customerService;
     private final TransactionTemplate transactionTemplate;
+    private final ExecutorService executorService;
     
     private static final DateTimeFormatter DATE_FORMATTER = DateTimeFormatter.ofPattern("yyyy-MM-dd");
     private static final DateTimeFormatter DATETIME_FORMATTER = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm");
@@ -65,6 +68,11 @@ public class SaleOrderImportService {
         this.transactionTemplate = new TransactionTemplate(transactionManager);
         this.transactionTemplate.setPropagationBehavior(TransactionTemplate.PROPAGATION_REQUIRES_NEW);
         this.transactionTemplate.setTimeout(120);
+        // 使用虚拟线程执行器（Java 21+ Virtual Threads）
+        // 虚拟线程是轻量级线程，可以创建大量线程而不会消耗过多资源
+        // 适合 I/O 密集型任务（如数据库操作），开销极小
+        // 注意：虽然虚拟线程可以创建很多，但需要配合信号量限制并发，避免数据库连接池耗尽
+        this.executorService = Executors.newVirtualThreadPerTaskExecutor();
     }
     
     public SaleOrderImportResponse importFromExcel(MultipartFile file) {
@@ -182,8 +190,12 @@ public class SaleOrderImportService {
             int totalItemCount = orderDataList.size();
             logger.info("找到 {} 个订单，{} 条明细，开始导入到数据库", totalOrderCount, totalItemCount);
             
-            List<SaleOrderImportResponse.ImportError> errors = new ArrayList<>();
+            // 使用线程安全的集合收集错误
+            List<SaleOrderImportResponse.ImportError> errors = Collections.synchronizedList(new ArrayList<>());
             AtomicInteger successCount = new AtomicInteger(0);
+            
+            // 预加载并批量创建客户（避免并发创建死锁）
+            Map<String, Customer> customerCache = preloadAndCreateCustomers(orderGroups, errors);
             
             // 预加载物料和单位数据
             Map<String, Material> materialCache = new HashMap<>();
@@ -197,39 +209,101 @@ public class SaleOrderImportService {
             List<Map.Entry<SaleOrderHeader, List<SaleOrderItemData>>> orderList = 
                     new ArrayList<>(orderGroups.entrySet());
             
-            // 批量导入订单
+            // 使用多线程并行处理批次
+            List<CompletableFuture<BatchResult>> futures = new ArrayList<>();
+            Semaphore batchSemaphore = new Semaphore(MAX_CONCURRENT_BATCHES);
+            
+            int totalBatches = (orderList.size() + BATCH_SIZE - 1) / BATCH_SIZE;
+            logger.info("开始并行处理 {} 个批次，最大并发数: {}", totalBatches, MAX_CONCURRENT_BATCHES);
+            
+            // 提交所有批次任务到线程池
             for (int i = 0; i < orderList.size(); i += BATCH_SIZE) {
                 int end = Math.min(i + BATCH_SIZE, orderList.size());
-                List<Map.Entry<SaleOrderHeader, List<SaleOrderItemData>>> batch = orderList.subList(i, end);
+                List<Map.Entry<SaleOrderHeader, List<SaleOrderItemData>>> batch = new ArrayList<>(
+                        orderList.subList(i, end));
                 int batchIndex = (i / BATCH_SIZE) + 1;
-                int totalBatches = (orderList.size() + BATCH_SIZE - 1) / BATCH_SIZE;
                 
-                logger.info("处理批次 {}/{}，订单数量: {}", batchIndex, totalBatches, batch.size());
-                long batchStartTime = System.currentTimeMillis();
-                
-                // 每个批次使用独立事务
-                try {
-                    int batchSuccess = transactionTemplate.execute(status -> {
-                        return importBatchOrders(batch, materialCache, unitCache, existingOrderMap, errors);
-                    });
-                    
-                    if (batchSuccess > 0) {
-                        successCount.addAndGet(batchSuccess);
-                    }
-                } catch (Exception e) {
-                    logger.error("批次 {} 导入失败", batchIndex, e);
-                    // 记录批次级别的错误
-                    for (Map.Entry<SaleOrderHeader, List<SaleOrderItemData>> entry : batch) {
-                        if (errors.size() < MAX_ERROR_COUNT) {
-                            errors.add(new SaleOrderImportResponse.ImportError(
-                                    "销售订单", entry.getKey().rowNumber, "单据编号",
-                                    "批次导入失败: " + e.getMessage()));
+                // 异步提交批次处理任务
+                CompletableFuture<BatchResult> future = CompletableFuture.supplyAsync(() -> {
+                    try {
+                        // 获取信号量许可，限制并发数量
+                        batchSemaphore.acquire();
+                        try {
+                            long batchStartTime = System.currentTimeMillis();
+                            logger.info("处理批次 {}/{}，订单数量: {}", batchIndex, totalBatches, batch.size());
+                            
+                            // 每个批次使用独立事务
+                            int batchSuccess = transactionTemplate.execute(status -> {
+                                return importBatchOrders(batch, customerCache, materialCache, unitCache, existingOrderMap, errors);
+                            });
+                            
+                            long batchDuration = System.currentTimeMillis() - batchStartTime;
+                            logger.info("批次 {}/{} 完成，耗时: {}ms，成功: {} 条", 
+                                    batchIndex, totalBatches, batchDuration, batchSuccess);
+                            
+                            return new BatchResult(batchSuccess, new ArrayList<>());
+                        } finally {
+                            // 释放信号量许可
+                            batchSemaphore.release();
                         }
+                    } catch (InterruptedException e) {
+                        Thread.currentThread().interrupt();
+                        logger.warn("批次 {} 处理被中断", batchIndex);
+                        List<SaleOrderImportResponse.ImportError> batchErrors = new ArrayList<>();
+                        for (Map.Entry<SaleOrderHeader, List<SaleOrderItemData>> entry : batch) {
+                            if (batchErrors.size() < MAX_ERROR_COUNT) {
+                                batchErrors.add(new SaleOrderImportResponse.ImportError(
+                                        "销售订单", entry.getKey().rowNumber, "单据编号",
+                                        "批次处理被中断"));
+                            }
+                        }
+                        return new BatchResult(0, batchErrors);
+                    } catch (Exception e) {
+                        logger.error("批次 {} 导入失败", batchIndex, e);
+                        List<SaleOrderImportResponse.ImportError> batchErrors = new ArrayList<>();
+                        for (Map.Entry<SaleOrderHeader, List<SaleOrderItemData>> entry : batch) {
+                            if (batchErrors.size() < MAX_ERROR_COUNT) {
+                                batchErrors.add(new SaleOrderImportResponse.ImportError(
+                                        "销售订单", entry.getKey().rowNumber, "单据编号",
+                                        "批次导入失败: " + e.getMessage()));
+                            }
+                        }
+                        return new BatchResult(0, batchErrors);
+                    }
+                }, executorService);
+                
+                futures.add(future);
+            }
+            
+            // 等待所有批次完成
+            try {
+                CompletableFuture.allOf(futures.toArray(new CompletableFuture[0]))
+                        .get(30, TimeUnit.MINUTES);
+                
+                // 收集所有批次的结果
+                for (CompletableFuture<BatchResult> future : futures) {
+                    try {
+                        BatchResult result = future.get();
+                        successCount.addAndGet(result.successCount);
+                        if (!result.errors.isEmpty()) {
+                            synchronized (errors) {
+                                errors.addAll(result.errors);
+                            }
+                        }
+                    } catch (Exception e) {
+                        logger.error("获取批次结果失败", e);
                     }
                 }
-                
-                long batchDuration = System.currentTimeMillis() - batchStartTime;
-                logger.info("批次 {}/{} 完成，耗时: {}ms", batchIndex, totalBatches, batchDuration);
+            } catch (TimeoutException e) {
+                logger.error("导入超时", e);
+                // 取消未完成的任务
+                futures.forEach(f -> f.cancel(true));
+                throw new RuntimeException("导入超时，请检查数据量或重试", e);
+            } catch (Exception e) {
+                logger.error("批次处理失败", e);
+                // 取消未完成的任务
+                futures.forEach(f -> f.cancel(true));
+                throw new RuntimeException("批次处理失败: " + e.getMessage(), e);
             }
             
             long totalDuration = System.currentTimeMillis() - startTime;
@@ -241,8 +315,102 @@ public class SaleOrderImportService {
                             totalOrderCount,
                             successCount.get(),
                             totalOrderCount - successCount.get(),
-                            errors)
+                            new ArrayList<>(errors))
             );
+        }
+        
+        private Map<String, Customer> preloadAndCreateCustomers(
+                Map<SaleOrderHeader, List<SaleOrderItemData>> orderGroups,
+                List<SaleOrderImportResponse.ImportError> errors) {
+            
+            // 收集所有唯一的客户编码和名称
+            Map<String, String> customerCodeToName = new LinkedHashMap<>();
+            for (SaleOrderHeader header : orderGroups.keySet()) {
+                if (header.customerCode != null && !header.customerCode.trim().isEmpty() &&
+                    header.customerName != null && !header.customerName.trim().isEmpty()) {
+                    String code = header.customerCode.trim();
+                    String name = header.customerName.trim();
+                    // 如果同一个编码有多个名称，保留第一个或使用最新的（根据业务需求）
+                    customerCodeToName.putIfAbsent(code, name);
+                }
+            }
+            
+            if (customerCodeToName.isEmpty()) {
+                logger.info("未找到需要创建的客户");
+                return new HashMap<>();
+            }
+            
+            logger.info("开始预加载和创建 {} 个客户", customerCodeToName.size());
+            long startTime = System.currentTimeMillis();
+            
+            Map<String, Customer> customerCache = new HashMap<>();
+            
+            // 先批量查询已存在的客户
+            List<String> codesToQuery = new ArrayList<>(customerCodeToName.keySet());
+            for (int i = 0; i < codesToQuery.size(); i += 1000) {
+                int end = Math.min(i + 1000, codesToQuery.size());
+                List<String> chunk = codesToQuery.subList(i, end);
+                List<Customer> existingCustomers = customerRepository.findByCodeIn(chunk);
+                for (Customer customer : existingCustomers) {
+                    customerCache.put(customer.getCode(), customer);
+                }
+            }
+            
+            // 批量创建不存在的客户
+            List<String> codesToCreate = new ArrayList<>();
+            List<String> namesToCreate = new ArrayList<>();
+            for (Map.Entry<String, String> entry : customerCodeToName.entrySet()) {
+                if (!customerCache.containsKey(entry.getKey())) {
+                    codesToCreate.add(entry.getKey());
+                    namesToCreate.add(entry.getValue());
+                }
+            }
+            
+            if (!codesToCreate.isEmpty()) {
+                logger.info("需要创建 {} 个新客户", codesToCreate.size());
+                // 使用事务模板批量创建客户
+                try {
+                    transactionTemplate.executeWithoutResult(status -> {
+                        for (int i = 0; i < codesToCreate.size(); i++) {
+                            try {
+                                Customer customer = customerRepository.insertOrGetByCode(
+                                        codesToCreate.get(i), namesToCreate.get(i));
+                                customerCache.put(customer.getCode(), customer);
+                            } catch (Exception e) {
+                                logger.error("创建客户失败: {}", codesToCreate.get(i), e);
+                                // 记录错误但不中断整个流程
+                                if (errors.size() < MAX_ERROR_COUNT) {
+                                    synchronized (errors) {
+                                        if (errors.size() < MAX_ERROR_COUNT) {
+                                            errors.add(new SaleOrderImportResponse.ImportError(
+                                                    "客户", 0, "客户编码",
+                                                    String.format("创建客户失败 %s: %s", codesToCreate.get(i), e.getMessage())));
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    });
+                } catch (Exception e) {
+                    logger.error("批量创建客户失败", e);
+                    if (errors.size() < MAX_ERROR_COUNT) {
+                        synchronized (errors) {
+                            if (errors.size() < MAX_ERROR_COUNT) {
+                                errors.add(new SaleOrderImportResponse.ImportError(
+                                        "客户", 0, "客户编码",
+                                        "批量创建客户失败: " + e.getMessage()));
+                            }
+                        }
+                    }
+                }
+            }
+            
+            long duration = System.currentTimeMillis() - startTime;
+            logger.info("客户预加载完成：共 {} 个，已存在 {} 个，新建 {} 个，耗时 {}ms",
+                    customerCodeToName.size(), customerCache.size() - codesToCreate.size(), 
+                    codesToCreate.size(), duration);
+            
+            return customerCache;
         }
         
         private void preloadMaterialsAndUnits(
@@ -315,6 +483,7 @@ public class SaleOrderImportService {
         
         private int importBatchOrders(
                 List<Map.Entry<SaleOrderHeader, List<SaleOrderItemData>>> batch,
+                Map<String, Customer> customerCache,
                 Map<String, Material> materialCache,
                 Map<String, Unit> unitCache,
                 Map<String, SaleOrder> existingOrderMap,
@@ -332,19 +501,16 @@ public class SaleOrderImportService {
                     boolean isNewOrder = (saleOrder == null);
                     
                     if (isNewOrder) {
-                        // 创建或获取客户
+                        // 从缓存中获取客户（已在导入前批量创建）
                         Customer customer = null;
                         if (header.customerCode != null && !header.customerCode.trim().isEmpty() &&
                             header.customerName != null && !header.customerName.trim().isEmpty()) {
-                            try {
-                                customer = customerService.findOrCreateByCode(
-                                        header.customerCode.trim(), 
-                                        header.customerName.trim());
-                            } catch (Exception e) {
+                            customer = customerCache.get(header.customerCode.trim());
+                            if (customer == null) {
                                 if (errors.size() < MAX_ERROR_COUNT) {
                                     errors.add(new SaleOrderImportResponse.ImportError(
                                             "销售订单", header.rowNumber, "客户编码",
-                                            "创建客户失败: " + e.getMessage()));
+                                            "客户不存在: " + header.customerCode));
                                 }
                                 continue;
                             }
@@ -390,8 +556,8 @@ public class SaleOrderImportService {
                         saleOrder = saleOrderRepository.save(saleOrder);
                     }
                     
-                    // 处理订单明细
-                    int itemSuccessCount = 0;
+                    // 处理订单明细：先验证和解析，然后批量保存
+                    List<SaleOrderItem> itemsToSave = new ArrayList<>();
                     for (SaleOrderItemData itemData : items) {
                         try {
                             // 验证物料
@@ -527,7 +693,7 @@ public class SaleOrderImportService {
                                 }
                             }
                             
-                            // 创建订单明细
+                            // 创建订单明细对象（暂不保存）
                             SaleOrderItem item = SaleOrderItem.builder()
                                     .saleOrder(saleOrder)
                                     .sequence(itemData.sequence != null ? itemData.sequence : 1)
@@ -542,21 +708,31 @@ public class SaleOrderImportService {
                                     .customerOrderNo(customerOrderNo)
                                     .customerLineNo(customerLineNo)
                                     .build();
-                            saleOrderItemRepository.save(item);
-                            itemSuccessCount++;
+                            itemsToSave.add(item);
                         } catch (Exception e) {
-                            logger.error("保存订单明细失败，行号: {}", itemData.rowNumber, e);
+                            logger.error("处理订单明细失败，行号: {}", itemData.rowNumber, e);
                             if (errors.size() < MAX_ERROR_COUNT) {
                                 errors.add(new SaleOrderImportResponse.ImportError(
                                         "销售订单明细", itemData.rowNumber, null,
-                                        "保存失败: " + e.getMessage()));
+                                        "处理失败: " + e.getMessage()));
                             }
                         }
                     }
                     
-                    // 只有至少有一个明细成功，订单才算成功
-                    if (itemSuccessCount > 0) {
-                        successCount++;
+                    // 批量保存订单明细（一次性保存所有有效的明细）
+                    if (!itemsToSave.isEmpty()) {
+                        try {
+                            saleOrderItemRepository.saveAll(itemsToSave);
+                            successCount++;
+                        } catch (Exception e) {
+                            logger.error("批量保存订单明细失败，单据编号: {}，明细数量: {}", header.billNo, itemsToSave.size(), e);
+                            // 记录批量保存失败的错误
+                            if (errors.size() < MAX_ERROR_COUNT) {
+                                errors.add(new SaleOrderImportResponse.ImportError(
+                                        "销售订单明细", header.rowNumber, "单据编号",
+                                        String.format("批量保存失败（%d条明细）: %s", itemsToSave.size(), e.getMessage())));
+                            }
+                        }
                     }
                 } catch (Exception e) {
                     logger.error("保存订单失败，单据编号: {}", header.billNo, e);
@@ -599,5 +775,11 @@ public class SaleOrderImportService {
     private record SaleOrderData(
             SaleOrderHeader header,
             SaleOrderItemData item
+    ) {}
+    
+    // 批次处理结果
+    private record BatchResult(
+            int successCount,
+            List<SaleOrderImportResponse.ImportError> errors
     ) {}
 }

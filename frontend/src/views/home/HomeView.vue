@@ -41,6 +41,9 @@
         </div>
       </div>
     </el-card>
+
+    <!-- 订单提醒组件 -->
+    <OrderAlertCard />
   </div>
 </template>
 
@@ -53,6 +56,7 @@ export default {
 <script setup lang="ts">
 import { onMounted } from 'vue'
 import { useAuthStore } from '@/stores/auth'
+import OrderAlertCard from './components/OrderAlertCard.vue'
 
 const authStore = useAuthStore()
 
@@ -110,4 +114,6 @@ onMounted(async () => {
 .user-info {
   margin-top: 30px;
 }
+
+/* 订单提醒组件样式已在组件内部定义 */
 </style>
