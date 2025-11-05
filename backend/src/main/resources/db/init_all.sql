@@ -13,6 +13,11 @@ BEGIN;
 -- ============================================
 -- 第一步：删除所有现有表（按依赖顺序）
 -- ============================================
+-- 删除销售订单相关表
+DROP TABLE IF EXISTS sale_order_items CASCADE;
+DROP TABLE IF EXISTS sale_orders CASCADE;
+DROP TABLE IF EXISTS customers CASCADE;
+
 -- 删除BOM相关表
 DROP TABLE IF EXISTS bom_items CASCADE;
 DROP TABLE IF EXISTS bill_of_materials CASCADE;
@@ -191,6 +196,48 @@ CREATE TABLE bom_items (
     CONSTRAINT chk_bom_item_sequence CHECK (sequence > 0)
 );
 
+-- 客户表
+CREATE TABLE customers (
+    id BIGSERIAL PRIMARY KEY,
+    code VARCHAR(50) NOT NULL UNIQUE,
+    name TEXT NOT NULL,
+    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
+
+-- 销售订单表
+CREATE TABLE sale_orders (
+    id BIGSERIAL PRIMARY KEY,
+    bill_no VARCHAR(100) NOT NULL UNIQUE,
+    order_date DATE NOT NULL,
+    note TEXT,
+    wo_number VARCHAR(100),
+    customer_id BIGINT NOT NULL REFERENCES customers(id) ON DELETE RESTRICT,
+    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
+
+-- 销售订单明细表
+CREATE TABLE sale_order_items (
+    id BIGSERIAL PRIMARY KEY,
+    sale_order_id BIGINT NOT NULL REFERENCES sale_orders(id) ON DELETE CASCADE,
+    sequence INTEGER NOT NULL,
+    material_id BIGINT NOT NULL REFERENCES materials(id) ON DELETE RESTRICT,
+    unit_id BIGINT NOT NULL REFERENCES units(id) ON DELETE RESTRICT,
+    qty DECIMAL(18, 6) NOT NULL,
+    old_qty DECIMAL(18, 6),
+    inspection_date DATE,
+    delivery_date TIMESTAMP,
+    bom_version VARCHAR(50),
+    entry_note TEXT,
+    customer_order_no VARCHAR(100),
+    customer_line_no VARCHAR(50),
+    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    CONSTRAINT chk_sale_order_item_qty CHECK (qty > 0),
+    CONSTRAINT chk_sale_order_item_sequence CHECK (sequence > 0)
+);
+
 -- ============================================
 -- 第三步：创建索引
 -- ============================================
@@ -244,6 +291,20 @@ CREATE INDEX idx_bom_items_child_material_id ON bom_items(child_material_id);
 CREATE INDEX idx_bom_items_child_unit_id ON bom_items(child_unit_id);
 CREATE INDEX idx_bom_items_sequence ON bom_items(bom_id, sequence);
 
+-- 客户表索引
+CREATE INDEX idx_customers_code ON customers(code);
+
+-- 销售订单表索引
+CREATE INDEX idx_sale_orders_bill_no ON sale_orders(bill_no);
+CREATE INDEX idx_sale_orders_customer_id ON sale_orders(customer_id);
+CREATE INDEX idx_sale_orders_order_date ON sale_orders(order_date);
+
+-- 销售订单明细表索引
+CREATE INDEX idx_sale_order_items_sale_order_id ON sale_order_items(sale_order_id);
+CREATE INDEX idx_sale_order_items_material_id ON sale_order_items(material_id);
+CREATE INDEX idx_sale_order_items_unit_id ON sale_order_items(unit_id);
+CREATE INDEX idx_sale_order_items_sequence ON sale_order_items(sale_order_id, sequence);
+
 -- ============================================
 -- 第四步：添加表注释和列注释
 -- ============================================
@@ -259,6 +320,9 @@ COMMENT ON TABLE units IS '单位表';
 COMMENT ON TABLE unit_conversions IS '单位转换表';
 COMMENT ON TABLE material_groups IS '物料组表';
 COMMENT ON TABLE materials IS '物料表';
+COMMENT ON TABLE customers IS '客户表';
+COMMENT ON TABLE sale_orders IS '销售订单表';
+COMMENT ON TABLE sale_order_items IS '销售订单明细表';
 
 COMMENT ON COLUMN users.id IS '用户ID';
 COMMENT ON COLUMN users.username IS '用户名（唯一）';
@@ -338,6 +402,37 @@ COMMENT ON COLUMN materials.base_unit_id IS '基础单位ID';
 COMMENT ON COLUMN materials.created_at IS '创建时间';
 COMMENT ON COLUMN materials.updated_at IS '更新时间';
 
+COMMENT ON COLUMN customers.id IS '客户ID';
+COMMENT ON COLUMN customers.code IS '客户编码（唯一）';
+COMMENT ON COLUMN customers.name IS '客户名称';
+COMMENT ON COLUMN customers.created_at IS '创建时间';
+COMMENT ON COLUMN customers.updated_at IS '更新时间';
+
+COMMENT ON COLUMN sale_orders.id IS '销售订单ID';
+COMMENT ON COLUMN sale_orders.bill_no IS '单据编号（唯一）';
+COMMENT ON COLUMN sale_orders.order_date IS '订单日期';
+COMMENT ON COLUMN sale_orders.note IS '备注';
+COMMENT ON COLUMN sale_orders.wo_number IS '工单号';
+COMMENT ON COLUMN sale_orders.customer_id IS '客户ID';
+COMMENT ON COLUMN sale_orders.created_at IS '创建时间';
+COMMENT ON COLUMN sale_orders.updated_at IS '更新时间';
+
+COMMENT ON COLUMN sale_order_items.id IS '销售订单明细ID';
+COMMENT ON COLUMN sale_order_items.sale_order_id IS '销售订单ID';
+COMMENT ON COLUMN sale_order_items.sequence IS '序号';
+COMMENT ON COLUMN sale_order_items.material_id IS '物料ID';
+COMMENT ON COLUMN sale_order_items.unit_id IS '单位ID';
+COMMENT ON COLUMN sale_order_items.qty IS '销售数量';
+COMMENT ON COLUMN sale_order_items.old_qty IS '原数量';
+COMMENT ON COLUMN sale_order_items.inspection_date IS '验货日期';
+COMMENT ON COLUMN sale_order_items.delivery_date IS '要货日期';
+COMMENT ON COLUMN sale_order_items.bom_version IS 'BOM版本';
+COMMENT ON COLUMN sale_order_items.entry_note IS '备注';
+COMMENT ON COLUMN sale_order_items.customer_order_no IS '客户订单号';
+COMMENT ON COLUMN sale_order_items.customer_line_no IS '客户行号';
+COMMENT ON COLUMN sale_order_items.created_at IS '创建时间';
+COMMENT ON COLUMN sale_order_items.updated_at IS '更新时间';
+
 -- ============================================
 -- 第五步：插入初始数据
 -- ============================================
@@ -356,6 +451,9 @@ INSERT INTO permissions (name, description) VALUES
 ('order:read', '查看订单'),
 ('order:write', '创建/编辑订单'),
 ('order:delete', '删除订单'),
+-- 销售订单权限
+('sale_order:read', '查看销售订单'),
+('sale_order:import', '导入销售订单'),
 -- 系统权限
 ('system:read', '查看系统设置'),
 ('system:write', '修改系统设置'),
@@ -396,7 +494,9 @@ CROSS JOIN permissions p
 WHERE r.name = 'MANAGER' 
     AND p.name IN (
         'user:read', 'product:read', 'product:write', 'product:delete',
-        'order:read', 'order:write', 'order:delete', 'system:read'
+        'order:read', 'order:write', 'order:delete', 
+        'sale_order:read', 'sale_order:import',
+        'system:read'
     );
 
 -- 插入默认管理员用户
@@ -482,7 +582,13 @@ SELECT '单位转换表', COUNT(*) FROM unit_conversions
 UNION ALL
 SELECT '物料组表', COUNT(*) FROM material_groups
 UNION ALL
-SELECT '物料表', COUNT(*) FROM materials;
+SELECT '物料表', COUNT(*) FROM materials
+UNION ALL
+SELECT '客户表', COUNT(*) FROM customers
+UNION ALL
+SELECT '销售订单表', COUNT(*) FROM sale_orders
+UNION ALL
+SELECT '销售订单明细表', COUNT(*) FROM sale_order_items;
 
 SELECT 
     u.username,

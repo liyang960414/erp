@@ -1,0 +1,12 @@
+﻿FBillHead(SAL_SaleOrder),FBillNo,FDate,FNote,F_kd_Textwo,F_kd_AssistantKH,F_kd_AssistantKH#Name,FSaleOrderEntry,FUnitID,FUnitID#Name,FQty,FMaterialId,FMaterialId#Name,F_kd_Dateyh,FDeliveryDate,FOldQty,FBomId,FBomId#Name,FEntryNote
+*基本信息(序号),(基本信息)单据编号,*(基本信息)日期,(基本信息)备注,(基本信息)本司WO#,(基本信息)最终客户#编码,(基本信息)最终客户#名称,*订单明细(序号),*(订单明细)销售单位#编码,(订单明细)销售单位#名称,(订单明细)销售数量,*(订单明细)物料编码#编码,(订单明细)物料编码#名称,(订单明细)验货日期,*(订单明细)要货日期,(订单明细)原数量,(订单明细)BOM版本#编码,(订单明细)BOM版本#名称,(订单明细)备注
+132047,SEOVN031968,2025-10-15,720pcs订单的外箱用库存V28733-V0-7/8（4500657962/70/80）512pcs/208pcs返工,V29970-V0-1,ARMAGAN,ARMAGAN   OYUNCAK   SANAYITICARET   A.S.,140384,Pcs,Pcs,720,96.SP66666X-GM001V,DWD INA TameNTrainIntToothles GML1pkSLD,2025-11-18,2025-11-25 00:00,720,V000,,4500670889/10
+,,,,,,,,,,,,,,,,,,
+131528,SEOVN031449,2025-09-27,500pcs订单的外箱用库存V28732-V0-6（4500657961/60）/V28733-V0-7（4500657962/70）/238pcs/262pcs返工,V29771-V0-2,Amazon.,Amazon.Com,139172,Pcs,Pcs,500,96.SP66666X-GM0A1V,DWD INA TameNTrainIntToothles GML1pkSLD-(AMAZON订单） 大无牙龙,2025-11-03,2025-11-10 00:00,500,V000,,4500668485/20
+,,,,,,,,,,,,,,,,,,
+131288,SEOVN031209,2025-09-18,761pcs订单的外箱用库存扣V28732-V0-6（4500657961/60）返工,V29639-V0-5,AmazonE,"Amazon  Eu Sarl,UK Branch",138757,Pcs,Pcs,761,96.SP66666X-GM0A1V,DWD INA TameNTrainIntToothles GML1pkSLD-(AMAZON订单） 大无牙龙,2025-11-04,2025-11-11 00:00,761,V000,,4500666807/50
+,,,,,,,,,,,,,,,,,,
+131187,SEOVN031108,2025-09-12,日期码：51009VAT，1000pcs订单的外箱用库存V29079-V0-1（4500661620/10）返工,V29601-V0-0,WAL,WAL  MART  CANADA  INC,138597,Pcs,Pcs,"1,000",96.SP66666X-GM001V,DWD INA TameNTrainIntToothles GML1pkSLD,2025-10-09,2025-10-16 00:00,"1,000",V000,,4500665898/10
+,,,,,,,,,,,,,,,,,,
+130937,SEOVN030858,2025-08-25,日期码：51009VAT,V29288-V0-2,MEIJER,MEIJER    INC,138165,Pcs,Pcs,304,96.SP66666X-GM001V,DWD INA TameNTrainIntToothles GML1pkSLD,2025-10-16,2025-10-23 00:00,304,V000,,4500664007/20
+,,,,,,,,,,,,,,,,,,
