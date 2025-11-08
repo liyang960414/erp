@@ -2,7 +2,6 @@ package com.sambound.erp.dto;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
-import java.util.List;
 
 public record PurchaseOrderItemDTO(
     Long id,
@@ -29,7 +28,6 @@ public record PurchaseOrderItemDTO(
     BigDecimal salBaseQty,
     BigDecimal deliveredQty,  // 已交货数量汇总
     LocalDateTime createdAt,
-    LocalDateTime updatedAt,
-    List<PurchaseOrderDeliveryDTO> deliveries
+    LocalDateTime updatedAt
 ) {}
 

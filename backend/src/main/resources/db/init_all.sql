@@ -18,6 +18,10 @@ DROP TABLE IF EXISTS sale_order_items CASCADE;
 DROP TABLE IF EXISTS sale_orders CASCADE;
 DROP TABLE IF EXISTS customers CASCADE;
 DROP TABLE IF EXISTS suppliers CASCADE;
+-- 删除采购订单相关表
+DROP TABLE IF EXISTS purchase_order_items CASCADE;
+DROP TABLE IF EXISTS purchase_orders CASCADE;
+DROP TYPE IF EXISTS purchase_order_status;
 
 -- 删除BOM相关表
 DROP TABLE IF EXISTS bom_items CASCADE;
@@ -218,6 +222,44 @@ CREATE TABLE suppliers (
     updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
 
+-- 采购订单状态类型
+CREATE TYPE purchase_order_status AS ENUM ('OPEN', 'CLOSED');
+
+-- 采购订单主表
+CREATE TABLE purchase_orders (
+    id BIGSERIAL PRIMARY KEY,
+    bill_no VARCHAR(100) NOT NULL UNIQUE,
+    order_date DATE NOT NULL,
+    supplier_id BIGINT NOT NULL REFERENCES suppliers(id) ON DELETE RESTRICT,
+    status purchase_order_status NOT NULL DEFAULT 'OPEN',
+    note TEXT,
+    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
+
+-- 采购订单明细表
+CREATE TABLE purchase_order_items (
+    id BIGSERIAL PRIMARY KEY,
+    purchase_order_id BIGINT NOT NULL REFERENCES purchase_orders(id) ON DELETE CASCADE,
+    sequence INTEGER NOT NULL,
+    material_id BIGINT NOT NULL REFERENCES materials(id) ON DELETE RESTRICT,
+    bom_id BIGINT REFERENCES bill_of_materials(id) ON DELETE SET NULL,
+    material_desc TEXT,
+    unit_id BIGINT NOT NULL REFERENCES units(id) ON DELETE RESTRICT,
+    qty DECIMAL(18, 6) NOT NULL,
+    plan_confirm BOOLEAN DEFAULT FALSE,
+    sal_unit_id BIGINT REFERENCES units(id) ON DELETE SET NULL,
+    sal_qty DECIMAL(18, 6),
+    sal_join_qty DECIMAL(18, 6),
+    base_sal_join_qty DECIMAL(18, 6),
+    remarks TEXT,
+    sal_base_qty DECIMAL(18, 6),
+    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    CONSTRAINT chk_purchase_order_item_sequence CHECK (sequence > 0),
+    CONSTRAINT chk_purchase_order_item_qty CHECK (qty > 0)
+);
+
 -- 销售订单表
 CREATE TABLE sale_orders (
     id BIGSERIAL PRIMARY KEY,
@@ -310,6 +352,16 @@ CREATE INDEX idx_customers_code ON customers(code);
 -- 供应商表索引
 CREATE INDEX idx_suppliers_code ON suppliers(code);
 
+-- 采购订单主表索引
+CREATE INDEX idx_purchase_orders_bill_no ON purchase_orders(bill_no);
+CREATE INDEX idx_purchase_orders_supplier_id ON purchase_orders(supplier_id);
+CREATE INDEX idx_purchase_orders_order_date ON purchase_orders(order_date);
+CREATE INDEX idx_purchase_orders_status ON purchase_orders(status);
+
+-- 采购订单明细表索引
+CREATE INDEX idx_purchase_order_items_order_id ON purchase_order_items(purchase_order_id);
+CREATE INDEX idx_purchase_order_items_material_id ON purchase_order_items(material_id);
+
 -- 销售订单表索引
 CREATE INDEX idx_sale_orders_bill_no ON sale_orders(bill_no);
 CREATE INDEX idx_sale_orders_customer_id ON sale_orders(customer_id);
@@ -340,99 +392,55 @@ COMMENT ON TABLE customers IS '客户表';
 COMMENT ON TABLE suppliers IS '供应商表';
 COMMENT ON TABLE sale_orders IS '销售订单表';
 COMMENT ON TABLE sale_order_items IS '销售订单明细表';
+COMMENT ON TABLE purchase_orders IS '采购订单主表';
+COMMENT ON COLUMN purchase_orders.id IS '采购订单ID';
+COMMENT ON COLUMN purchase_orders.bill_no IS '单据编号（唯一）';
+COMMENT ON COLUMN purchase_orders.order_date IS '采购日期';
+COMMENT ON COLUMN purchase_orders.supplier_id IS '供应商ID';
+COMMENT ON COLUMN purchase_orders.status IS '订单状态：OPEN-进行中，CLOSED-已关闭';
+COMMENT ON COLUMN purchase_orders.note IS '备注';
+COMMENT ON COLUMN purchase_orders.created_at IS '创建时间';
+COMMENT ON COLUMN purchase_orders.updated_at IS '更新时间';
 
-COMMENT ON COLUMN users.id IS '用户ID';
-COMMENT ON COLUMN users.username IS '用户名（唯一）';
-COMMENT ON COLUMN users.password IS '加密后的密码';
-COMMENT ON COLUMN users.email IS '邮箱（唯一）';
-COMMENT ON COLUMN users.full_name IS '用户全名';
-COMMENT ON COLUMN users.enabled IS '账户是否启用';
-COMMENT ON COLUMN users.account_non_expired IS '账户是否未过期';
-COMMENT ON COLUMN users.account_non_locked IS '账户是否未锁定';
-COMMENT ON COLUMN users.credentials_non_expired IS '凭证是否未过期';
-COMMENT ON COLUMN users.created_at IS '创建时间';
-COMMENT ON COLUMN users.updated_at IS '更新时间';
+COMMENT ON TABLE purchase_order_items IS '采购订单明细表';
+COMMENT ON COLUMN purchase_order_items.id IS '采购订单明细ID';
+COMMENT ON COLUMN purchase_order_items.purchase_order_id IS '采购订单ID';
+COMMENT ON COLUMN purchase_order_items.sequence IS '序号';
+COMMENT ON COLUMN purchase_order_items.material_id IS '物料ID';
+COMMENT ON COLUMN purchase_order_items.bom_id IS 'BOM版本ID';
+COMMENT ON COLUMN purchase_order_items.material_desc IS '物料说明';
+COMMENT ON COLUMN purchase_order_items.unit_id IS '采购单位ID';
+COMMENT ON COLUMN purchase_order_items.qty IS '采购数量';
+COMMENT ON COLUMN purchase_order_items.plan_confirm IS '计划确认标识';
+COMMENT ON COLUMN purchase_order_items.sal_unit_id IS '销售单位ID';
+COMMENT ON COLUMN purchase_order_items.sal_qty IS '销售数量';
+COMMENT ON COLUMN purchase_order_items.sal_join_qty IS '销售订单关联数量';
+COMMENT ON COLUMN purchase_order_items.base_sal_join_qty IS '销售订单关联基本数量';
+COMMENT ON COLUMN purchase_order_items.remarks IS '备注';
+COMMENT ON COLUMN purchase_order_items.sal_base_qty IS '销售基本数量';
+COMMENT ON COLUMN purchase_order_items.created_at IS '创建时间';
+COMMENT ON COLUMN purchase_order_items.updated_at IS '更新时间';
 
-COMMENT ON COLUMN roles.id IS '角色ID';
-COMMENT ON COLUMN roles.name IS '角色名称（唯一）';
-COMMENT ON COLUMN roles.description IS '角色描述';
+-- 采购订单更新时间触发器函数
+CREATE OR REPLACE FUNCTION update_purchase_order_updated_at()
+RETURNS TRIGGER AS $$
+BEGIN
+    NEW.updated_at = CURRENT_TIMESTAMP;
+    RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
 
-COMMENT ON COLUMN permissions.id IS '权限ID';
-COMMENT ON COLUMN permissions.name IS '权限名称（唯一）';
-COMMENT ON COLUMN permissions.description IS '权限描述';
+-- 为采购订单主表创建触发器
+CREATE TRIGGER trigger_purchase_orders_updated_at
+    BEFORE UPDATE ON purchase_orders
+    FOR EACH ROW
+    EXECUTE FUNCTION update_purchase_order_updated_at();
 
-COMMENT ON COLUMN audit_logs.id IS '审计日志ID';
-COMMENT ON COLUMN audit_logs.username IS '操作者用户名';
-COMMENT ON COLUMN audit_logs.user_id IS '操作者用户ID';
-COMMENT ON COLUMN audit_logs.action IS '操作类型（LOGIN, CREATE_USER等）';
-COMMENT ON COLUMN audit_logs.module IS '操作模块（AUTH, USER_MANAGEMENT等）';
-COMMENT ON COLUMN audit_logs.resource_type IS '目标资源类型（User, Role等）';
-COMMENT ON COLUMN audit_logs.resource_id IS '目标资源ID';
-COMMENT ON COLUMN audit_logs.description IS '操作详情/描述';
-COMMENT ON COLUMN audit_logs.request_method IS '请求方法（GET, POST等）';
-COMMENT ON COLUMN audit_logs.request_uri IS '请求URI';
-COMMENT ON COLUMN audit_logs.ip_address IS '请求IP地址';
-COMMENT ON COLUMN audit_logs.status IS '操作状态（SUCCESS, FAILURE）';
-COMMENT ON COLUMN audit_logs.error_message IS '错误信息（如果操作失败）';
-COMMENT ON COLUMN audit_logs.created_at IS '操作时间';
-
-COMMENT ON COLUMN unit_groups.id IS '单位组ID';
-COMMENT ON COLUMN unit_groups.code IS '单位组编码（唯一）';
-COMMENT ON COLUMN unit_groups.name IS '单位组名称';
-COMMENT ON COLUMN unit_groups.description IS '单位组描述';
-COMMENT ON COLUMN unit_groups.created_at IS '创建时间';
-COMMENT ON COLUMN unit_groups.updated_at IS '更新时间';
-
-COMMENT ON COLUMN units.id IS '单位ID';
-COMMENT ON COLUMN units.code IS '单位编码（唯一）';
-COMMENT ON COLUMN units.name IS '单位名称';
-COMMENT ON COLUMN units.unit_group_id IS '所属单位组ID';
-COMMENT ON COLUMN units.enabled IS '是否启用';
-COMMENT ON COLUMN units.created_at IS '创建时间';
-COMMENT ON COLUMN units.updated_at IS '更新时间';
-
-COMMENT ON COLUMN unit_conversions.id IS '单位转换ID';
-COMMENT ON COLUMN unit_conversions.from_unit_id IS '源单位ID';
-COMMENT ON COLUMN unit_conversions.to_unit_id IS '目标单位ID';
-COMMENT ON COLUMN unit_conversions.convert_type IS '换算类型（FIXED-固定, FLOAT-浮动）';
-COMMENT ON COLUMN unit_conversions.numerator IS '换算分子';
-COMMENT ON COLUMN unit_conversions.denominator IS '换算分母';
-COMMENT ON COLUMN unit_conversions.created_at IS '创建时间';
-
-COMMENT ON COLUMN material_groups.id IS '物料组ID';
-COMMENT ON COLUMN material_groups.code IS '物料组编码（唯一）';
-COMMENT ON COLUMN material_groups.name IS '物料组名称';
-COMMENT ON COLUMN material_groups.description IS '物料组描述';
-COMMENT ON COLUMN material_groups.parent_id IS '父级物料组ID（树形结构支持）';
-COMMENT ON COLUMN material_groups.created_at IS '创建时间';
-COMMENT ON COLUMN material_groups.updated_at IS '更新时间';
-
-COMMENT ON COLUMN materials.id IS '物料ID';
-COMMENT ON COLUMN materials.code IS '物料编码（唯一）';
-COMMENT ON COLUMN materials.name IS '物料名称';
-COMMENT ON COLUMN materials.specification IS '规格';
-COMMENT ON COLUMN materials.mnemonic_code IS '助记码';
-COMMENT ON COLUMN materials.old_number IS '旧编号';
-COMMENT ON COLUMN materials.description IS '描述';
-COMMENT ON COLUMN materials.material_group_id IS '所属物料组ID';
-COMMENT ON COLUMN materials.base_unit_id IS '基础单位ID';
-COMMENT ON COLUMN materials.created_at IS '创建时间';
-COMMENT ON COLUMN materials.updated_at IS '更新时间';
-
-COMMENT ON COLUMN customers.id IS '客户ID';
-COMMENT ON COLUMN customers.code IS '客户编码（唯一）';
-COMMENT ON COLUMN customers.name IS '客户名称';
-COMMENT ON COLUMN customers.created_at IS '创建时间';
-COMMENT ON COLUMN customers.updated_at IS '更新时间';
-
-COMMENT ON COLUMN suppliers.id IS '供应商ID';
-COMMENT ON COLUMN suppliers.code IS '供应商编码（唯一）';
-COMMENT ON COLUMN suppliers.name IS '供应商名称';
-COMMENT ON COLUMN suppliers.short_name IS '简称';
-COMMENT ON COLUMN suppliers.english_name IS '英文名称';
-COMMENT ON COLUMN suppliers.description IS '描述';
-COMMENT ON COLUMN suppliers.created_at IS '创建时间';
-COMMENT ON COLUMN suppliers.updated_at IS '更新时间';
+-- 为采购订单明细表创建触发器
+CREATE TRIGGER trigger_purchase_order_items_updated_at
+    BEFORE UPDATE ON purchase_order_items
+    FOR EACH ROW
+    EXECUTE FUNCTION update_purchase_order_updated_at();
 
 COMMENT ON COLUMN sale_orders.id IS '销售订单ID';
 COMMENT ON COLUMN sale_orders.bill_no IS '单据编号（唯一）';
@@ -483,6 +491,7 @@ INSERT INTO permissions (name, description) VALUES
 -- 采购订单权限
 ('purchase_order:read', '查看采购订单'),
 ('purchase_order:import', '导入采购订单'),
+('purchase_order:update', '更新采购订单'),
 -- 供应商权限
 ('supplier:import', '导入供应商'),
 -- 系统权限
@@ -527,7 +536,7 @@ WHERE r.name = 'MANAGER'
         'user:read', 'product:read', 'product:write', 'product:delete',
         'order:read', 'order:write', 'order:delete', 
         'sale_order:read', 'sale_order:import',
-        'purchase_order:read', 'purchase_order:import',
+        'purchase_order:read', 'purchase_order:import', 'purchase_order:update',
         'supplier:import',
         'system:read'
     );
@@ -673,5 +682,9 @@ COMMIT;
 \echo '  - materials (物料表)'
 \echo '  - customers (客户表)'
 \echo '  - suppliers (供应商表)'
+\echo '  - sale_orders (销售订单表)'
+\echo '  - sale_order_items (销售订单明细表)'
+\echo '  - purchase_orders (采购订单表)'
+\echo '  - purchase_order_items (采购订单明细表)'
 \echo ''
 

@@ -1,13 +1,10 @@
 package com.sambound.erp.service;
 
 import com.sambound.erp.dto.PurchaseOrderDTO;
-import com.sambound.erp.dto.PurchaseOrderDeliveryDTO;
 import com.sambound.erp.dto.PurchaseOrderItemDTO;
 import com.sambound.erp.entity.PurchaseOrder;
-import com.sambound.erp.entity.PurchaseOrderDelivery;
 import com.sambound.erp.entity.PurchaseOrderItem;
 import com.sambound.erp.exception.BusinessException;
-import com.sambound.erp.repository.PurchaseOrderDeliveryRepository;
 import com.sambound.erp.repository.PurchaseOrderItemRepository;
 import com.sambound.erp.repository.PurchaseOrderRepository;
 import org.springframework.data.domain.Page;
@@ -25,15 +22,12 @@ public class PurchaseOrderService {
     
     private final PurchaseOrderRepository purchaseOrderRepository;
     private final PurchaseOrderItemRepository purchaseOrderItemRepository;
-    private final PurchaseOrderDeliveryRepository purchaseOrderDeliveryRepository;
     
     public PurchaseOrderService(
             PurchaseOrderRepository purchaseOrderRepository,
-            PurchaseOrderItemRepository purchaseOrderItemRepository,
-            PurchaseOrderDeliveryRepository purchaseOrderDeliveryRepository) {
+            PurchaseOrderItemRepository purchaseOrderItemRepository) {
         this.purchaseOrderRepository = purchaseOrderRepository;
         this.purchaseOrderItemRepository = purchaseOrderItemRepository;
-        this.purchaseOrderDeliveryRepository = purchaseOrderDeliveryRepository;
     }
     
     /**
@@ -87,42 +81,7 @@ public class PurchaseOrderService {
         );
     }
     
-    /**
-     * 检查并更新订单状态
-     * 当订单明细的所有交货明细总数量达到订单明细的采购数量时，将订单状态更新为CLOSED
-     */
-    @Transactional
-    public void checkAndUpdateOrderStatus(Long orderId) {
-        PurchaseOrder order = purchaseOrderRepository.findById(orderId)
-                .orElseThrow(() -> new BusinessException("订单不存在"));
-        
-        if (order.getStatus() == PurchaseOrder.OrderStatus.CLOSED) {
-            return; // 已关闭的订单不需要检查
-        }
-        
-        // 查询订单的所有明细
-        List<PurchaseOrderItem> items = purchaseOrderItemRepository.findByPurchaseOrderId(orderId);
-        
-        boolean allCompleted = true;
-        for (PurchaseOrderItem item : items) {
-            // 计算该明细的所有交货明细总数量
-            BigDecimal totalDeliveredQty = purchaseOrderDeliveryRepository
-                    .sumPlanQtyByItemId(item.getId())
-                    .orElse(BigDecimal.ZERO);
-            
-            // 检查是否完成
-            if (totalDeliveredQty.compareTo(item.getQty()) < 0) {
-                allCompleted = false;
-                break;
-            }
-        }
-        
-        // 如果所有明细都已完成，更新订单状态为CLOSED
-        if (allCompleted) {
-            order.setStatus(PurchaseOrder.OrderStatus.CLOSED);
-            purchaseOrderRepository.save(order);
-        }
-    }
+    // 交货明细表已移除，订单状态更新逻辑不再依赖交货明细
     
     private PurchaseOrderDTO toDTO(PurchaseOrder order) {
         return new PurchaseOrderDTO(
@@ -141,17 +100,8 @@ public class PurchaseOrderService {
     }
     
     private PurchaseOrderItemDTO toItemDTO(PurchaseOrderItem item) {
-        // 计算已交货数量汇总
-        BigDecimal deliveredQty = purchaseOrderDeliveryRepository
-                .sumPlanQtyByItemId(item.getId())
-                .orElse(BigDecimal.ZERO);
-        
-        // 查询交货明细
-        List<PurchaseOrderDelivery> deliveries = purchaseOrderDeliveryRepository
-                .findByPurchaseOrderItemIdOrderBySequence(item.getId());
-        List<PurchaseOrderDeliveryDTO> deliveryDTOs = deliveries.stream()
-                .map(this::toDeliveryDTO)
-                .collect(Collectors.toList());
+        // 交货明细已移除，默认返回0
+        BigDecimal deliveredQty = BigDecimal.ZERO;
         
         return new PurchaseOrderItemDTO(
                 item.getId(),
@@ -178,23 +128,7 @@ public class PurchaseOrderService {
                 item.getSalBaseQty(),
                 deliveredQty,
                 item.getCreatedAt(),
-                item.getUpdatedAt(),
-                deliveryDTOs
-        );
-    }
-    
-    private PurchaseOrderDeliveryDTO toDeliveryDTO(PurchaseOrderDelivery delivery) {
-        return new PurchaseOrderDeliveryDTO(
-                delivery.getId(),
-                delivery.getPurchaseOrderItem() != null ? delivery.getPurchaseOrderItem().getId() : null,
-                delivery.getSequence(),
-                delivery.getDeliveryDate(),
-                delivery.getPlanQty(),
-                delivery.getSupplierDeliveryDate(),
-                delivery.getPreArrivalDate(),
-                delivery.getTransportLeadTime(),
-                delivery.getCreatedAt(),
-                delivery.getUpdatedAt()
+                item.getUpdatedAt()
         );
     }
 }
