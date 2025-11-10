@@ -8,43 +8,32 @@ import lombok.NoArgsConstructor;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
 
-import com.sambound.erp.enums.SaleOrderStatus;
-
-/**
- * 销售订单实体类
- */
 @Entity
-@Table(name = "sale_orders")
+@Table(name = "sale_outstocks")
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-public class SaleOrder {
+public class SaleOutstock {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(name = "bill_no", unique = true, nullable = false, length = 100)
+    @Column(name = "bill_no", nullable = false, unique = true, length = 100)
     private String billNo;
 
-    @Column(name = "order_date", nullable = false)
-    private LocalDate orderDate;
+    @Column(name = "outstock_date", nullable = false)
+    private LocalDate outstockDate;
 
     @Column(columnDefinition = "TEXT")
     private String note;
 
-    @Column(name = "wo_number", length = 100)
-    private String woNumber;
-
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "customer_id", nullable = false)
-    private Customer customer;
-
-    @Enumerated(EnumType.STRING)
-    @Column(name = "status", nullable = false, length = 20)
+    @OneToMany(mappedBy = "saleOutstock", cascade = CascadeType.ALL, orphanRemoval = true)
     @Builder.Default
-    private SaleOrderStatus status = SaleOrderStatus.OPEN;
+    private List<SaleOutstockItem> items = new ArrayList<>();
 
     @Column(nullable = false, updatable = false)
     @Builder.Default
@@ -58,4 +47,10 @@ public class SaleOrder {
     public void preUpdate() {
         updatedAt = LocalDateTime.now();
     }
+
+    public void addItem(SaleOutstockItem item) {
+        items.add(item);
+        item.setSaleOutstock(this);
+    }
 }
+

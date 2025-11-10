@@ -21,6 +21,11 @@
         <el-descriptions-item label="客户名称">
           <span class="detail-value customer-name">{{ order.customerName }}</span>
         </el-descriptions-item>
+        <el-descriptions-item label="订单状态">
+          <el-tag :type="getOrderStatusType(order.status)" size="small">
+            {{ getOrderStatusLabel(order.status) }}
+          </el-tag>
+        </el-descriptions-item>
         <el-descriptions-item label="本司WO#">
           <span class="detail-value wo-number">{{ order.woNumber || '-' }}</span>
         </el-descriptions-item>
@@ -47,6 +52,18 @@
         <el-table-column prop="qty" label="销售数量" width="120" align="right">
           <template #default="{ row }">
             {{ formatNumber(row.qty) }}
+          </template>
+        </el-table-column>
+        <el-table-column prop="deliveredQty" label="已出库数量" width="140" align="right">
+          <template #default="{ row }">
+            {{ formatNumber(row.deliveredQty) }}
+          </template>
+        </el-table-column>
+        <el-table-column prop="status" label="明细状态" width="110" align="center">
+          <template #default="{ row }">
+            <el-tag :type="getItemStatusType(row.status)" size="small">
+              {{ getItemStatusLabel(row.status) }}
+            </el-tag>
           </template>
         </el-table-column>
         <el-table-column prop="oldQty" label="原数量" width="120" align="right">
@@ -99,7 +116,7 @@
 
 <script setup lang="ts">
 import { ref, watch } from 'vue'
-import type { SaleOrder } from '@/types/saleOrder'
+import type { SaleOrder, SaleOrderStatus, SaleOrderItemStatus } from '@/types/saleOrder'
 
 interface Props {
   modelValue: boolean
@@ -159,6 +176,22 @@ const formatDateTime = (value: string): string => {
   } catch {
     return value
   }
+}
+
+const getOrderStatusLabel = (status: SaleOrderStatus): string => {
+  return status === 'CLOSED' ? '已关闭' : '进行中'
+}
+
+const getOrderStatusType = (status: SaleOrderStatus): 'success' | 'info' => {
+  return status === 'CLOSED' ? 'success' : 'info'
+}
+
+const getItemStatusLabel = (status: SaleOrderItemStatus): string => {
+  return status === 'CLOSED' ? '已关闭' : '进行中'
+}
+
+const getItemStatusType = (status: SaleOrderItemStatus): 'success' | 'warning' => {
+  return status === 'CLOSED' ? 'success' : 'warning'
 }
 </script>
 

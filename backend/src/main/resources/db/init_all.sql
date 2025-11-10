@@ -13,15 +13,18 @@ BEGIN;
 -- ============================================
 -- 第一步：删除所有现有表（按依赖顺序）
 -- ============================================
--- 删除销售订单相关表
 DROP TABLE IF EXISTS sale_order_items CASCADE;
 DROP TABLE IF EXISTS sale_orders CASCADE;
+DROP TABLE IF EXISTS sale_outstock_items CASCADE;
+DROP TABLE IF EXISTS sale_outstocks CASCADE;
 DROP TABLE IF EXISTS customers CASCADE;
 DROP TABLE IF EXISTS suppliers CASCADE;
 -- 删除采购订单相关表
 DROP TABLE IF EXISTS purchase_order_items CASCADE;
 DROP TABLE IF EXISTS purchase_orders CASCADE;
 DROP TYPE IF EXISTS purchase_order_status;
+DROP TYPE IF EXISTS sale_order_item_status;
+DROP TYPE IF EXISTS sale_order_status;
 
 -- 删除BOM相关表
 DROP TABLE IF EXISTS bom_items CASCADE;
@@ -222,8 +225,11 @@ CREATE TABLE suppliers (
     updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
 
--- 采购订单状态类型
 CREATE TYPE purchase_order_status AS ENUM ('OPEN', 'CLOSED');
+
+-- 销售订单状态类型
+CREATE TYPE sale_order_status AS ENUM ('OPEN', 'CLOSED');
+CREATE TYPE sale_order_item_status AS ENUM ('OPEN', 'CLOSED');
 
 -- 采购订单主表
 CREATE TABLE purchase_orders (
@@ -268,6 +274,7 @@ CREATE TABLE sale_orders (
     note TEXT,
     wo_number VARCHAR(100),
     customer_id BIGINT NOT NULL REFERENCES customers(id) ON DELETE RESTRICT,
+    status sale_order_status NOT NULL DEFAULT 'OPEN',
     created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
@@ -287,10 +294,43 @@ CREATE TABLE sale_order_items (
     entry_note TEXT,
     customer_order_no VARCHAR(100),
     customer_line_no VARCHAR(50),
+    status sale_order_item_status NOT NULL DEFAULT 'OPEN',
+    delivered_qty DECIMAL(18, 6) NOT NULL DEFAULT 0,
     created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
     CONSTRAINT chk_sale_order_item_qty CHECK (qty > 0),
-    CONSTRAINT chk_sale_order_item_sequence CHECK (sequence > 0)
+    CONSTRAINT chk_sale_order_item_sequence CHECK (sequence > 0),
+    CONSTRAINT chk_sale_order_item_delivered_qty CHECK (delivered_qty >= 0)
+);
+
+ALTER TABLE sale_order_items
+    ADD CONSTRAINT uq_sale_order_items_sequence UNIQUE (sequence);
+
+-- 销售出库主表
+CREATE TABLE sale_outstocks (
+    id BIGSERIAL PRIMARY KEY,
+    bill_no VARCHAR(100) NOT NULL UNIQUE,
+    outstock_date DATE NOT NULL,
+    note TEXT,
+    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
+
+-- 销售出库明细表
+CREATE TABLE sale_outstock_items (
+    id BIGSERIAL PRIMARY KEY,
+    sale_outstock_id BIGINT NOT NULL REFERENCES sale_outstocks(id) ON DELETE CASCADE,
+    sequence INTEGER NOT NULL,
+    sale_order_sequence INTEGER NOT NULL REFERENCES sale_order_items(sequence) ON DELETE RESTRICT,
+    material_id BIGINT NOT NULL REFERENCES materials(id) ON DELETE RESTRICT,
+    unit_id BIGINT NOT NULL REFERENCES units(id) ON DELETE RESTRICT,
+    qty DECIMAL(18, 6) NOT NULL,
+    entry_note TEXT,
+    wo_number VARCHAR(100),
+    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    CONSTRAINT chk_sale_outstock_item_sequence CHECK (sequence > 0),
+    CONSTRAINT chk_sale_outstock_item_qty CHECK (qty > 0)
 );
 
 -- ============================================
@@ -366,12 +406,22 @@ CREATE INDEX idx_purchase_order_items_material_id ON purchase_order_items(materi
 CREATE INDEX idx_sale_orders_bill_no ON sale_orders(bill_no);
 CREATE INDEX idx_sale_orders_customer_id ON sale_orders(customer_id);
 CREATE INDEX idx_sale_orders_order_date ON sale_orders(order_date);
+CREATE INDEX idx_sale_orders_status ON sale_orders(status);
 
 -- 销售订单明细表索引
 CREATE INDEX idx_sale_order_items_sale_order_id ON sale_order_items(sale_order_id);
 CREATE INDEX idx_sale_order_items_material_id ON sale_order_items(material_id);
 CREATE INDEX idx_sale_order_items_unit_id ON sale_order_items(unit_id);
 CREATE INDEX idx_sale_order_items_sequence ON sale_order_items(sale_order_id, sequence);
+CREATE INDEX idx_sale_order_items_status ON sale_order_items(status);
+
+-- 销售出库表索引
+CREATE INDEX idx_sale_outstocks_bill_no ON sale_outstocks(bill_no);
+CREATE INDEX idx_sale_outstocks_outstock_date ON sale_outstocks(outstock_date);
+
+CREATE INDEX idx_sale_outstock_items_outstock_id ON sale_outstock_items(sale_outstock_id);
+CREATE INDEX idx_sale_outstock_items_order_sequence ON sale_outstock_items(sale_order_sequence);
+CREATE INDEX idx_sale_outstock_items_material_id ON sale_outstock_items(material_id);
 
 -- ============================================
 -- 第四步：添加表注释和列注释
@@ -448,6 +498,7 @@ COMMENT ON COLUMN sale_orders.order_date IS '订单日期';
 COMMENT ON COLUMN sale_orders.note IS '备注';
 COMMENT ON COLUMN sale_orders.wo_number IS '工单号';
 COMMENT ON COLUMN sale_orders.customer_id IS '客户ID';
+COMMENT ON COLUMN sale_orders.status IS '销售订单状态：OPEN-进行中，CLOSED-已关闭';
 COMMENT ON COLUMN sale_orders.created_at IS '创建时间';
 COMMENT ON COLUMN sale_orders.updated_at IS '更新时间';
 
@@ -464,8 +515,29 @@ COMMENT ON COLUMN sale_order_items.bom_version IS 'BOM版本';
 COMMENT ON COLUMN sale_order_items.entry_note IS '备注';
 COMMENT ON COLUMN sale_order_items.customer_order_no IS '客户订单号';
 COMMENT ON COLUMN sale_order_items.customer_line_no IS '客户行号';
+COMMENT ON COLUMN sale_order_items.status IS '销售订单明细状态：OPEN-进行中，CLOSED-已关闭';
+COMMENT ON COLUMN sale_order_items.delivered_qty IS '销售订单明细累计出库数量';
 COMMENT ON COLUMN sale_order_items.created_at IS '创建时间';
 COMMENT ON COLUMN sale_order_items.updated_at IS '更新时间';
+
+COMMENT ON TABLE sale_outstocks IS '销售出库主表';
+COMMENT ON COLUMN sale_outstocks.id IS '销售出库ID';
+COMMENT ON COLUMN sale_outstocks.bill_no IS '销售出库单据编号（唯一）';
+COMMENT ON COLUMN sale_outstocks.outstock_date IS '出库日期';
+COMMENT ON COLUMN sale_outstocks.note IS '出库备注';
+COMMENT ON COLUMN sale_outstocks.created_at IS '创建时间';
+COMMENT ON COLUMN sale_outstocks.updated_at IS '更新时间';
+
+COMMENT ON TABLE sale_outstock_items IS '销售出库明细表';
+COMMENT ON COLUMN sale_outstock_items.id IS '销售出库明细ID';
+COMMENT ON COLUMN sale_outstock_items.sale_outstock_id IS '销售出库ID';
+COMMENT ON COLUMN sale_outstock_items.sequence IS '明细序号';
+COMMENT ON COLUMN sale_outstock_items.sale_order_sequence IS '关联的销售订单明细序号';
+COMMENT ON COLUMN sale_outstock_items.material_id IS '物料ID';
+COMMENT ON COLUMN sale_outstock_items.unit_id IS '出库单位ID';
+COMMENT ON COLUMN sale_outstock_items.qty IS '实发数量';
+COMMENT ON COLUMN sale_outstock_items.entry_note IS '明细备注';
+COMMENT ON COLUMN sale_outstock_items.wo_number IS '本司WO编号';
 
 -- ============================================
 -- 第五步：插入初始数据
@@ -488,6 +560,8 @@ INSERT INTO permissions (name, description) VALUES
 -- 销售订单权限
 ('sale_order:read', '查看销售订单'),
 ('sale_order:import', '导入销售订单'),
+('sale_outstock:read', '查看销售出库单'),
+('sale_outstock:import', '导入销售出库单'),
 -- 采购订单权限
 ('purchase_order:read', '查看采购订单'),
 ('purchase_order:import', '导入采购订单'),
@@ -535,7 +609,7 @@ WHERE r.name = 'MANAGER'
     AND p.name IN (
         'user:read', 'product:read', 'product:write', 'product:delete',
         'order:read', 'order:write', 'order:delete', 
-        'sale_order:read', 'sale_order:import',
+        'sale_order:read', 'sale_order:import', 'sale_outstock:read', 'sale_outstock:import',
         'purchase_order:read', 'purchase_order:import', 'purchase_order:update',
         'supplier:import',
         'system:read'
@@ -632,7 +706,11 @@ SELECT '供应商表', COUNT(*) FROM suppliers
 UNION ALL
 SELECT '销售订单表', COUNT(*) FROM sale_orders
 UNION ALL
-SELECT '销售订单明细表', COUNT(*) FROM sale_order_items;
+SELECT '销售订单明细表', COUNT(*) FROM sale_order_items
+UNION ALL
+SELECT '销售出库表', COUNT(*) FROM sale_outstocks
+UNION ALL
+SELECT '销售出库明细表', COUNT(*) FROM sale_outstock_items;
 
 SELECT 
     u.username,
@@ -684,6 +762,8 @@ COMMIT;
 \echo '  - suppliers (供应商表)'
 \echo '  - sale_orders (销售订单表)'
 \echo '  - sale_order_items (销售订单明细表)'
+\echo '  - sale_outstocks (销售出库主表)'
+\echo '  - sale_outstock_items (销售出库明细表)'
 \echo '  - purchase_orders (采购订单表)'
 \echo '  - purchase_order_items (采购订单明细表)'
 \echo ''

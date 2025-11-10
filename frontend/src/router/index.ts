@@ -45,6 +45,12 @@ const router = createRouter({
           meta: { title: '销售订单管理', requiresAuth: true },
         },
         {
+          path: 'orders/outstocks',
+          name: 'saleOutstocks',
+          component: () => import('@/views/orders/SaleOutstockView.vue'),
+          meta: { title: '销售出库单管理', requiresAuth: true },
+        },
+        {
           path: 'purchase-orders',
           name: 'purchaseOrders',
           component: () => import('@/views/orders/PurchaseOrderView.vue'),

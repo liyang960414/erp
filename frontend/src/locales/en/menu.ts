@@ -5,6 +5,7 @@ export default {
   productManagement: 'Product Management',
   orderManagement: 'Order Management',
   saleOrderManagement: 'Sale Order Management',
+  saleOutstockManagement: 'Sale Outstock Management',
   purchaseOrderManagement: 'Purchase Order Management',
   basicInfoManagement: 'Basic Information Management',
   unitManagement: 'Unit Management',

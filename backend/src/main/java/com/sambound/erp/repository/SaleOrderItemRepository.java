@@ -1,6 +1,7 @@
 package com.sambound.erp.repository;
 
 import com.sambound.erp.entity.SaleOrderItem;
+import com.sambound.erp.enums.SaleOrderItemStatus;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -50,4 +51,8 @@ public interface SaleOrderItemRepository extends JpaRepository<SaleOrderItem, Lo
         @Param("inspectionDateEnd") LocalDate inspectionDateEnd,
         @Param("deliveryDateEndTime") LocalDateTime deliveryDateEndTime
     );
+
+    List<SaleOrderItem> findBySequenceIn(List<Integer> sequences);
+
+    boolean existsBySaleOrderIdAndStatus(Long saleOrderId, SaleOrderItemStatus status);
 }

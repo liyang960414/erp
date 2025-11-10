@@ -87,6 +87,12 @@
               <span>{{ $t('menu.orderManagement') }}</span>
             </template>
             <el-menu-item index="/orders">{{ $t('menu.saleOrderManagement') }}</el-menu-item>
+            <el-menu-item
+              v-if="authStore.hasPermission('sale_outstock:read')"
+              index="/orders/outstocks"
+            >
+              {{ $t('menu.saleOutstockManagement') }}
+            </el-menu-item>
             <el-menu-item index="/purchase-orders">{{ $t('menu.purchaseOrderManagement') }}</el-menu-item>
           </el-sub-menu>
 

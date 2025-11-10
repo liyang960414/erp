@@ -1,0 +1,7 @@
+﻿FBillHead(SAL_OUTSTOCK),FBillNo,FDate,FNote,FEntity,FMaterialID,FMaterialID#Name,FUnitID,FUnitID#Name,FRealQty,FEntrynote,F_kd_Text,FSOEntryId
+*基本信息(序号),(基本信息)单据编号,*(基本信息)日期,(基本信息)备注,*明细信息(序号),*(明细信息)物料编码#编码,(明细信息)物料编码#名称,*(明细信息)库存单位#编码,(明细信息)库存单位#名称,(明细信息)实发数量,(明细信息)备注,(明细信息)本司WO#,(明细信息)销售订单EntryId
+130570,XOUT030485,2025/11/10,日期码：51009VAT，扣V29613-V0-0,151921,96.SP37573X-GE001V,CLM ACK Stackd Heishi BrcltStd GEN5pkSLD,Pcs,Pcs,554,4500666812/10,V29662-V0-0,"138,766"
+,,,,151922,96.SP37573X-GE001V,CLM ACK Stackd Heishi BrcltStd GEN5pkSLD,Pcs,Pcs,166,4500666812/10,V29662-V0-0,"138,766"
+130513,XOUT030428,2025/11/6,20000pcs（含外箱）由V29870-V0-0减单转入，外箱需返工,151852,96.SP37573X-GE001V,CLM ACK Stackd Heishi BrcltStd GEN5pkSLD,Pcs,Pcs,"8,450",4500670068/20,V29870-V0-2/V29870-V0-2原来出V29870-V0-0/6071/3427,"140,443"
+,,,,151853,96.SP37573X-GE001V,CLM ACK Stackd Heishi BrcltStd GEN5pkSLD,Pcs,Pcs,"4,000",4500670068/20,V29870-V0-2/V29870-V0-2原来出V29870-V0-0//6068,"140,443"
+,,,,151714,96.SP37573X-GE001V,CLM ACK Stackd Heishi BrcltStd GEN5pkSLD,Pcs,Pcs,"7,500",4500666227/20,V29612-V0-0,"138,612"

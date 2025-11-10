@@ -4,6 +4,8 @@ import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 
+import com.sambound.erp.enums.SaleOrderItemStatus;
+
 public record SaleOrderItemDTO(
     Long id,
     Long saleOrderId,
@@ -22,6 +24,8 @@ public record SaleOrderItemDTO(
     String entryNote,
     String customerOrderNo,
     String customerLineNo,
+    SaleOrderItemStatus status,
+    BigDecimal deliveredQty,
     LocalDateTime createdAt,
     LocalDateTime updatedAt
 ) {}
