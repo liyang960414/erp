@@ -103,10 +103,10 @@ paths:
 # 重点关注 JPA 实体和 Repository 层，确保数据访问正确
 auto_attached:
   - path: src/main/java/**/*Controller.java
-    prompt_modifier: "All list endpoints (GET methods returning collections) MUST support pagination with page, size, sortBy, sortDir parameters. Return Page<T> type from Spring Data JPA. Never return complete lists without pagination."
+    prompt_modifier: "Require page, size, sortBy, sortDir on list GET endpoints; return Page<T>; never send full lists."
   - path: src/main/java/**/*Service.java
-    prompt_modifier: "Service methods for list operations MUST accept Pageable parameter and return Page<DTO> type. Use @Transactional(readOnly = true) for read operations."
+    prompt_modifier: "Accept Pageable and return Page<DTO> for list services; mark reads with @Transactional(readOnly = true)."
   - path: src/main/java/**/*Repository.java
-    prompt_modifier: "Repository methods for list queries MUST accept Pageable parameter and return Page<T> type. Use @EntityGraph to optimize queries and avoid N+1 problems. Use JOIN instead of JOIN FETCH in paginated queries."
+    prompt_modifier: "Accept Pageable and return Page<T> for list queries; use @EntityGraph to prevent N+1; prefer JOIN over JOIN FETCH when paginating."
   - path: src/main/java/**/*.java
-    prompt_modifier: "Strictly adhere to modern Java 25 features (Records, Virtual Threads) and use Constructor Injection."
+    prompt_modifier: "Use Java 25 features (records, virtual threads) and constructor injection only."

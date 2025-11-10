@@ -1,18 +1,5 @@
 export type PurchaseOrderStatus = 'OPEN' | 'CLOSED'
 
-export interface PurchaseOrderDelivery {
-  id: number
-  purchaseOrderItemId: number
-  sequence: number
-  deliveryDate: string
-  planQty: number
-  supplierDeliveryDate?: string
-  preArrivalDate?: string
-  transportLeadTime?: number
-  createdAt: string
-  updatedAt: string
-}
-
 export interface PurchaseOrderItem {
   id: number
   purchaseOrderId: number
@@ -39,7 +26,6 @@ export interface PurchaseOrderItem {
   deliveredQty: number
   createdAt: string
   updatedAt: string
-  deliveries?: PurchaseOrderDelivery[]
 }
 
 export interface PurchaseOrder {

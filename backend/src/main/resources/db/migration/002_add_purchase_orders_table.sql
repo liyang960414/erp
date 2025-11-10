@@ -57,23 +57,7 @@ CREATE TABLE IF NOT EXISTS purchase_order_items (
 );
 
 -- ============================================
--- 第四步：创建采购订单交货明细表
--- ============================================
-CREATE TABLE IF NOT EXISTS purchase_order_deliveries (
-    id BIGSERIAL PRIMARY KEY,
-    purchase_order_item_id BIGINT NOT NULL REFERENCES purchase_order_items(id) ON DELETE CASCADE,
-    sequence INTEGER NOT NULL,
-    delivery_date DATE NOT NULL,
-    plan_qty NUMERIC(18, 6) NOT NULL,
-    supplier_delivery_date DATE,
-    pre_arrival_date DATE,
-    transport_lead_time INTEGER,
-    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
-);
-
--- ============================================
--- 第五步：创建索引
+-- 第四步：创建索引
 -- ============================================
 -- 采购订单主表索引
 DO $$
@@ -131,28 +115,8 @@ BEGIN
     END IF;
 END $$;
 
--- 采购订单交货明细表索引
-DO $$
-BEGIN
-    IF NOT EXISTS (
-        SELECT 1 FROM pg_indexes 
-        WHERE tablename = 'purchase_order_deliveries' 
-        AND indexname = 'idx_purchase_order_deliveries_item_id'
-    ) THEN
-        CREATE INDEX idx_purchase_order_deliveries_item_id ON purchase_order_deliveries(purchase_order_item_id);
-    END IF;
-    
-    IF NOT EXISTS (
-        SELECT 1 FROM pg_indexes 
-        WHERE tablename = 'purchase_order_deliveries' 
-        AND indexname = 'idx_purchase_order_deliveries_delivery_date'
-    ) THEN
-        CREATE INDEX idx_purchase_order_deliveries_delivery_date ON purchase_order_deliveries(delivery_date);
-    END IF;
-END $$;
-
 -- ============================================
--- 第六步：添加表注释和列注释
+-- 第五步：添加表注释和列注释
 -- ============================================
 COMMENT ON TABLE purchase_orders IS '采购订单主表';
 COMMENT ON COLUMN purchase_orders.id IS '采购订单ID';
@@ -183,20 +147,8 @@ COMMENT ON COLUMN purchase_order_items.sal_base_qty IS '销售基本数量（可
 COMMENT ON COLUMN purchase_order_items.created_at IS '创建时间';
 COMMENT ON COLUMN purchase_order_items.updated_at IS '更新时间';
 
-COMMENT ON TABLE purchase_order_deliveries IS '采购订单交货明细表';
-COMMENT ON COLUMN purchase_order_deliveries.id IS '采购订单交货明细ID';
-COMMENT ON COLUMN purchase_order_deliveries.purchase_order_item_id IS '采购订单明细ID';
-COMMENT ON COLUMN purchase_order_deliveries.sequence IS '交货明细序号';
-COMMENT ON COLUMN purchase_order_deliveries.delivery_date IS '交货日期';
-COMMENT ON COLUMN purchase_order_deliveries.plan_qty IS '计划数量';
-COMMENT ON COLUMN purchase_order_deliveries.supplier_delivery_date IS '供应商发货日期（可为空）';
-COMMENT ON COLUMN purchase_order_deliveries.pre_arrival_date IS '预计到货日期（可为空）';
-COMMENT ON COLUMN purchase_order_deliveries.transport_lead_time IS '运输提前期（天数，可为空）';
-COMMENT ON COLUMN purchase_order_deliveries.created_at IS '创建时间';
-COMMENT ON COLUMN purchase_order_deliveries.updated_at IS '更新时间';
-
 -- ============================================
--- 第七步：创建更新updated_at的触发器函数
+-- 第六步：创建更新updated_at的触发器函数
 -- ============================================
 CREATE OR REPLACE FUNCTION update_purchase_order_updated_at()
 RETURNS TRIGGER AS $$
@@ -220,15 +172,8 @@ CREATE TRIGGER trigger_purchase_order_items_updated_at
     FOR EACH ROW
     EXECUTE FUNCTION update_purchase_order_updated_at();
 
--- 为采购订单交货明细表创建触发器
-DROP TRIGGER IF EXISTS trigger_purchase_order_deliveries_updated_at ON purchase_order_deliveries;
-CREATE TRIGGER trigger_purchase_order_deliveries_updated_at
-    BEFORE UPDATE ON purchase_order_deliveries
-    FOR EACH ROW
-    EXECUTE FUNCTION update_purchase_order_updated_at();
-
 -- ============================================
--- 第八步：添加采购订单权限
+-- 第七步：添加采购订单权限
 -- ============================================
 -- 插入权限（如果不存在）
 INSERT INTO permissions (name, description)
@@ -250,7 +195,7 @@ WHERE NOT EXISTS (
 );
 
 -- ============================================
--- 第九步：为角色分配采购订单权限
+-- 第八步：为角色分配采购订单权限
 -- ============================================
 -- 为ADMIN角色分配权限
 INSERT INTO role_permissions (role_id, permission_id)
@@ -283,7 +228,6 @@ DO $$
 DECLARE
     orders_table_exists BOOLEAN;
     items_table_exists BOOLEAN;
-    deliveries_table_exists BOOLEAN;
     status_type_exists BOOLEAN;
     permission_read_exists BOOLEAN;
     permission_import_exists BOOLEAN;
@@ -301,12 +245,6 @@ BEGIN
         WHERE table_schema = 'public' 
         AND table_name = 'purchase_order_items'
     ) INTO items_table_exists;
-    
-    SELECT EXISTS (
-        SELECT 1 FROM information_schema.tables 
-        WHERE table_schema = 'public' 
-        AND table_name = 'purchase_order_deliveries'
-    ) INTO deliveries_table_exists;
     
     -- 检查枚举类型是否存在
     SELECT EXISTS (
@@ -331,7 +269,6 @@ BEGIN
     RAISE NOTICE '迁移脚本执行结果：';
     RAISE NOTICE '  采购订单主表存在: %', orders_table_exists;
     RAISE NOTICE '  采购订单明细表存在: %', items_table_exists;
-    RAISE NOTICE '  采购订单交货明细表存在: %', deliveries_table_exists;
     RAISE NOTICE '  订单状态枚举类型存在: %', status_type_exists;
     RAISE NOTICE '  查看权限存在: %', permission_read_exists;
     RAISE NOTICE '  导入权限存在: %', permission_import_exists;
@@ -353,7 +290,6 @@ COMMIT;
 \echo '已创建的内容：'
 \echo '  - purchase_orders 表'
 \echo '  - purchase_order_items 表'
-\echo '  - purchase_order_deliveries 表'
 \echo '  - purchase_order_status 枚举类型'
 \echo '  - 相关索引'
 \echo '  - 更新触发器'

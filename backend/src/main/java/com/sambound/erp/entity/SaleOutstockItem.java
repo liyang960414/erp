@@ -7,31 +7,32 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import java.math.BigDecimal;
-import java.time.LocalDate;
 import java.time.LocalDateTime;
 
-import com.sambound.erp.enums.SaleOrderItemStatus;
-
-/**
- * 销售订单明细实体类
- */
 @Entity
-@Table(name = "sale_order_items")
+@Table(name = "sale_outstock_items")
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-public class SaleOrderItem {
+public class SaleOutstockItem {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "sale_order_id", nullable = false)
-    private SaleOrder saleOrder;
+    @JoinColumn(name = "sale_outstock_id", nullable = false)
+    private SaleOutstock saleOutstock;
 
     @Column(nullable = false)
     private Integer sequence;
+
+    @Column(name = "sale_order_sequence", nullable = false)
+    private Integer saleOrderSequence;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "sale_order_sequence", referencedColumnName = "sequence", insertable = false, updatable = false)
+    private SaleOrderItem saleOrderItem;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "material_id", nullable = false)
@@ -44,35 +45,11 @@ public class SaleOrderItem {
     @Column(nullable = false, precision = 18, scale = 6)
     private BigDecimal qty;
 
-    @Column(name = "old_qty", precision = 18, scale = 6)
-    private BigDecimal oldQty;
-
-    @Column(name = "inspection_date")
-    private LocalDate inspectionDate;
-
-    @Column(name = "delivery_date")
-    private LocalDateTime deliveryDate;
-
-    @Column(name = "bom_version", length = 50)
-    private String bomVersion;
-
     @Column(name = "entry_note", columnDefinition = "TEXT")
     private String entryNote;
 
-    @Column(name = "customer_order_no", length = 100)
-    private String customerOrderNo;
-
-    @Column(name = "customer_line_no", length = 50)
-    private String customerLineNo;
-
-    @Enumerated(EnumType.STRING)
-    @Column(name = "status", nullable = false, length = 20)
-    @Builder.Default
-    private SaleOrderItemStatus status = SaleOrderItemStatus.OPEN;
-
-    @Column(name = "delivered_qty", nullable = false, precision = 18, scale = 6)
-    @Builder.Default
-    private BigDecimal deliveredQty = BigDecimal.ZERO;
+    @Column(name = "wo_number", length = 100)
+    private String woNumber;
 
     @Column(nullable = false, updatable = false)
     @Builder.Default
@@ -87,3 +64,4 @@ public class SaleOrderItem {
         updatedAt = LocalDateTime.now();
     }
 }
+

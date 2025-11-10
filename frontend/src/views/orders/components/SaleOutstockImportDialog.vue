@@ -1,7 +1,7 @@
 <template>
   <el-dialog
     v-model="dialogVisible"
-    title="导入销售订单"
+    title="导入销售出库单"
     width="800px"
     :close-on-click-modal="false"
     @close="handleClose"
@@ -31,13 +31,13 @@
       <el-divider>导入结果</el-divider>
       <div class="result-summary">
         <div class="statistic-group">
-          <el-statistic title="总计" :value="importResult.saleOrderResult.totalRows" />
-          <el-statistic title="成功" :value="importResult.saleOrderResult.successCount">
+          <el-statistic title="总计" :value="importResult.result.totalRows" />
+          <el-statistic title="成功" :value="importResult.result.successCount">
             <template #suffix>
               <el-tag type="success" size="small" style="margin-left: 8px">成功</el-tag>
             </template>
           </el-statistic>
-          <el-statistic title="失败" :value="importResult.saleOrderResult.failureCount">
+          <el-statistic title="失败" :value="importResult.result.failureCount">
             <template #suffix>
               <el-tag type="danger" size="small" style="margin-left: 8px">失败</el-tag>
             </template>
@@ -45,15 +45,10 @@
         </div>
       </div>
 
-      <div v-if="importResult.saleOrderResult.errors.length > 0" class="error-list">
-        <el-alert
-          title="错误详情"
-          type="error"
-          :closable="false"
-          show-icon
-        >
+      <div v-if="importResult.result.errors.length > 0" class="error-list">
+        <el-alert title="错误详情" type="error" :closable="false" show-icon>
           <el-scrollbar max-height="300px">
-            <el-table :data="importResult.saleOrderResult.errors" size="small" border>
+            <el-table :data="importResult.result.errors" size="small" border>
               <el-table-column prop="rowNumber" label="行号" width="80" />
               <el-table-column prop="field" label="字段" width="120" />
               <el-table-column prop="message" label="错误信息" show-overflow-tooltip />
@@ -83,8 +78,8 @@
 import { ref, watch } from 'vue'
 import { ElMessage, type UploadInstance, type UploadFile } from 'element-plus'
 import { UploadFilled } from '@element-plus/icons-vue'
-import { saleOrderApi } from '@/api/saleOrder'
-import type { SaleOrderImportResponse } from '@/types/saleOrder'
+import { saleOutstockApi } from '@/api/saleOutstock'
+import type { SaleOutstockImportResponse } from '@/types/saleOutstock'
 
 interface Props {
   modelValue: boolean
@@ -105,7 +100,7 @@ const uploading = ref(false)
 const progress = ref(0)
 const progressStatus = ref<'success' | 'exception' | 'warning' | ''>('')
 const progressMessage = ref('')
-const importResult = ref<SaleOrderImportResponse | null>(null)
+const importResult = ref<SaleOutstockImportResponse | null>(null)
 
 watch(
   () => props.modelValue,
@@ -149,7 +144,7 @@ const handleImport = async () => {
     progress.value = 30
     progressMessage.value = '正在解析文件...'
 
-    const result = await saleOrderApi.importSaleOrders(selectedFile.value)
+    const result = await saleOutstockApi.importSaleOutstocks(selectedFile.value)
 
     progress.value = 100
     progressStatus.value = 'success'
@@ -157,17 +152,15 @@ const handleImport = async () => {
 
     importResult.value = result
 
-    if (result.saleOrderResult.failureCount === 0) {
-      ElMessage.success(
-        `导入成功！共导入 ${result.saleOrderResult.successCount} 条订单`,
-      )
+    if (result.result.failureCount === 0) {
+      ElMessage.success(`导入成功！共导入 ${result.result.successCount} 张出库单`)
       emit('success')
       setTimeout(() => {
         handleClose()
       }, 2000)
     } else {
       ElMessage.warning(
-        `导入完成！成功 ${result.saleOrderResult.successCount} 条，失败 ${result.saleOrderResult.failureCount} 条`,
+        `导入完成！成功 ${result.result.successCount} 张，失败 ${result.result.failureCount} 张`,
       )
     }
   } catch (error: any) {
@@ -175,8 +168,7 @@ const handleImport = async () => {
     progressStatus.value = 'exception'
     progressMessage.value = '导入失败'
 
-    const errorMessage =
-      error.response?.data?.message || error.message || '未知错误'
+    const errorMessage = error.response?.data?.message || error.message || '未知错误'
     ElMessage.error('导入失败: ' + errorMessage)
   } finally {
     uploading.value = false
@@ -245,7 +237,6 @@ const handleClose = () => {
   margin-top: 20px;
 }
 
-/* 响应式设计 */
 @media (max-width: 768px) {
   .statistic-group {
     flex-direction: column;
@@ -257,3 +248,4 @@ const handleClose = () => {
   }
 }
 </style>
+

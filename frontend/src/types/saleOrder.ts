@@ -6,6 +6,9 @@ export interface Customer {
   updatedAt: string;
 }
 
+export type SaleOrderStatus = 'OPEN' | 'CLOSED';
+export type SaleOrderItemStatus = 'OPEN' | 'CLOSED';
+
 export interface SaleOrderItem {
   id: number;
   saleOrderId: number;
@@ -24,6 +27,8 @@ export interface SaleOrderItem {
   entryNote?: string;
   customerOrderNo?: string;
   customerLineNo?: string;
+  status: SaleOrderItemStatus;
+  deliveredQty: number;
   createdAt: string;
   updatedAt: string;
 }
@@ -37,6 +42,7 @@ export interface SaleOrder {
   customerId: number;
   customerCode: string;
   customerName: string;
+  status: SaleOrderStatus;
   createdAt: string;
   updatedAt: string;
   items?: SaleOrderItem[];

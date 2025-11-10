@@ -78,23 +78,20 @@ frontend/.eslintcache
 # ============================================
 # IntelliJ IDEA / WebStorm
 # 策略：保留项目共享配置，排除用户特定配置
-# 先排除整个目录，然后取消排除需要共享的文件
-.idea/
-
-# 保留项目级别的共享配置
-!.idea/modules.xml
-!.idea/misc.xml
-!.idea/vcs.xml
-!.idea/compiler.xml
-!.idea/encodings.xml
-!.idea/jarRepositories.xml
-!.idea/sqldialects.xml
-!.idea/dataSources.xml
-!.idea/data_source_mapping.xml
-
-# 保留运行配置（一键打包等）
-!.idea/runConfigurations/
-!.idea/runConfigurations/*.xml
+# 共享项目级 .idea 配置，忽略用户特有文件
+.idea/workspace.xml
+.idea/tasks.xml
+.idea/shelf/
+.idea/dictionaries/
+.idea/httpRequests/
+.idea/sonarlint/
+.idea/inspectionProfiles/
+.idea/scopes/
+.idea/dataSources.local.xml
+.idea/usage.statistics.xml
+.idea/**/jarRepositories.xml~
+.idea/**/__pycache__/
+.idea/**/dataSources/
 
 # 保留模块配置文件（.iml 文件在模块目录下，不在 .idea 中）
 backend/*.iml

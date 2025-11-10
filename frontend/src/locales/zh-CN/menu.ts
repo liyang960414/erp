@@ -5,6 +5,7 @@ export default {
   productManagement: '商品管理',
   orderManagement: '订单管理',
   saleOrderManagement: '销售订单管理',
+  saleOutstockManagement: '销售出库单管理',
   purchaseOrderManagement: '采购订单管理',
   basicInfoManagement: '基础信息管理',
   unitManagement: '单位管理',

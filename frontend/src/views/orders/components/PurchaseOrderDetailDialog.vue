@@ -41,44 +41,7 @@
           border
           style="width: 100%"
           stripe
-          @expand-change="handleItemExpand"
         >
-          <el-table-column type="expand">
-            <template #default="{ row }">
-              <div v-if="row.deliveries && row.deliveries.length > 0" class="delivery-details">
-                <el-table
-                  :data="row.deliveries"
-                  border
-                  size="small"
-                  max-height="300"
-                >
-                  <el-table-column prop="sequence" label="序号" width="80" />
-                  <el-table-column prop="deliveryDate" label="交货日期" width="120" />
-                  <el-table-column prop="planQty" label="计划数量" width="120" align="right">
-                    <template #default="{ row }">
-                      {{ formatNumber(row.planQty) }}
-                    </template>
-                  </el-table-column>
-                  <el-table-column prop="supplierDeliveryDate" label="供应商发货日期" width="140">
-                    <template #default="{ row }">
-                      {{ row.supplierDeliveryDate || '-' }}
-                    </template>
-                  </el-table-column>
-                  <el-table-column prop="preArrivalDate" label="预计到货日期" width="140">
-                    <template #default="{ row }">
-                      {{ row.preArrivalDate || '-' }}
-                    </template>
-                  </el-table-column>
-                  <el-table-column prop="transportLeadTime" label="运输提前期(天)" width="140" align="right">
-                    <template #default="{ row }">
-                      {{ row.transportLeadTime ? row.transportLeadTime + ' 天' : '-' }}
-                    </template>
-                  </el-table-column>
-                </el-table>
-              </div>
-              <el-empty v-else description="该明细暂无交货计划" />
-            </template>
-          </el-table-column>
           <el-table-column prop="sequence" label="序号" width="80" />
           <el-table-column prop="materialCode" label="物料编码" width="150" />
           <el-table-column prop="materialName" label="物料名称" min-width="200" />
@@ -166,10 +129,6 @@ watch(dialogVisible, (newValue) => {
 
 const handleClose = () => {
   dialogVisible.value = false
-}
-
-const handleItemExpand = (row: any, expandedRows: any[]) => {
-  // 展开/折叠明细的交货计划
 }
 
 const formatNumber = (value: number | string): string => {
@@ -290,17 +249,6 @@ const formatDateTime = (value: string): string => {
 
 .detail-table-wrapper :deep(.el-table__row:hover) {
   background-color: #f5f7fa;
-}
-
-.delivery-details {
-  padding: 12px;
-  background-color: #f9fafb;
-  border-radius: 4px;
-  margin: 8px 0;
-}
-
-.delivery-details :deep(.el-table) {
-  background-color: #ffffff;
 }
 
 .dialog-footer {

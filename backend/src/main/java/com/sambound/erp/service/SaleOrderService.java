@@ -73,6 +73,7 @@ public class SaleOrderService {
                 dto.customerId(),
                 dto.customerCode(),
                 dto.customerName(),
+                dto.status(),
                 dto.createdAt(),
                 dto.updatedAt(),
                 itemDTOs
@@ -89,6 +90,7 @@ public class SaleOrderService {
                 order.getCustomer() != null ? order.getCustomer().getId() : null,
                 order.getCustomer() != null ? order.getCustomer().getCode() : null,
                 order.getCustomer() != null ? order.getCustomer().getName() : null,
+                order.getStatus(),
                 order.getCreatedAt(),
                 order.getUpdatedAt(),
                 null  // 明细列表在getSaleOrderById中单独填充
@@ -114,6 +116,8 @@ public class SaleOrderService {
                 item.getEntryNote(),
                 item.getCustomerOrderNo(),
                 item.getCustomerLineNo(),
+                item.getStatus(),
+                item.getDeliveredQty(),
                 item.getCreatedAt(),
                 item.getUpdatedAt()
         );

@@ -40,12 +40,10 @@ public class PurchaseOrderImportService {
     
     private final PurchaseOrderRepository purchaseOrderRepository;
     private final PurchaseOrderItemRepository purchaseOrderItemRepository;
-    private final PurchaseOrderDeliveryRepository purchaseOrderDeliveryRepository;
     private final SupplierRepository supplierRepository;
     private final MaterialRepository materialRepository;
     private final UnitRepository unitRepository;
     private final BillOfMaterialRepository bomRepository;
-    private final PurchaseOrderService purchaseOrderService;
     private final TransactionTemplate transactionTemplate;
     private final ExecutorService executorService;
     
@@ -54,21 +52,17 @@ public class PurchaseOrderImportService {
     public PurchaseOrderImportService(
             PurchaseOrderRepository purchaseOrderRepository,
             PurchaseOrderItemRepository purchaseOrderItemRepository,
-            PurchaseOrderDeliveryRepository purchaseOrderDeliveryRepository,
             SupplierRepository supplierRepository,
             MaterialRepository materialRepository,
             UnitRepository unitRepository,
             BillOfMaterialRepository bomRepository,
-            PurchaseOrderService purchaseOrderService,
             PlatformTransactionManager transactionManager) {
         this.purchaseOrderRepository = purchaseOrderRepository;
         this.purchaseOrderItemRepository = purchaseOrderItemRepository;
-        this.purchaseOrderDeliveryRepository = purchaseOrderDeliveryRepository;
         this.supplierRepository = supplierRepository;
         this.materialRepository = materialRepository;
         this.unitRepository = unitRepository;
         this.bomRepository = bomRepository;
-        this.purchaseOrderService = purchaseOrderService;
         this.transactionTemplate = new TransactionTemplate(transactionManager);
         this.transactionTemplate.setPropagationBehavior(TransactionTemplate.PROPAGATION_REQUIRES_NEW);
         this.transactionTemplate.setTimeout(1800); // 30分钟超时，支持大文件导入
@@ -118,97 +112,51 @@ public class PurchaseOrderImportService {
             totalRows.incrementAndGet();
             int rowNum = context.readRowHolder().getRowIndex();
             
-            // 检查是否是新订单（单据编号不为空）
             String billNo = trimOrNull(data.getBillNo());
             if (billNo != null) {
                 currentBillNo = billNo;
-                // 创建新的订单头
                 currentHeader = new PurchaseOrderHeader(
                         rowNum,
                         currentBillNo,
                         data.getOrderDate(),
-                        null, // CSV文件中没有备注字段
+                        null,
                         data.getSupplierCode(),
                         data.getSupplierName()
                 );
-                currentItemHeader = null; // 重置明细头
+                currentItemHeader = null;
             }
             
-            // 检查是否是新订单明细（订单明细序号不为空）
             String purchaseOrderEntry = trimOrNull(data.getPurchaseOrderEntry());
-            boolean isNewItem = false;
-            if (purchaseOrderEntry != null) {
-                if (currentHeader != null) {
-                    // 创建新的明细头
-                    Integer sequence = null;
-                    try {
-                        sequence = Integer.parseInt(purchaseOrderEntry);
-                    } catch (NumberFormatException e) {
-                        // 忽略解析错误，sequence保持为null
-                    }
-                    currentItemHeader = new PurchaseOrderItemHeader(
-                            rowNum,
-                            sequence,
-                            data.getMaterialCode(),
-                            data.getBomVersion(),
-                            data.getMaterialDesc(),
-                            data.getUnitCode(),
-                            data.getQty(),
-                            data.getPlanConfirm(),
-                            data.getSalUnitCode(),
-                            data.getSalQty(),
-                            data.getSalJoinQty(),
-                            data.getBaseSalJoinQty(),
-                            data.getRemarks(),
-                            data.getSalBaseQty()
-                    );
-                    isNewItem = true;
+            if (purchaseOrderEntry != null && currentHeader != null) {
+                Integer sequence = null;
+                try {
+                    sequence = Integer.parseInt(purchaseOrderEntry);
+                } catch (NumberFormatException e) {
+                    // 序号解析失败时保持为null
                 }
-            }
-            
-            // 如果有订单头、明细头，处理交货明细
-            if (currentHeader != null && currentItemHeader != null) {
-                String deliveryEntry = trimOrNull(data.getDeliveryEntry());
-                if (deliveryEntry != null) {
-                    // 有交货明细，添加交货明细项
-                    Integer deliverySequence = null;
-                    try {
-                        deliverySequence = Integer.parseInt(deliveryEntry);
-                    } catch (NumberFormatException e) {
-                        // 忽略解析错误，sequence保持为null
-                    }
-                    PurchaseOrderDeliveryData deliveryData = new PurchaseOrderDeliveryData(
-                            rowNum,
-                            deliverySequence,
-                            data.getDeliveryDate(),
-                            data.getPlanQty(),
-                            data.getSupplierDeliveryDate(),
-                            data.getPreArrivalDate(),
-                            data.getTransportLeadTime()
-                    );
-                    
-                    PurchaseOrderData orderData = new PurchaseOrderData(
-                            currentHeader, 
-                            currentItemHeader, 
-                            deliveryData
-                    );
-                    orderDataList.add(orderData);
-                } else if (isNewItem) {
-                    // 新订单明细但没有交货明细，也添加记录（使用null作为占位符）
-                    // 这样确保订单明细被收集，即使没有交货明细
-                    PurchaseOrderData orderData = new PurchaseOrderData(
-                            currentHeader, 
-                            currentItemHeader, 
-                            null
-                    );
-                    orderDataList.add(orderData);
-                }
+                currentItemHeader = new PurchaseOrderItemHeader(
+                        rowNum,
+                        sequence,
+                        data.getMaterialCode(),
+                        data.getBomVersion(),
+                        data.getMaterialDesc(),
+                        data.getUnitCode(),
+                        data.getQty(),
+                        data.getPlanConfirm(),
+                        data.getSalUnitCode(),
+                        data.getSalQty(),
+                        data.getSalJoinQty(),
+                        data.getBaseSalJoinQty(),
+                        data.getRemarks(),
+                        data.getSalBaseQty()
+                );
+                orderDataList.add(new PurchaseOrderData(currentHeader, currentItemHeader));
             }
         }
         
         @Override
         public void doAfterAllAnalysed(AnalysisContext context) {
-            logger.info("采购订单数据收集完成，共 {} 条订单交货明细数据", orderDataList.size());
+            logger.info("采购订单数据收集完成，共 {} 条订单明细数据", orderDataList.size());
         }
         
         public PurchaseOrderImportResponse importToDatabase() {
@@ -223,58 +171,56 @@ public class PurchaseOrderImportService {
             
             // 预估容量，减少Map扩容开销（假设平均每个订单有5条明细）
             int estimatedOrderCount = Math.max(1000, orderDataList.size() / 10);
-            int estimatedItemCount = orderDataList.size();
             
-            // 按订单头、明细分组（优化：减少computeIfAbsent调用）
-            Map<String, Map<Integer, List<PurchaseOrderDeliveryData>>> orderGroups = new LinkedHashMap<>(estimatedOrderCount);
+            // 按订单头、明细分组
             Map<String, PurchaseOrderHeader> headerMap = new LinkedHashMap<>(estimatedOrderCount);
             Map<String, Map<Integer, PurchaseOrderItemHeader>> itemHeaderMap = new LinkedHashMap<>(estimatedOrderCount);
             
-            int totalDeliveryCount = 0;
             for (PurchaseOrderData data : orderDataList) {
+                if (data == null || data.header == null || data.itemHeader == null) {
+                    continue;
+                }
                 String billNo = data.header.billNo;
-                Integer sequence = data.itemHeader.sequence;
-                
-                // 优化：使用putIfAbsent减少方法调用
+                if (billNo == null) {
+                    continue;
+                }
                 headerMap.putIfAbsent(billNo, data.header);
-                
-                // 优化：减少嵌套computeIfAbsent调用
-                Map<Integer, PurchaseOrderItemHeader> items = itemHeaderMap.get(billNo);
-                if (items == null) {
-                    items = new LinkedHashMap<>();
-                    itemHeaderMap.put(billNo, items);
+                Map<Integer, PurchaseOrderItemHeader> items = itemHeaderMap.computeIfAbsent(billNo, key -> new LinkedHashMap<>());
+                Integer sequence = data.itemHeader.sequence;
+                PurchaseOrderItemHeader itemHeader = data.itemHeader;
+                if (sequence == null) {
+                    sequence = items.size() + 1;
+                    itemHeader = new PurchaseOrderItemHeader(
+                            data.itemHeader.rowNumber,
+                            sequence,
+                            data.itemHeader.materialCode,
+                            data.itemHeader.bomVersion,
+                            data.itemHeader.materialDesc,
+                            data.itemHeader.unitCode,
+                            data.itemHeader.qty,
+                            data.itemHeader.planConfirm,
+                            data.itemHeader.salUnitCode,
+                            data.itemHeader.salQty,
+                            data.itemHeader.salJoinQty,
+                            data.itemHeader.baseSalJoinQty,
+                            data.itemHeader.remarks,
+                            data.itemHeader.salBaseQty
+                    );
                 }
-                items.putIfAbsent(sequence, data.itemHeader);
-                
-                // 只有交货明细不为null时才添加到分组中
-                if (data.delivery != null) {
-                    totalDeliveryCount++;
-                    Map<Integer, List<PurchaseOrderDeliveryData>> orderDeliveries = orderGroups.get(billNo);
-                    if (orderDeliveries == null) {
-                        orderDeliveries = new LinkedHashMap<>();
-                        orderGroups.put(billNo, orderDeliveries);
-                    }
-                    List<PurchaseOrderDeliveryData> deliveries = orderDeliveries.get(sequence);
-                    if (deliveries == null) {
-                        deliveries = new ArrayList<>();
-                        orderDeliveries.put(sequence, deliveries);
-                    }
-                    deliveries.add(data.delivery);
-                } else {
-                    // 如果没有交货明细，也要确保订单明细被记录（创建空的交货明细列表）
-                    Map<Integer, List<PurchaseOrderDeliveryData>> orderDeliveries = orderGroups.get(billNo);
-                    if (orderDeliveries == null) {
-                        orderDeliveries = new LinkedHashMap<>();
-                        orderGroups.put(billNo, orderDeliveries);
-                    }
-                    orderDeliveries.putIfAbsent(sequence, new ArrayList<>());
-                }
+                items.putIfAbsent(sequence, itemHeader);
             }
             
-            int totalOrderCount = orderGroups.size();
+            int totalOrderCount = headerMap.size();
             int totalItemCount = itemHeaderMap.values().stream().mapToInt(Map::size).sum();
-            logger.info("找到 {} 个订单，{} 条明细，{} 条交货明细，开始导入到数据库", 
-                    totalOrderCount, totalItemCount, totalDeliveryCount);
+            logger.info("找到 {} 个订单，{} 条明细，开始导入到数据库", 
+                    totalOrderCount, totalItemCount);
+            
+            if (totalOrderCount == 0) {
+                logger.info("未收集到有效的采购订单");
+                return new PurchaseOrderImportResponse(
+                        new PurchaseOrderImportResponse.PurchaseOrderImportResult(0, 0, 0, new ArrayList<>())
+                );
+            }
             
             // 使用线程安全的集合收集错误
             List<PurchaseOrderImportResponse.ImportError> errors = Collections.synchronizedList(new ArrayList<>());
@@ -288,11 +234,11 @@ public class PurchaseOrderImportService {
             preloadMaterialsUnitsAndBoms(itemHeaderMap, materialCache, unitCache, bomCache, errors);
             
             // 预先批量查询所有已存在的订单
-            Map<String, PurchaseOrder> existingOrderMap = preloadExistingOrders(orderGroups.keySet());
+            Map<String, PurchaseOrder> existingOrderMap = preloadExistingOrders(headerMap.keySet());
             
             // 将订单分组转换为列表以便批量处理
-            List<Map.Entry<String, Map<Integer, List<PurchaseOrderDeliveryData>>>> orderList = 
-                    new ArrayList<>(orderGroups.entrySet());
+            List<Map.Entry<String, Map<Integer, PurchaseOrderItemHeader>>> orderList = 
+                    new ArrayList<>(itemHeaderMap.entrySet());
             
             // 使用多线程并行处理批次
             List<CompletableFuture<BatchResult>> futures = new ArrayList<>();
@@ -304,7 +250,7 @@ public class PurchaseOrderImportService {
             // 提交所有批次任务到线程池
             for (int i = 0; i < orderList.size(); i += BATCH_SIZE) {
                 int end = Math.min(i + BATCH_SIZE, orderList.size());
-                List<Map.Entry<String, Map<Integer, List<PurchaseOrderDeliveryData>>>> batch = new ArrayList<>(
+                List<Map.Entry<String, Map<Integer, PurchaseOrderItemHeader>>> batch = new ArrayList<>(
                         orderList.subList(i, end));
                 int batchIndex = (i / BATCH_SIZE) + 1;
                 
@@ -317,7 +263,7 @@ public class PurchaseOrderImportService {
                             logger.info("处理批次 {}/{}，订单数量: {}", batchIndex, totalBatches, batch.size());
                             
                             int batchSuccess = transactionTemplate.execute(status -> {
-                                return importBatchOrders(batch, headerMap, itemHeaderMap, 
+                                return importBatchOrders(batch, headerMap, 
                                         supplierCache, materialCache, unitCache, bomCache, 
                                         existingOrderMap, errors);
                             });
@@ -334,7 +280,7 @@ public class PurchaseOrderImportService {
                         Thread.currentThread().interrupt();
                         logger.warn("批次 {} 处理被中断", batchIndex);
                         List<PurchaseOrderImportResponse.ImportError> batchErrors = new ArrayList<>();
-                        for (Map.Entry<String, Map<Integer, List<PurchaseOrderDeliveryData>>> entry : batch) {
+                        for (Map.Entry<String, Map<Integer, PurchaseOrderItemHeader>> entry : batch) {
                             if (batchErrors.size() < MAX_ERROR_COUNT) {
                                 batchErrors.add(new PurchaseOrderImportResponse.ImportError(
                                         "采购订单", headerMap.get(entry.getKey()).rowNumber, "单据编号",
@@ -345,7 +291,7 @@ public class PurchaseOrderImportService {
                     } catch (Exception e) {
                         logger.error("批次 {} 导入失败", batchIndex, e);
                         List<PurchaseOrderImportResponse.ImportError> batchErrors = new ArrayList<>();
-                        for (Map.Entry<String, Map<Integer, List<PurchaseOrderDeliveryData>>> entry : batch) {
+                        for (Map.Entry<String, Map<Integer, PurchaseOrderItemHeader>> entry : batch) {
                             if (batchErrors.size() < MAX_ERROR_COUNT) {
                                 batchErrors.add(new PurchaseOrderImportResponse.ImportError(
                                         "采购订单", headerMap.get(entry.getKey()).rowNumber, "单据编号",
@@ -550,9 +496,8 @@ public class PurchaseOrderImportService {
         }
         
         private int importBatchOrders(
-                List<Map.Entry<String, Map<Integer, List<PurchaseOrderDeliveryData>>>> batch,
+                List<Map.Entry<String, Map<Integer, PurchaseOrderItemHeader>>> batch,
                 Map<String, PurchaseOrderHeader> headerMap,
-                Map<String, Map<Integer, PurchaseOrderItemHeader>> itemHeaderMap,
                 Map<String, Supplier> supplierCache,
                 Map<String, Material> materialCache,
                 Map<String, Unit> unitCache,
@@ -563,18 +508,16 @@ public class PurchaseOrderImportService {
             // 用于收集需要保存的实体，实现真正的批量插入
             List<PurchaseOrder> ordersToSave = new ArrayList<>();
             List<OrderItemData> itemsToSave = new ArrayList<>();
-            List<DeliveryData> deliveriesToSave = new ArrayList<>();
             
             // 用于跟踪订单和订单明细的映射关系
             Map<String, PurchaseOrder> orderMap = new LinkedHashMap<>();
             Map<String, Map<Integer, PurchaseOrderItem>> itemMap = new LinkedHashMap<>();
             
             // 第一遍：验证数据并准备实体对象
-            for (Map.Entry<String, Map<Integer, List<PurchaseOrderDeliveryData>>> entry : batch) {
+            for (Map.Entry<String, Map<Integer, PurchaseOrderItemHeader>> entry : batch) {
                 String billNo = entry.getKey();
                 PurchaseOrderHeader header = headerMap.get(billNo);
-                Map<Integer, PurchaseOrderItemHeader> items = itemHeaderMap.get(billNo);
-                Map<Integer, List<PurchaseOrderDeliveryData>> deliveries = entry.getValue();
+                Map<Integer, PurchaseOrderItemHeader> items = entry.getValue();
                 
                 try {
                     // 验证订单必须至少有一个订单明细
@@ -656,12 +599,11 @@ public class PurchaseOrderImportService {
                     orderMap.put(billNo, purchaseOrder);
                     itemMap.put(billNo, new LinkedHashMap<>());
                     
-                    // 处理订单明细和交货明细
+                    // 处理订单明细
                     logger.debug("处理订单 {} 的明细，共 {} 条明细", billNo, items.size());
                     for (Map.Entry<Integer, PurchaseOrderItemHeader> itemEntry : items.entrySet()) {
                         Integer sequence = itemEntry.getKey();
                         PurchaseOrderItemHeader itemHeader = itemEntry.getValue();
-                        List<PurchaseOrderDeliveryData> deliveryList = deliveries.getOrDefault(sequence, new ArrayList<>());
                         
                         try {
                             // 验证物料
@@ -773,94 +715,6 @@ public class PurchaseOrderImportService {
                             
                             itemsToSave.add(new OrderItemData(billNo, sequence, item, itemHeader.rowNumber));
                             itemMap.get(billNo).put(sequence, item);
-                            
-                            // 处理交货明细
-                            for (PurchaseOrderDeliveryData deliveryData : deliveryList) {
-                                try {
-                                    // 解析交货日期
-                                    LocalDate deliveryDate = null;
-                                    if (deliveryData.deliveryDate != null && !deliveryData.deliveryDate.trim().isEmpty()) {
-                                        try {
-                                            String dateStr = deliveryData.deliveryDate.trim();
-                                            if (dateStr.contains("/")) {
-                                                dateStr = dateStr.replace("/", "-");
-                                            }
-                                            deliveryDate = LocalDate.parse(dateStr, DATE_FORMATTER);
-                                        } catch (Exception e) {
-                                            if (errors.size() < MAX_ERROR_COUNT) {
-                                                errors.add(new PurchaseOrderImportResponse.ImportError(
-                                                        "采购订单交货明细", deliveryData.rowNumber, "交货日期",
-                                                        "日期格式错误: " + deliveryData.deliveryDate));
-                                            }
-                                            continue;
-                                        }
-                                    } else {
-                                        if (errors.size() < MAX_ERROR_COUNT) {
-                                            errors.add(new PurchaseOrderImportResponse.ImportError(
-                                                    "采购订单交货明细", deliveryData.rowNumber, "交货日期",
-                                                    "交货日期为空"));
-                                        }
-                                        continue;
-                                    }
-                                    
-                                    // 解析计划数量
-                                    BigDecimal planQty = null;
-                                    if (deliveryData.planQty != null && !deliveryData.planQty.trim().isEmpty()) {
-                                        try {
-                                            String planQtyStr = deliveryData.planQty.trim().replace(",", "");
-                                            planQty = new BigDecimal(planQtyStr);
-                                        } catch (Exception e) {
-                                            if (errors.size() < MAX_ERROR_COUNT) {
-                                                errors.add(new PurchaseOrderImportResponse.ImportError(
-                                                        "采购订单交货明细", deliveryData.rowNumber, "计划数量",
-                                                        "数量格式错误: " + deliveryData.planQty));
-                                            }
-                                            continue;
-                                        }
-                                    } else {
-                                        if (errors.size() < MAX_ERROR_COUNT) {
-                                            errors.add(new PurchaseOrderImportResponse.ImportError(
-                                                    "采购订单交货明细", deliveryData.rowNumber, "计划数量",
-                                                    "计划数量为空"));
-                                        }
-                                        continue;
-                                    }
-                                    
-                                    // 解析其他日期
-                                    LocalDate supplierDeliveryDate = parseDate(deliveryData.supplierDeliveryDate);
-                                    LocalDate preArrivalDate = parseDate(deliveryData.preArrivalDate);
-                                    
-                                    // 解析运输提前期
-                                    Integer transportLeadTime = null;
-                                    if (deliveryData.transportLeadTime != null && !deliveryData.transportLeadTime.trim().isEmpty()) {
-                                        try {
-                                            transportLeadTime = Integer.parseInt(deliveryData.transportLeadTime.trim());
-                                        } catch (Exception e) {
-                                            // 运输提前期可以为空，忽略解析错误
-                                        }
-                                    }
-                                    
-                                    // 创建交货明细（暂不保存）
-                                    PurchaseOrderDelivery delivery = PurchaseOrderDelivery.builder()
-                                            .purchaseOrderItem(item)
-                                            .sequence(deliveryData.sequence != null ? deliveryData.sequence : 1)
-                                            .deliveryDate(deliveryDate)
-                                            .planQty(planQty)
-                                            .supplierDeliveryDate(supplierDeliveryDate)
-                                            .preArrivalDate(preArrivalDate)
-                                            .transportLeadTime(transportLeadTime)
-                                            .build();
-                                    
-                                    deliveriesToSave.add(new DeliveryData(billNo, sequence, delivery, deliveryData.rowNumber));
-                                } catch (Exception e) {
-                                    logger.error("处理交货明细失败，行号: {}", deliveryData.rowNumber, e);
-                                    if (errors.size() < MAX_ERROR_COUNT) {
-                                        errors.add(new PurchaseOrderImportResponse.ImportError(
-                                                "采购订单交货明细", deliveryData.rowNumber, null,
-                                                "处理失败: " + e.getMessage()));
-                                    }
-                                }
-                            }
                         } catch (Exception e) {
                             logger.error("处理订单明细失败，行号: {}", itemHeader.rowNumber, e);
                             if (errors.size() < MAX_ERROR_COUNT) {
@@ -916,33 +770,23 @@ public class PurchaseOrderImportService {
                 }
                 
                 // 3. 批量保存所有交货明细
-                if (!deliveriesToSave.isEmpty()) {
-                    logger.debug("批量保存 {} 条交货明细", deliveriesToSave.size());
-                    // 更新交货明细中的订单明细引用（确保ID已设置）
-                    for (DeliveryData deliveryData : deliveriesToSave) {
-                        Map<Integer, PurchaseOrderItem> items = itemMap.get(deliveryData.billNo);
-                        if (items != null) {
-                            PurchaseOrderItem item = items.get(deliveryData.sequence);
-                            if (item != null) {
-                                deliveryData.delivery.setPurchaseOrderItem(item);
-                            }
-                        }
-                    }
-                    purchaseOrderDeliveryRepository.saveAll(
-                            deliveriesToSave.stream().map(dd -> dd.delivery).toList());
-                }
+                // if (!deliveriesToSave.isEmpty()) { // deliveriesToSave is removed
+                //     logger.debug("批量保存 {} 条交货明细", deliveriesToSave.size());
+                //     // 更新交货明细中的订单明细引用（确保ID已设置）
+                //     for (DeliveryData deliveryData : deliveriesToSave) {
+                //         Map<Integer, PurchaseOrderItem> items = itemMap.get(deliveryData.billNo);
+                //         if (items != null) {
+                //             PurchaseOrderItem item = items.get(deliveryData.sequence);
+                //             if (item != null) {
+                //                 deliveryData.delivery.setPurchaseOrderItem(item);
+                //             }
+                //         }
+                //     }
+                //     // purchaseOrderDeliveryRepository.saveAll(
+                //     //         deliveriesToSave.stream().map(dd -> dd.delivery).toList());
+                // }
                 
                 // 4. 批量更新订单状态
-                Set<String> processedBillNos = new HashSet<>();
-                for (OrderItemData itemData : itemsToSave) {
-                    if (!processedBillNos.contains(itemData.billNo)) {
-                        PurchaseOrder order = orderMap.get(itemData.billNo);
-                        if (order != null && order.getId() != null) {
-                            purchaseOrderService.checkAndUpdateOrderStatus(order.getId());
-                            processedBillNos.add(itemData.billNo);
-                        }
-                    }
-                }
                 
                 // 统计成功数量（只统计有订单明细的订单）
                 Set<String> ordersWithItems = new HashSet<>();
@@ -950,8 +794,8 @@ public class PurchaseOrderImportService {
                     ordersWithItems.add(itemData.billNo);
                 }
                 successCount = ordersWithItems.size();
-                logger.debug("批次处理完成，成功保存 {} 个订单（共 {} 条订单明细，{} 条交货明细）", 
-                        successCount, itemsToSave.size(), deliveriesToSave.size());
+                logger.debug("批次处理完成，成功保存 {} 个订单（共 {} 条订单明细）", 
+                        successCount, itemsToSave.size());
                 
             } catch (Exception e) {
                 logger.error("批量保存失败", e);
@@ -979,13 +823,6 @@ public class PurchaseOrderImportService {
                 int rowNumber
         ) {}
         
-        private record DeliveryData(
-                String billNo,
-                Integer sequence,
-                PurchaseOrderDelivery delivery,
-                int rowNumber
-        ) {}
-        
         private BigDecimal parseBigDecimal(String value) {
             if (value == null || value.trim().isEmpty()) {
                 return null;
@@ -993,21 +830,6 @@ public class PurchaseOrderImportService {
             try {
                 String qtyStr = value.trim().replace(",", "");
                 return new BigDecimal(qtyStr);
-            } catch (Exception e) {
-                return null;
-            }
-        }
-        
-        private LocalDate parseDate(String value) {
-            if (value == null || value.trim().isEmpty()) {
-                return null;
-            }
-            try {
-                String dateStr = value.trim();
-                if (dateStr.contains("/")) {
-                    dateStr = dateStr.replace("/", "-");
-                }
-                return LocalDate.parse(dateStr, DATE_FORMATTER);
             } catch (Exception e) {
                 return null;
             }
@@ -1041,20 +863,9 @@ public class PurchaseOrderImportService {
             String salBaseQty
     ) {}
     
-    private record PurchaseOrderDeliveryData(
-            int rowNumber,
-            Integer sequence,
-            String deliveryDate,
-            String planQty,
-            String supplierDeliveryDate,
-            String preArrivalDate,
-            String transportLeadTime
-    ) {}
-    
     private record PurchaseOrderData(
             PurchaseOrderHeader header,
-            PurchaseOrderItemHeader itemHeader,
-            PurchaseOrderDeliveryData delivery  // 可以为null，表示订单明细没有交货明细
+            PurchaseOrderItemHeader itemHeader
     ) {}
     
     // 批次处理结果

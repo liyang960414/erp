@@ -9,6 +9,14 @@
               <el-icon><Upload /></el-icon>
               导入Excel
             </el-button>
+            <el-button
+              v-if="authStore.hasPermission('sale_outstock:import')"
+              type="warning"
+              @click="handleOutstockImport"
+            >
+              <el-icon><Upload /></el-icon>
+              导入出库单
+            </el-button>
             <el-button type="primary" @click="handleRefresh">
               <el-icon><Refresh /></el-icon>
               刷新
@@ -92,6 +100,18 @@
                         {{ formatNumber(row.qty) }}
                       </template>
                     </el-table-column>
+                    <el-table-column prop="deliveredQty" label="已出库数量" width="140" align="right">
+                      <template #default="{ row }">
+                        {{ formatNumber(row.deliveredQty) }}
+                      </template>
+                    </el-table-column>
+                    <el-table-column prop="status" label="明细状态" width="110" align="center">
+                      <template #default="{ row }">
+                        <el-tag :type="getItemStatusType(row.status)" size="small">
+                          {{ getItemStatusLabel(row.status) }}
+                        </el-tag>
+                      </template>
+                    </el-table-column>
                     <el-table-column prop="inspectionDate" label="验货日期" width="120">
                       <template #default="{ row }">
                         {{ row.inspectionDate || '-' }}
@@ -135,6 +155,13 @@
             <el-table-column prop="orderDate" label="订单日期" width="120" align="center">
               <template #default="{ row }">
                 <span class="order-date">{{ row.orderDate }}</span>
+              </template>
+            </el-table-column>
+            <el-table-column prop="status" label="状态" width="100" align="center">
+              <template #default="{ row }">
+                <el-tag :type="getOrderStatusType(row.status)" size="small">
+                  {{ getOrderStatusLabel(row.status) }}
+                </el-tag>
               </template>
             </el-table-column>
             <el-table-column prop="customerName" label="客户名称" min-width="200" show-overflow-tooltip>
@@ -182,6 +209,10 @@
 
     <!-- 导入对话框 -->
     <SaleOrderImportDialog v-model="importDialogVisible" @success="handleImportSuccess" />
+    <SaleOutstockImportDialog
+      v-model="outstockImportDialogVisible"
+      @success="handleOutstockImportSuccess"
+    />
 
     <!-- 详情对话框 -->
     <SaleOrderDetailDialog
@@ -203,9 +234,10 @@ import { ElMessage } from 'element-plus'
 import { Upload, Refresh, Search, Loading, View } from '@element-plus/icons-vue'
 import { useAuthStore } from '@/stores/auth'
 import { saleOrderApi } from '@/api/saleOrder'
-import type { SaleOrder } from '@/types/saleOrder'
+import type { SaleOrder, SaleOrderStatus, SaleOrderItemStatus } from '@/types/saleOrder'
 import SaleOrderImportDialog from './components/SaleOrderImportDialog.vue'
 import SaleOrderDetailDialog from './components/SaleOrderDetailDialog.vue'
+import SaleOutstockImportDialog from './components/SaleOutstockImportDialog.vue'
 
 const authStore = useAuthStore()
 
@@ -215,6 +247,7 @@ const expandedRows = ref(new Set<number>())
 const loadingDetails = ref<Record<number, boolean>>({})
 const orderDetailsMap = ref<Record<number, SaleOrder>>({})
 const importDialogVisible = ref(false)
+const outstockImportDialogVisible = ref(false)
 const detailDialogVisible = ref(false)
 const currentOrder = ref<SaleOrder | null>(null)
 
@@ -340,6 +373,16 @@ const handleImportSuccess = () => {
   loadOrders()
 }
 
+const handleOutstockImport = () => {
+  outstockImportDialogVisible.value = true
+}
+
+const handleOutstockImportSuccess = () => {
+  loadOrders()
+  expandedRows.value.clear()
+  orderDetailsMap.value = {}
+}
+
 const handleTableExpand = (row: SaleOrder, expandedRowsList: SaleOrder[]) => {
   // 展开行
   if (expandedRowsList.includes(row)) {
@@ -396,6 +439,22 @@ const formatDateTime = (value: string): string => {
   } catch {
     return value
   }
+}
+
+const getOrderStatusLabel = (status: SaleOrderStatus): string => {
+  return status === 'CLOSED' ? '已关闭' : '进行中'
+}
+
+const getOrderStatusType = (status: SaleOrderStatus): 'success' | 'info' => {
+  return status === 'CLOSED' ? 'success' : 'info'
+}
+
+const getItemStatusLabel = (status: SaleOrderItemStatus): string => {
+  return status === 'CLOSED' ? '已关闭' : '进行中'
+}
+
+const getItemStatusType = (status: SaleOrderItemStatus): 'success' | 'warning' => {
+  return status === 'CLOSED' ? 'success' : 'warning'
 }
 </script>
 
