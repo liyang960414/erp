@@ -9,6 +9,7 @@ import org.springframework.stereotype.Repository;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.Collection;
 import java.util.List;
 
 @Repository
@@ -54,5 +55,25 @@ public interface SaleOrderItemRepository extends JpaRepository<SaleOrderItem, Lo
 
     List<SaleOrderItem> findBySequenceIn(List<Integer> sequences);
 
+    @Query("SELECT soi FROM SaleOrderItem soi " +
+           "LEFT JOIN FETCH soi.material " +
+           "LEFT JOIN FETCH soi.unit " +
+           "LEFT JOIN FETCH soi.saleOrder " +
+           "WHERE soi.sequence IN :sequences")
+    List<SaleOrderItem> findBySequenceInWithRelations(@Param("sequences") Collection<Integer> sequences);
+
     boolean existsBySaleOrderIdAndStatus(Long saleOrderId, SaleOrderItemStatus status);
+
+    interface SaleOrderOpenFlag {
+        Long getSaleOrderId();
+        boolean isHasOpenItem();
+    }
+
+    @Query("SELECT soi.saleOrder.id AS saleOrderId, " +
+           "CASE WHEN COUNT(soi) > 0 THEN true ELSE false END AS hasOpenItem " +
+           "FROM SaleOrderItem soi " +
+           "WHERE soi.saleOrder.id IN :saleOrderIds " +
+           "AND soi.status = com.sambound.erp.enums.SaleOrderItemStatus.OPEN " +
+           "GROUP BY soi.saleOrder.id")
+    List<SaleOrderOpenFlag> findOpenFlagsBySaleOrderIds(@Param("saleOrderIds") Collection<Long> saleOrderIds);
 }

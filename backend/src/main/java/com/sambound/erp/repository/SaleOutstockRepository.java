@@ -9,11 +9,16 @@ import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import java.time.LocalDate;
+import java.util.Collection;
+import java.util.List;
 import java.util.Optional;
 
 @Repository
 public interface SaleOutstockRepository extends JpaRepository<SaleOutstock, Long> {
     Optional<SaleOutstock> findByBillNo(String billNo);
+
+    @Query("SELECT so.billNo FROM SaleOutstock so WHERE so.billNo IN :billNos")
+    List<String> findExistingBillNos(@Param("billNos") Collection<String> billNos);
 
     @Query("SELECT so FROM SaleOutstock so " +
            "WHERE (:billNo IS NULL OR LOWER(so.billNo) LIKE :billNo) " +

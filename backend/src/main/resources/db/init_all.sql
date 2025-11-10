@@ -273,7 +273,7 @@ CREATE TABLE sale_orders (
     order_date DATE NOT NULL,
     note TEXT,
     wo_number VARCHAR(100),
-    customer_id BIGINT NOT NULL REFERENCES customers(id) ON DELETE RESTRICT,
+    customer_id BIGINT REFERENCES customers(id) ON DELETE RESTRICT,
     status sale_order_status NOT NULL DEFAULT 'OPEN',
     created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP

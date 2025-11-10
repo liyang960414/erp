@@ -37,8 +37,8 @@ public class SaleOrder {
     @Column(name = "wo_number", length = 100)
     private String woNumber;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "customer_id", nullable = false)
+    @ManyToOne(fetch = FetchType.LAZY, optional = true)
+    @JoinColumn(name = "customer_id")
     private Customer customer;
 
     @Enumerated(EnumType.STRING)

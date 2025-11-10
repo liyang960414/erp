@@ -1,6 +1,7 @@
 package com.sambound.erp.repository;
 
 import com.sambound.erp.entity.SaleOrder;
+import com.sambound.erp.enums.SaleOrderStatus;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -19,15 +20,21 @@ public interface SaleOrderRepository extends JpaRepository<SaleOrder, Long> {
     /**
      * 分页查询销售订单,包含客户信息
      */
-    @Query("SELECT so FROM SaleOrder so " +
-           "LEFT JOIN FETCH so.customer " +
+    @Query("SELECT DISTINCT so FROM SaleOrder so " +
+           "LEFT JOIN FETCH so.customer c " +
            "WHERE (:billNo IS NULL OR so.billNo LIKE :billNo) " +
-           "AND (:customerCode IS NULL OR so.customer.code LIKE :customerCode) " +
+           "AND (:customerCode IS NULL OR c.code LIKE :customerCode) " +
+           "AND (:customerName IS NULL OR c.name LIKE :customerName) " +
+           "AND (:status IS NULL OR so.status = :status) " +
+           "AND (:woNumber IS NULL OR so.woNumber LIKE :woNumber) " +
            "AND (:startDate IS NULL OR so.orderDate >= :startDate) " +
            "AND (:endDate IS NULL OR so.orderDate <= :endDate)")
     Page<SaleOrder> findByConditions(
         @Param("billNo") String billNo,
         @Param("customerCode") String customerCode,
+        @Param("customerName") String customerName,
+        @Param("status") SaleOrderStatus status,
+        @Param("woNumber") String woNumber,
         @Param("startDate") LocalDate startDate,
         @Param("endDate") LocalDate endDate,
         Pageable pageable

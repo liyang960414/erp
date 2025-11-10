@@ -4,6 +4,7 @@ import com.sambound.erp.dto.ApiResponse;
 import com.sambound.erp.dto.OrderAlertDTO;
 import com.sambound.erp.dto.SaleOrderDTO;
 import com.sambound.erp.dto.SaleOrderImportResponse;
+import com.sambound.erp.enums.SaleOrderStatus;
 import com.sambound.erp.service.SaleOrderImportService;
 import com.sambound.erp.service.SaleOrderService;
 import org.springframework.data.domain.Page;
@@ -68,6 +69,9 @@ public class SaleOrderController {
     public ResponseEntity<ApiResponse<Page<SaleOrderDTO>>> getSaleOrders(
             @RequestParam(required = false) String billNo,
             @RequestParam(required = false) String customerCode,
+            @RequestParam(required = false) String customerName,
+            @RequestParam(required = false) SaleOrderStatus status,
+            @RequestParam(required = false) String woNumber,
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate startDate,
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate endDate,
             @RequestParam(defaultValue = "0") int page,
@@ -75,7 +79,7 @@ public class SaleOrderController {
         
         Pageable pageable = PageRequest.of(page, size);
         Page<SaleOrderDTO> orders = saleOrderService.getSaleOrders(
-                billNo, customerCode, startDate, endDate, pageable);
+                billNo, customerCode, customerName, status, woNumber, startDate, endDate, pageable);
         return ResponseEntity.ok(ApiResponse.success(orders));
     }
     

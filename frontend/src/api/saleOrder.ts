@@ -1,10 +1,19 @@
 import request from '@/utils/request'
-import type { SaleOrder, SaleOrderImportResponse, PageResponse, SaleOrderListResponse } from '@/types/saleOrder'
+import type {
+  SaleOrder,
+  SaleOrderImportResponse,
+  PageResponse,
+  SaleOrderListResponse,
+  SaleOrderStatus,
+} from '@/types/saleOrder'
 import type { OrderAlert } from '@/types/orderAlert'
 
 export interface SaleOrderQueryParams {
   billNo?: string
   customerCode?: string
+  customerName?: string
+  woNumber?: string
+  status?: SaleOrderStatus
   startDate?: string
   endDate?: string
   page?: number

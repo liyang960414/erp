@@ -44,6 +44,33 @@
               style="width: 200px"
             />
           </el-form-item>
+          <el-form-item label="客户名称">
+            <el-input
+              v-model="searchForm.customerName"
+              placeholder="请输入客户名称"
+              clearable
+              style="width: 200px"
+            />
+          </el-form-item>
+          <el-form-item label="本司WO#">
+            <el-input
+              v-model="searchForm.woNumber"
+              placeholder="请输入WO编号"
+              clearable
+              style="width: 200px"
+            />
+          </el-form-item>
+          <el-form-item label="订单状态">
+            <el-select
+              v-model="searchForm.status"
+              placeholder="请选择订单状态"
+              clearable
+              style="width: 150px"
+            >
+              <el-option label="进行中" value="OPEN" />
+              <el-option label="已关闭" value="CLOSED" />
+            </el-select>
+          </el-form-item>
           <el-form-item label="订单日期">
             <el-date-picker
               v-model="dateRange"
@@ -70,6 +97,7 @@
       <div class="table-wrapper">
         <div class="table-container">
           <el-table
+            ref="tableRef"
             v-loading="loading"
             :data="orders"
             style="width: 100%"
@@ -231,6 +259,7 @@ export default {
 <script setup lang="ts">
 import { ref, reactive, onMounted, onActivated, nextTick } from 'vue'
 import { ElMessage } from 'element-plus'
+import type { TableInstance } from 'element-plus'
 import { Upload, Refresh, Search, Loading, View } from '@element-plus/icons-vue'
 import { useAuthStore } from '@/stores/auth'
 import { saleOrderApi } from '@/api/saleOrder'
@@ -242,6 +271,7 @@ import SaleOutstockImportDialog from './components/SaleOutstockImportDialog.vue'
 const authStore = useAuthStore()
 
 const loading = ref(false)
+const tableRef = ref<TableInstance | null>(null)
 const orders = ref<SaleOrder[]>([])
 const expandedRows = ref(new Set<number>())
 const loadingDetails = ref<Record<number, boolean>>({})
@@ -256,6 +286,9 @@ const dateRange = ref<[string, string] | null>(null)
 const searchForm = reactive({
   billNo: '',
   customerCode: '',
+  customerName: '',
+  woNumber: '',
+  status: null as SaleOrderStatus | null,
 })
 
 const pagination = reactive({
@@ -281,7 +314,7 @@ onActivated(() => {
 const loadOrders = async () => {
   loading.value = true
   try {
-    const params: any = {
+    const params: Record<string, any> = {
       page: pagination.page - 1,
       size: pagination.size,
     }
@@ -291,6 +324,15 @@ const loadOrders = async () => {
     }
     if (searchForm.customerCode) {
       params.customerCode = searchForm.customerCode
+    }
+    if (searchForm.customerName) {
+      params.customerName = searchForm.customerName
+    }
+    if (searchForm.woNumber) {
+      params.woNumber = searchForm.woNumber
+    }
+    if (searchForm.status) {
+      params.status = searchForm.status
     }
     if (dateRange.value) {
       params.startDate = dateRange.value[0]
@@ -317,11 +359,68 @@ const loadOrders = async () => {
     } else {
       pagination.total = 0
     }
+
+    expandedRows.value = new Set<number>()
+    orderDetailsMap.value = Object.create(null) as Record<number, SaleOrder>
+    loadingDetails.value = Object.create(null) as Record<number, boolean>
+
+    if (orders.value.length > 0) {
+      await nextTick()
+      expandAllRows()
+    }
   } catch (error: any) {
     ElMessage.error('加载订单列表失败: ' + (error.message || '未知错误'))
   } finally {
     loading.value = false
   }
+}
+
+const ensureOrderDetails = async (order: SaleOrder) => {
+  if (!order || order.id == null) {
+    return
+  }
+
+  if (orderDetailsMap.value[order.id] || loadingDetails.value[order.id]) {
+    return
+  }
+
+  loadingDetails.value[order.id] = true
+  try {
+    const detail = await saleOrderApi.getSaleOrderById(order.id)
+    orderDetailsMap.value[order.id] = detail
+  } catch (error: any) {
+    ElMessage.error(`加载订单详情失败: ${error.message || '未知错误'}`)
+    orderDetailsMap.value[order.id] = { ...order, items: [] } as SaleOrder
+  } finally {
+    loadingDetails.value[order.id] = false
+  }
+}
+
+const expandAllRows = () => {
+  const table = tableRef.value
+
+  if (!orders.value.length) {
+    expandedRows.value = new Set<number>()
+    return
+  }
+
+  if (!table) {
+    expandedRows.value = new Set<number>(orders.value.map((order) => order.id))
+    orders.value.forEach((order) => {
+      void ensureOrderDetails(order)
+    })
+    return
+  }
+
+  const nextExpanded = new Set<number>()
+
+  orders.value.forEach((order) => {
+    nextExpanded.add(order.id)
+    table.toggleRowExpansion?.(order, true)
+    void ensureOrderDetails(order)
+  })
+
+  expandedRows.value = nextExpanded
 }
 
 const handleSearch = () => {
@@ -332,6 +431,9 @@ const handleSearch = () => {
 const handleReset = () => {
   searchForm.billNo = ''
   searchForm.customerCode = ''
+  searchForm.customerName = ''
+  searchForm.woNumber = ''
+  searchForm.status = null
   dateRange.value = null
   pagination.page = 1
   loadOrders()
@@ -378,33 +480,19 @@ const handleOutstockImport = () => {
 }
 
 const handleOutstockImportSuccess = () => {
+  expandedRows.value = new Set<number>()
+  orderDetailsMap.value = Object.create(null) as Record<number, SaleOrder>
+  loadingDetails.value = Object.create(null) as Record<number, boolean>
   loadOrders()
-  expandedRows.value.clear()
-  orderDetailsMap.value = {}
 }
 
 const handleTableExpand = (row: SaleOrder, expandedRowsList: SaleOrder[]) => {
-  // 展开行
-  if (expandedRowsList.includes(row)) {
+  const isExpanded = expandedRowsList.some((item) => item.id === row.id)
+
+  if (isExpanded) {
     expandedRows.value.add(row.id)
-    // 只有在数据未加载且不在加载中时才发起请求
-    if (!orderDetailsMap.value[row.id] && !loadingDetails.value[row.id]) {
-      loadingDetails.value[row.id] = true
-      saleOrderApi
-        .getSaleOrderById(row.id)
-        .then((order) => {
-          orderDetailsMap.value[row.id] = order
-        })
-        .catch((error: any) => {
-          ElMessage.error(`加载订单详情失败: ${error.message || '未知错误'}`)
-          orderDetailsMap.value[row.id] = { ...row, items: [] } as SaleOrder
-        })
-        .finally(() => {
-          loadingDetails.value[row.id] = false
-        })
-    }
+    void ensureOrderDetails(row)
   } else {
-    // 折叠行
     expandedRows.value.delete(row.id)
   }
 }

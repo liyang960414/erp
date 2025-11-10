@@ -514,13 +514,6 @@ public class SaleOrderImportService {
                                 }
                                 continue;
                             }
-                        } else {
-                            if (errors.size() < MAX_ERROR_COUNT) {
-                                errors.add(new SaleOrderImportResponse.ImportError(
-                                        "销售订单", header.rowNumber, "客户编码",
-                                        "客户编码或名称为空"));
-                            }
-                            continue;
                         }
                         
                         // 解析订单日期

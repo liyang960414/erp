@@ -5,6 +5,7 @@ import com.sambound.erp.dto.SaleOrderDTO;
 import com.sambound.erp.dto.SaleOrderItemDTO;
 import com.sambound.erp.entity.SaleOrder;
 import com.sambound.erp.entity.SaleOrderItem;
+import com.sambound.erp.enums.SaleOrderStatus;
 import com.sambound.erp.exception.BusinessException;
 import com.sambound.erp.repository.SaleOrderItemRepository;
 import com.sambound.erp.repository.SaleOrderRepository;
@@ -35,17 +36,23 @@ public class SaleOrderService {
     /**
      * 分页查询销售订单
      */
-    public Page<SaleOrderDTO> getSaleOrders(String billNo, String customerCode, 
-                                           LocalDate startDate, LocalDate endDate,
+    public Page<SaleOrderDTO> getSaleOrders(String billNo, String customerCode,
+                                           String customerName, SaleOrderStatus status,
+                                           String woNumber, LocalDate startDate, LocalDate endDate,
                                            Pageable pageable) {
         // 处理模糊查询参数
         String billNoPattern = billNo != null && !billNo.trim().isEmpty() 
                 ? "%" + billNo.trim() + "%" : null;
         String customerCodePattern = customerCode != null && !customerCode.trim().isEmpty()
                 ? "%" + customerCode.trim() + "%" : null;
+        String customerNamePattern = customerName != null && !customerName.trim().isEmpty()
+                ? "%" + customerName.trim() + "%" : null;
+        String woNumberPattern = woNumber != null && !woNumber.trim().isEmpty()
+                ? "%" + woNumber.trim() + "%" : null;
         
         Page<SaleOrder> orders = saleOrderRepository.findByConditions(
-                billNoPattern, customerCodePattern, startDate, endDate, pageable);
+                billNoPattern, customerCodePattern, customerNamePattern, status, woNumberPattern,
+                startDate, endDate, pageable);
         return orders.map(this::toDTO);
     }
     

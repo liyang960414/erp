@@ -14,11 +14,11 @@ import com.sambound.erp.enums.SaleOrderStatus;
 import com.sambound.erp.repository.SaleOrderItemRepository;
 import com.sambound.erp.repository.SaleOrderRepository;
 import com.sambound.erp.repository.SaleOutstockRepository;
-import com.sambound.erp.exception.BusinessException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.PlatformTransactionManager;
+import org.springframework.transaction.TransactionDefinition;
 import org.springframework.transaction.support.TransactionTemplate;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -28,13 +28,22 @@ import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.LinkedHashMap;
+import java.util.HashMap;
 import java.util.HashSet;
+import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 import java.util.Set;
+import java.util.concurrent.Callable;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
+import java.util.concurrent.Semaphore;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.locks.ReentrantLock;
+import java.util.stream.Collectors;
 
 @Service
 public class SaleOutstockImportService {
@@ -42,11 +51,16 @@ public class SaleOutstockImportService {
     private static final Logger logger = LoggerFactory.getLogger(SaleOutstockImportService.class);
     private static final int MAX_ERROR_COUNT = 1000;
     private static final DateTimeFormatter DATE_FORMATTER = DateTimeFormatter.ofPattern("yyyy-MM-dd");
+    private static final int BATCH_SIZE = 500;
+    private static final int IMPORT_BATCH_SIZE = 50;
+    private static final int MAX_CONCURRENT_IMPORTS = 10;
 
     private final SaleOutstockRepository saleOutstockRepository;
     private final SaleOrderItemRepository saleOrderItemRepository;
     private final SaleOrderRepository saleOrderRepository;
     private final TransactionTemplate transactionTemplate;
+    private final TransactionTemplate readOnlyTransactionTemplate;
+    private final Semaphore importConcurrencySemaphore = new Semaphore(MAX_CONCURRENT_IMPORTS, true);
 
     public SaleOutstockImportService(
             SaleOutstockRepository saleOutstockRepository,
@@ -57,8 +71,12 @@ public class SaleOutstockImportService {
         this.saleOrderItemRepository = saleOrderItemRepository;
         this.saleOrderRepository = saleOrderRepository;
         this.transactionTemplate = new TransactionTemplate(transactionManager);
-        this.transactionTemplate.setPropagationBehavior(TransactionTemplate.PROPAGATION_REQUIRES_NEW);
+        this.transactionTemplate.setPropagationBehavior(TransactionDefinition.PROPAGATION_REQUIRES_NEW);
         this.transactionTemplate.setTimeout(120);
+        this.readOnlyTransactionTemplate = new TransactionTemplate(transactionManager);
+        this.readOnlyTransactionTemplate.setPropagationBehavior(TransactionDefinition.PROPAGATION_REQUIRED);
+        this.readOnlyTransactionTemplate.setReadOnly(true);
+        this.readOnlyTransactionTemplate.setTimeout(60);
     }
 
     public SaleOutstockImportResponse importFromExcel(MultipartFile file) {
@@ -89,6 +107,7 @@ public class SaleOutstockImportService {
     private class SaleOutstockDataCollector implements ReadListener<SaleOutstockExcelRow> {
 
         private final List<SaleOutstockData> outstockDataList = new ArrayList<>();
+        private final Map<Integer, String> billNoByRowNumber = new ConcurrentHashMap<>();
         private final AtomicInteger totalRows = new AtomicInteger(0);
         private SaleOutstockHeader currentHeader = null;
 
@@ -119,6 +138,11 @@ public class SaleOutstockImportService {
                 return;
             }
 
+            String currentBillNo = trimToNull(currentHeader.billNo());
+            if (currentBillNo != null) {
+                billNoByRowNumber.put(rowNum, currentBillNo);
+            }
+
             String saleOrderEntryId = trimToNull(data.getSaleOrderEntryId());
             if (saleOrderEntryId != null) {
                 //移除千分位
@@ -136,6 +160,9 @@ public class SaleOutstockImportService {
                 );
 
                 outstockDataList.add(new SaleOutstockData(currentHeader, item));
+                if (currentBillNo != null) {
+                    billNoByRowNumber.put(item.rowNumber(), currentBillNo);
+                }
             }
         }
 
@@ -157,44 +184,125 @@ public class SaleOutstockImportService {
                 outstockGroups.computeIfAbsent(data.header(), k -> new ArrayList<>()).add(data.item());
             }
 
-            int totalOutstockCount = outstockGroups.size();
+            Map<String, List<SaleOutstockHeader>> headersByBillNo = new HashMap<>();
+            for (SaleOutstockHeader header : outstockGroups.keySet()) {
+                String billNo = trimToNull(header.billNo());
+                if (billNo != null) {
+                    headersByBillNo.computeIfAbsent(billNo, k -> new ArrayList<>()).add(header);
+                }
+            }
+
+            Map<Integer, String> duplicateBillNoByRow = new HashMap<>();
+            headersByBillNo.forEach((billNo, headerList) -> {
+                if (headerList.size() > 1) {
+                    headerList.forEach(header -> duplicateBillNoByRow.put(header.rowNumber(), billNo));
+                }
+            });
+
+            Set<String> billNos = headersByBillNo.keySet();
+            Set<String> existingBillNos = findExistingBillNos(billNos);
+
+            List<Map.Entry<SaleOutstockHeader, List<SaleOutstockItemData>>> entries =
+                    new ArrayList<>(outstockGroups.entrySet());
+
+            int totalOutstockCount = entries.size();
             logger.info("找到 {} 张销售出库单，{} 条明细，开始导入数据库", totalOutstockCount, outstockDataList.size());
 
             List<SaleOutstockImportResponse.ImportError> errors = Collections.synchronizedList(new ArrayList<>());
             AtomicInteger successCount = new AtomicInteger(0);
+            Set<Long> saleOrdersToRefresh = ConcurrentHashMap.newKeySet();
+            Map<Long, Integer> saleOrderFirstRowMap = new ConcurrentHashMap<>();
+            ConcurrentHashMap<Integer, ReentrantLock> sequenceLocks = new ConcurrentHashMap<>();
 
-            outstockGroups.forEach((header, items) -> {
-                if (errors.size() >= MAX_ERROR_COUNT) {
-                    return;
+            for (int start = 0; start < entries.size() && errors.size() < MAX_ERROR_COUNT; start += IMPORT_BATCH_SIZE) {
+                int end = Math.min(start + IMPORT_BATCH_SIZE, entries.size());
+                List<Map.Entry<SaleOutstockHeader, List<SaleOutstockItemData>>> batch = entries.subList(start, end);
+
+                try (ExecutorService executor = Executors.newVirtualThreadPerTaskExecutor()) {
+                    List<Future<ImportTaskResult>> futures = new ArrayList<>();
+                    Map<Future<ImportTaskResult>, SaleOutstockHeader> futureHeaders = new HashMap<>();
+
+                    for (Map.Entry<SaleOutstockHeader, List<SaleOutstockItemData>> entry : batch) {
+                        if (errors.size() >= MAX_ERROR_COUNT) {
+                            break;
+                        }
+
+                        SaleOutstockHeader header = entry.getKey();
+                        List<SaleOutstockItemData> items = entry.getValue();
+                        String billNo = trimToNull(header.billNo());
+
+                        if (billNo != null) {
+                            if (duplicateBillNoByRow.containsKey(header.rowNumber())) {
+                                addError(errors, header.rowNumber(), "单据编号",
+                                        "Excel 中存在重复的销售出库单编号: " + billNo);
+                                continue;
+                            }
+                            if (existingBillNos.contains(billNo)) {
+                                addError(errors, header.rowNumber(), "单据编号",
+                                        "销售出库单已存在: " + billNo);
+                                continue;
+                            }
+                        }
+
+                        Callable<ImportTaskResult> task = () -> {
+                            importConcurrencySemaphore.acquireUninterruptibly();
+                            try {
+                                Set<Long> affectedSaleOrders = transactionTemplate.execute(status ->
+                                        processOutstock(header, items, sequenceLocks));
+                                return new ImportTaskResult(
+                                        affectedSaleOrders == null ? Collections.emptySet() : affectedSaleOrders
+                                );
+                            } finally {
+                                importConcurrencySemaphore.release();
+                            }
+                        };
+
+                        Future<ImportTaskResult> future = executor.submit(task);
+                        futures.add(future);
+                        futureHeaders.put(future, header);
+                    }
+
+                    for (Future<ImportTaskResult> future : futures) {
+                        if (errors.size() >= MAX_ERROR_COUNT) {
+                            future.cancel(false);
+                            continue;
+                        }
+
+                        SaleOutstockHeader header = futureHeaders.get(future);
+                        String billNo = header != null ? trimToNull(header.billNo()) : null;
+                        try {
+                            ImportTaskResult result = future.get();
+                            successCount.incrementAndGet();
+                            if (result.affectedSaleOrderIds() != null) {
+                                result.affectedSaleOrderIds().forEach(id -> {
+                                    saleOrdersToRefresh.add(id);
+                                    if (header != null) {
+                                        saleOrderFirstRowMap.putIfAbsent(id, header.rowNumber());
+                                    }
+                                });
+                            }
+                        } catch (Exception e) {
+                            Throwable cause = e.getCause() != null ? e.getCause() : e;
+                            if (cause instanceof ImportException importException) {
+                                addError(errors, importException.rowNumber, importException.field, importException.getMessage());
+                            } else {
+                                logger.error("导入销售出库单失败，单据编号: {}", billNo, cause);
+                                if (header != null) {
+                                    addError(errors, header.rowNumber(), "单据编号", "导入失败: " + cause.getMessage());
+                                }
+                            }
+                        }
+                    }
                 }
+            }
 
+            if (!saleOrdersToRefresh.isEmpty()) {
                 try {
-                    transactionTemplate.execute(status -> {
-                        processOutstock(header, items, errors);
-                        return null;
-                    });
-                    successCount.incrementAndGet();
+                    refreshSaleOrderStatus(saleOrdersToRefresh, saleOrderFirstRowMap);
                 } catch (ImportException e) {
-                    if (errors.size() < MAX_ERROR_COUNT) {
-                        errors.add(new SaleOutstockImportResponse.ImportError(
-                                "销售出库",
-                                e.rowNumber,
-                                e.field,
-                                e.getMessage()
-                        ));
-                    }
-                } catch (Exception e) {
-                    logger.error("导入销售出库单失败，单据编号: {}", header.billNo(), e);
-                    if (errors.size() < MAX_ERROR_COUNT) {
-                        errors.add(new SaleOutstockImportResponse.ImportError(
-                                "销售出库",
-                                header.rowNumber(),
-                                "单据编号",
-                                "导入失败: " + e.getMessage()
-                        ));
-                    }
+                    addError(errors, e.rowNumber, e.field, e.getMessage());
                 }
-            });
+            }
 
             int failureCount = totalOutstockCount - successCount.get();
             return new SaleOutstockImportResponse(
@@ -207,19 +315,12 @@ public class SaleOutstockImportService {
             );
         }
 
-        private void processOutstock(
+        private Set<Long> processOutstock(
                 SaleOutstockHeader header,
                 List<SaleOutstockItemData> items,
-                List<SaleOutstockImportResponse.ImportError> errors) {
+                ConcurrentHashMap<Integer, ReentrantLock> sequenceLocks) {
 
             String billNo = requireNonBlank(header.billNo(), header.rowNumber(), "单据编号");
-
-            Optional<SaleOutstock> existing = saleOutstockRepository.findByBillNo(billNo);
-            if (existing.isPresent()) {
-                throw new ImportException(header.rowNumber(), "单据编号",
-                        "销售出库单已存在: " + billNo);
-            }
-
             LocalDate outstockDate = parseDate(requireNonBlank(header.outstockDate(), header.rowNumber(), "出库日期"), header.rowNumber());
             String note = trimToNull(header.note());
 
@@ -228,8 +329,8 @@ public class SaleOutstockImportService {
                         "销售出库单没有任何明细记录");
             }
 
-            List<Integer> saleOrderSequences = new ArrayList<>();
             List<ParsedItem> parsedItems = new ArrayList<>();
+            LinkedHashSet<Integer> uniqueSequences = new LinkedHashSet<>();
 
             for (SaleOutstockItemData item : items) {
                 int rowNumber = item.rowNumber();
@@ -237,16 +338,50 @@ public class SaleOutstockImportService {
                 Integer sequence = parseInteger(requireNonBlank(item.entrySequence(), rowNumber, "明细序号"), rowNumber, "明细序号");
                 BigDecimal qty = parseDecimal(requireNonBlank(item.realQty(), rowNumber, "实发数量"), rowNumber, "实发数量");
 
-                saleOrderSequences.add(saleOrderSequence);
                 parsedItems.add(new ParsedItem(item, saleOrderSequence, sequence, qty));
+                uniqueSequences.add(saleOrderSequence);
             }
 
-            Map<Integer, List<SaleOrderItem>> sequenceToItems = new LinkedHashMap<>();
-            if (!saleOrderSequences.isEmpty()) {
-                saleOrderItemRepository.findBySequenceIn(saleOrderSequences).forEach(item -> {
-                    sequenceToItems.computeIfAbsent(item.getSequence(), k -> new ArrayList<>()).add(item);
-                });
+            List<Integer> sortedSequences = new ArrayList<>(uniqueSequences);
+            Collections.sort(sortedSequences);
+
+            List<ReentrantLock> locks = new ArrayList<>(sortedSequences.size());
+            for (Integer sequence : sortedSequences) {
+                ReentrantLock lock = sequenceLocks.computeIfAbsent(sequence, key -> new ReentrantLock(true));
+                locks.add(lock);
             }
+
+            for (ReentrantLock lock : locks) {
+                lock.lock();
+            }
+
+            try {
+                return transactionTemplate.execute(status ->
+                        executeOutstockTransaction(billNo, outstockDate, note, parsedItems));
+            } finally {
+                for (int i = locks.size() - 1; i >= 0; i--) {
+                    locks.get(i).unlock();
+                }
+            }
+        }
+
+        private Set<Long> executeOutstockTransaction(
+                String billNo,
+                LocalDate outstockDate,
+                String note,
+                List<ParsedItem> parsedItems) {
+
+            List<Integer> sequences = parsedItems.stream()
+                    .map(ParsedItem::saleOrderSequence)
+                    .distinct()
+                    .toList();
+
+            List<SaleOrderItem> saleOrderItems = saleOrderItemRepository.findBySequenceInWithRelations(sequences);
+            Map<Integer, SaleOrderItem> itemsBySequence = saleOrderItems.stream()
+                    .collect(Collectors.toMap(SaleOrderItem::getSequence, item -> item));
+
+            Map<Integer, ItemAggregation> aggregations = new HashMap<>();
+            Set<Long> affectedSaleOrderIds = new HashSet<>();
 
             SaleOutstock outstock = SaleOutstock.builder()
                     .billNo(billNo)
@@ -254,31 +389,20 @@ public class SaleOutstockImportService {
                     .note(note)
                     .build();
 
-            List<SaleOrderItem> itemsToUpdate = new ArrayList<>();
-            Set<Long> affectedSaleOrderIds = new HashSet<>();
-
             for (ParsedItem parsed : parsedItems) {
-                List<SaleOrderItem> candidates = sequenceToItems.get(parsed.saleOrderSequence());
-                if (candidates == null || candidates.isEmpty()) {
+                SaleOrderItem saleOrderItem = itemsBySequence.get(parsed.saleOrderSequence());
+                if (saleOrderItem == null) {
                     throw new ImportException(parsed.raw().rowNumber(), "销售订单EntryId",
                             "无法找到对应的销售订单明细，序号: " + parsed.raw().saleOrderEntryId());
                 }
-                if (candidates.size() > 1) {
-                    throw new ImportException(parsed.raw().rowNumber(), "销售订单EntryId",
-                            "存在多个销售订单明细匹配序号 " + parsed.raw().saleOrderEntryId() + "，请确认数据唯一性");
-                }
-                SaleOrderItem saleOrderItem = candidates.get(0);
 
-                validateMaterial(parsed, saleOrderItem);
-                validateUnit(parsed, saleOrderItem);
+                validateMaterial(parsed.raw(), saleOrderItem, parsed.raw().rowNumber());
+                validateUnit(parsed.raw(), saleOrderItem, parsed.raw().rowNumber());
 
-                BigDecimal newDeliveredQty = saleOrderItem.getDeliveredQty().add(parsed.qty());
-                if (newDeliveredQty.compareTo(saleOrderItem.getQty()) > 0) {
-                    throw new ImportException(parsed.raw().rowNumber(), "实发数量",
-                            String.format("累计出库数量（%s）超过销售数量（%s）",
-                                    newDeliveredQty.toPlainString(),
-                                    saleOrderItem.getQty().toPlainString()));
-                }
+                ItemAggregation aggregation = aggregations.computeIfAbsent(
+                        parsed.saleOrderSequence(),
+                        key -> new ItemAggregation(saleOrderItem));
+                aggregation.addQuantity(parsed.qty(), parsed.raw().rowNumber());
 
                 SaleOutstockItem outstockItem = SaleOutstockItem.builder()
                         .sequence(parsed.sequence())
@@ -290,43 +414,228 @@ public class SaleOutstockImportService {
                         .entryNote(trimToNull(parsed.raw().entryNote()))
                         .woNumber(trimToNull(parsed.raw().woNumber()))
                         .build();
-
                 outstock.addItem(outstockItem);
 
+                affectedSaleOrderIds.add(saleOrderItem.getSaleOrder().getId());
+            }
+
+            aggregations.values().forEach(ItemAggregation::apply);
+
+            saleOutstockRepository.save(outstock);
+            if (!aggregations.isEmpty()) {
+                saleOrderItemRepository.saveAll(
+                        aggregations.values().stream()
+                                .map(ItemAggregation::saleOrderItem)
+                                .toList());
+            }
+
+            return affectedSaleOrderIds;
+        }
+
+        private void refreshSaleOrderStatus(Set<Long> saleOrderIds, Map<Long, Integer> saleOrderFirstRowMap) {
+            if (saleOrderIds.isEmpty()) {
+                return;
+            }
+
+            List<Long> ids = new ArrayList<>(saleOrderIds);
+            ids.sort(Long::compareTo);
+
+            for (int i = 0; i < ids.size(); i += BATCH_SIZE) {
+                int end = Math.min(i + BATCH_SIZE, ids.size());
+                List<Long> batchIds = ids.subList(i, end);
+                transactionTemplate.executeWithoutResult(status -> {
+                    Map<Long, SaleOrder> saleOrderMap = saleOrderRepository.findAllById(batchIds)
+                            .stream()
+                            .collect(Collectors.toMap(SaleOrder::getId, saleOrder -> saleOrder));
+
+                    if (saleOrderMap.size() != batchIds.size()) {
+                        for (Long saleOrderId : batchIds) {
+                            if (!saleOrderMap.containsKey(saleOrderId)) {
+                                int rowNumber = saleOrderFirstRowMap.getOrDefault(saleOrderId, -1);
+                                throw new ImportException(rowNumber, "销售订单",
+                                        "销售订单不存在: " + saleOrderId);
+                            }
+                        }
+                    }
+
+                    Map<Long, Boolean> orderHasOpenItems = fetchOpenItemFlags(batchIds);
+
+                    for (Long saleOrderId : batchIds) {
+                        SaleOrder saleOrder = saleOrderMap.get(saleOrderId);
+                        boolean hasOpenItems = orderHasOpenItems.getOrDefault(saleOrderId, Boolean.FALSE);
+                        saleOrder.setStatus(hasOpenItems ? SaleOrderStatus.OPEN : SaleOrderStatus.CLOSED);
+                    }
+
+                    saleOrderRepository.saveAll(saleOrderMap.values());
+                });
+            }
+        }
+
+        private Map<Long, Boolean> fetchOpenItemFlags(List<Long> saleOrderIds) {
+            List<Long> orderedIds = new ArrayList<>(saleOrderIds);
+            orderedIds.sort(Long::compareTo);
+
+            Map<Long, Boolean> result = new HashMap<>();
+            List<Long> batchIds = new ArrayList<>(BATCH_SIZE);
+
+            for (Long id : orderedIds) {
+                batchIds.add(id);
+                if (batchIds.size() >= BATCH_SIZE) {
+                    queryOpenItems(batchIds, result);
+                    batchIds.clear();
+                }
+            }
+            if (!batchIds.isEmpty()) {
+                queryOpenItems(batchIds, result);
+            }
+            return result;
+        }
+
+        private void queryOpenItems(List<Long> batchIds, Map<Long, Boolean> result) {
+            List<Long> idsCopy = new ArrayList<>(batchIds);
+            Map<Long, Boolean> flags = readOnlyTransactionTemplate.execute(status -> {
+                Map<Long, Boolean> map = new HashMap<>();
+                saleOrderItemRepository.findOpenFlagsBySaleOrderIds(idsCopy)
+                        .forEach(flag -> map.put(flag.getSaleOrderId(), flag.isHasOpenItem()));
+                return map;
+            });
+            if (flags != null) {
+                result.putAll(flags);
+            }
+            for (Long id : batchIds) {
+                result.putIfAbsent(id, Boolean.FALSE);
+            }
+        }
+
+        private static final class ItemAggregation {
+            private final SaleOrderItem saleOrderItem;
+            private BigDecimal accumulatedQty = BigDecimal.ZERO;
+            private BigDecimal remainingQty;
+
+            private ItemAggregation(SaleOrderItem saleOrderItem) {
+                this.saleOrderItem = saleOrderItem;
+                this.remainingQty = saleOrderItem.getQty().subtract(saleOrderItem.getDeliveredQty());
+            }
+
+            private void addQuantity(BigDecimal qty, int rowNumber) {
+                BigDecimal availableQty = remainingQty == null ? BigDecimal.ZERO : remainingQty;
+                if (availableQty.compareTo(BigDecimal.ZERO) < 0) {
+                    availableQty = BigDecimal.ZERO;
+                }
+
+                if (availableQty.compareTo(BigDecimal.ZERO) <= 0) {
+                    throw new ImportException(rowNumber, "实发数量",
+                            String.format("销售订单剩余可出库数量不足，已出库数量（%s），销售数量（%s）",
+                                    saleOrderItem.getDeliveredQty().toPlainString(),
+                                    saleOrderItem.getQty().toPlainString()));
+                }
+
+                if (qty.compareTo(availableQty) > 0) {
+                    BigDecimal totalDelivered = saleOrderItem.getDeliveredQty()
+                            .add(accumulatedQty)
+                            .add(qty);
+                    throw new ImportException(rowNumber, "实发数量",
+                            String.format("累计出库数量（%s）超过销售数量（%s）",
+                                    totalDelivered.toPlainString(),
+                                    saleOrderItem.getQty().toPlainString()));
+                }
+
+                accumulatedQty = accumulatedQty.add(qty);
+                remainingQty = availableQty.subtract(qty);
+            }
+
+            private void apply() {
+                if (accumulatedQty.compareTo(BigDecimal.ZERO) <= 0) {
+                    return;
+                }
+                BigDecimal newDeliveredQty = saleOrderItem.getDeliveredQty().add(accumulatedQty);
                 saleOrderItem.setDeliveredQty(newDeliveredQty);
                 saleOrderItem.setStatus(newDeliveredQty.compareTo(saleOrderItem.getQty()) >= 0
                         ? SaleOrderItemStatus.CLOSED
                         : SaleOrderItemStatus.OPEN);
-
-                itemsToUpdate.add(saleOrderItem);
-                affectedSaleOrderIds.add(saleOrderItem.getSaleOrder().getId());
             }
 
-            saleOutstockRepository.save(outstock);
-            saleOrderItemRepository.saveAll(itemsToUpdate);
-
-            for (Long saleOrderId : affectedSaleOrderIds) {
-                boolean hasOpenItems = saleOrderItemRepository.existsBySaleOrderIdAndStatus(saleOrderId, SaleOrderItemStatus.OPEN);
-                SaleOrder saleOrder = saleOrderRepository.findById(saleOrderId)
-                        .orElseThrow(() -> new BusinessException("销售订单不存在: " + saleOrderId));
-                saleOrder.setStatus(hasOpenItems ? SaleOrderStatus.OPEN : SaleOrderStatus.CLOSED);
-                saleOrderRepository.save(saleOrder);
+            private SaleOrderItem saleOrderItem() {
+                return saleOrderItem;
             }
         }
 
-        private void validateMaterial(ParsedItem parsed, SaleOrderItem saleOrderItem) {
-            String materialCode = trimToNull(parsed.raw().materialCode());
+        private Set<String> findExistingBillNos(Set<String> billNos) {
+            if (billNos.isEmpty()) {
+                return Collections.emptySet();
+            }
+            List<String> billNoList = new ArrayList<>(billNos);
+            List<List<String>> batches = new ArrayList<>();
+            for (int i = 0; i < billNoList.size(); i += BATCH_SIZE) {
+                int end = Math.min(i + BATCH_SIZE, billNoList.size());
+                batches.add(new ArrayList<>(billNoList.subList(i, end)));
+            }
+
+            Set<String> existing = ConcurrentHashMap.newKeySet();
+            try (ExecutorService executor = Executors.newVirtualThreadPerTaskExecutor()) {
+                List<Future<Void>> futures = new ArrayList<>();
+                for (List<String> batch : batches) {
+                    futures.add(executor.submit(() -> {
+                        importConcurrencySemaphore.acquireUninterruptibly();
+                        try {
+                            List<String> found = readOnlyTransactionTemplate.execute(status ->
+                                    saleOutstockRepository.findExistingBillNos(batch));
+                            if (found != null && !found.isEmpty()) {
+                                existing.addAll(found);
+                            }
+                        } finally {
+                            importConcurrencySemaphore.release();
+                        }
+                        return null;
+                    }));
+                }
+                for (Future<Void> future : futures) {
+                    try {
+                        future.get();
+                    } catch (Exception e) {
+                        futures.forEach(f -> f.cancel(false));
+                        throw new RuntimeException("批量查询出库单编号失败: " + e.getMessage(), e);
+                    }
+                }
+            }
+            return existing;
+        }
+
+        private void addError(List<SaleOutstockImportResponse.ImportError> errors, int rowNumber, String field, String message) {
+            if (errors.size() < MAX_ERROR_COUNT) {
+                errors.add(new SaleOutstockImportResponse.ImportError(
+                        "销售出库",
+                        rowNumber,
+                        field,
+                        appendBillNo(rowNumber, message)
+                ));
+            }
+        }
+
+        private String appendBillNo(int rowNumber, String message) {
+            String billNo = billNoByRowNumber.get(rowNumber);
+            if (billNo == null || billNo.isEmpty()) {
+                return message;
+            }
+            if (message.contains(billNo) || message.contains("出库单号")) {
+                return message;
+            }
+            return message + "；出库单号: " + billNo;
+        }
+
+        private void validateMaterial(SaleOutstockItemData raw, SaleOrderItem saleOrderItem, int rowNumber) {
+            String materialCode = trimToNull(raw.materialCode());
             if (materialCode != null && !materialCode.equalsIgnoreCase(saleOrderItem.getMaterial().getCode())) {
-                throw new ImportException(parsed.raw().rowNumber(), "物料编码",
+                throw new ImportException(rowNumber, "物料编码",
                         String.format("物料编码不匹配，Excel: %s，系统: %s",
                                 materialCode, saleOrderItem.getMaterial().getCode()));
             }
         }
 
-        private void validateUnit(ParsedItem parsed, SaleOrderItem saleOrderItem) {
-            String unitCode = trimToNull(parsed.raw().unitCode());
+        private void validateUnit(SaleOutstockItemData raw, SaleOrderItem saleOrderItem, int rowNumber) {
+            String unitCode = trimToNull(raw.unitCode());
             if (unitCode != null && !unitCode.equalsIgnoreCase(saleOrderItem.getUnit().getCode())) {
-                throw new ImportException(parsed.raw().rowNumber(), "库存单位编码",
+                throw new ImportException(rowNumber, "库存单位编码",
                         String.format("单位编码不匹配，Excel: %s，系统: %s",
                                 unitCode, saleOrderItem.getUnit().getCode()));
             }
@@ -409,6 +718,11 @@ public class SaleOutstockImportService {
                 Integer saleOrderSequence,
                 Integer sequence,
                 BigDecimal qty
+        ) {
+        }
+
+        private record ImportTaskResult(
+                Set<Long> affectedSaleOrderIds
         ) {
         }
     }
