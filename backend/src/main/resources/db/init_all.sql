@@ -321,7 +321,7 @@ CREATE TABLE sale_outstock_items (
     id BIGSERIAL PRIMARY KEY,
     sale_outstock_id BIGINT NOT NULL REFERENCES sale_outstocks(id) ON DELETE CASCADE,
     sequence INTEGER NOT NULL,
-    sale_order_sequence INTEGER NOT NULL REFERENCES sale_order_items(sequence) ON DELETE RESTRICT,
+    sale_order_item_id INTEGER NOT NULL REFERENCES sale_order_items(id) ON DELETE RESTRICT,
     material_id BIGINT NOT NULL REFERENCES materials(id) ON DELETE RESTRICT,
     unit_id BIGINT NOT NULL REFERENCES units(id) ON DELETE RESTRICT,
     qty DECIMAL(18, 6) NOT NULL,
@@ -420,7 +420,7 @@ CREATE INDEX idx_sale_outstocks_bill_no ON sale_outstocks(bill_no);
 CREATE INDEX idx_sale_outstocks_outstock_date ON sale_outstocks(outstock_date);
 
 CREATE INDEX idx_sale_outstock_items_outstock_id ON sale_outstock_items(sale_outstock_id);
-CREATE INDEX idx_sale_outstock_items_order_sequence ON sale_outstock_items(sale_order_sequence);
+CREATE INDEX idx_sale_outstock_items_order_item_id ON sale_outstock_items(sale_order_item_id);
 CREATE INDEX idx_sale_outstock_items_material_id ON sale_outstock_items(material_id);
 
 -- ============================================
@@ -532,7 +532,7 @@ COMMENT ON TABLE sale_outstock_items IS '销售出库明细表';
 COMMENT ON COLUMN sale_outstock_items.id IS '销售出库明细ID';
 COMMENT ON COLUMN sale_outstock_items.sale_outstock_id IS '销售出库ID';
 COMMENT ON COLUMN sale_outstock_items.sequence IS '明细序号';
-COMMENT ON COLUMN sale_outstock_items.sale_order_sequence IS '关联的销售订单明细序号';
+COMMENT ON COLUMN sale_outstock_items.sale_order_item_id IS '关联的销售订单明细';
 COMMENT ON COLUMN sale_outstock_items.material_id IS '物料ID';
 COMMENT ON COLUMN sale_outstock_items.unit_id IS '出库单位ID';
 COMMENT ON COLUMN sale_outstock_items.qty IS '实发数量';

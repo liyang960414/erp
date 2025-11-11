@@ -27,11 +27,8 @@ public class SaleOutstockItem {
     @Column(nullable = false)
     private Integer sequence;
 
-    @Column(name = "sale_order_sequence", nullable = false)
-    private Integer saleOrderSequence;
-
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "sale_order_sequence", referencedColumnName = "sequence", insertable = false, updatable = false)
+    @JoinColumn(name = "sale_order_item_id", nullable = false)
     private SaleOrderItem saleOrderItem;
 
     @ManyToOne(fetch = FetchType.LAZY)

@@ -113,7 +113,7 @@ public class SaleOutstockService {
                 saleOrder != null ? saleOrder.getBillNo() : null,
                 saleOrderItem != null ? saleOrderItem.getId() : null,
                 saleOrderItem != null ? saleOrderItem.getSequence() : null,
-                item.getSaleOrderSequence(),
+                item.getSaleOrderItem().getSequence(),
                 item.getMaterial() != null ? item.getMaterial().getCode() : null,
                 item.getMaterial() != null ? item.getMaterial().getName() : null,
                 item.getUnit() != null ? item.getUnit().getCode() : null,

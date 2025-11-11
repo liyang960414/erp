@@ -407,7 +407,6 @@ public class SaleOutstockImportService {
                 SaleOutstockItem outstockItem = SaleOutstockItem.builder()
                         .sequence(parsed.sequence())
                         .saleOrderItem(saleOrderItem)
-                        .saleOrderSequence(parsed.saleOrderSequence())
                         .material(saleOrderItem.getMaterial())
                         .unit(saleOrderItem.getUnit())
                         .qty(parsed.qty())
