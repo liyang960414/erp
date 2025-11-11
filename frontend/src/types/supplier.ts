@@ -9,21 +9,3 @@ export interface Supplier {
   updatedAt: string
 }
 
-export interface SupplierImportError {
-  sheetName: string
-  rowNumber: number
-  field?: string
-  message: string
-}
-
-export interface SupplierImportResult {
-  totalRows: number
-  successCount: number
-  failureCount: number
-  errors: SupplierImportError[]
-}
-
-export interface SupplierImportResponse {
-  supplierResult: SupplierImportResult
-}
-

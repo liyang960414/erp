@@ -83,6 +83,24 @@ logging:
       # 使用默认值避免循环引用
       file-name-pattern: ${LOG_ROLLING_FILE_NAME_PATTERN:./logs/erp.log.%d{yyyy-MM-dd}.%i}
 
+# 导入任务调度配置
+erp:
+  import:
+    scheduler:
+      pool-size: ${ERP_IMPORT_SCHEDULER_POOL_SIZE:4}
+      max-concurrent-tasks: ${ERP_IMPORT_SCHEDULER_MAX_CONCURRENT:4}
+      queue-capacity: ${ERP_IMPORT_SCHEDULER_QUEUE_CAPACITY:100}
+      poll-interval: ${ERP_IMPORT_SCHEDULER_POLL_INTERVAL:2000}
+    dependencies:
+      material:
+        - unit
+      bom:
+        - material
+    type-concurrency:
+      unit: ${ERP_IMPORT_CONCURRENCY_UNIT:1}
+      material: ${ERP_IMPORT_CONCURRENCY_MATERIAL:1}
+      bom: ${ERP_IMPORT_CONCURRENCY_BOM:1}
+
 # 添加以下配置
 management:
   endpoints:

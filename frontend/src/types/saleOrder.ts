@@ -48,24 +48,6 @@ export interface SaleOrder {
   items?: SaleOrderItem[];
 }
 
-export interface SaleOrderImportError {
-  sheetName: string;
-  rowNumber: number;
-  field?: string;
-  message: string;
-}
-
-export interface SaleOrderImportResult {
-  totalRows: number;
-  successCount: number;
-  failureCount: number;
-  errors: SaleOrderImportError[];
-}
-
-export interface SaleOrderImportResponse {
-  saleOrderResult: SaleOrderImportResult;
-}
-
 export interface PageResponse<T> {
   content: T[];
   totalElements: number;

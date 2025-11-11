@@ -3,10 +3,11 @@ package com.sambound.erp.controller;
 import com.sambound.erp.dto.ApiResponse;
 import com.sambound.erp.dto.OrderAlertDTO;
 import com.sambound.erp.dto.SaleOrderDTO;
-import com.sambound.erp.dto.SaleOrderImportResponse;
+import com.sambound.erp.dto.ImportTaskCreateResponse;
 import com.sambound.erp.enums.SaleOrderStatus;
-import com.sambound.erp.service.SaleOrderImportService;
 import com.sambound.erp.service.SaleOrderService;
+import com.sambound.erp.service.importing.task.ImportTaskManager;
+import com.sambound.erp.service.importing.task.ImportTaskMapper;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -19,23 +20,24 @@ import org.springframework.web.multipart.MultipartFile;
 
 import java.time.LocalDate;
 import java.util.List;
+import java.util.Map;
 
 @RestController
 @RequestMapping("/api/sale-orders")
 public class SaleOrderController {
     
     private final SaleOrderService saleOrderService;
-    private final SaleOrderImportService saleOrderImportService;
-    
+    private final ImportTaskManager importTaskManager;
+
     public SaleOrderController(SaleOrderService saleOrderService,
-                              SaleOrderImportService saleOrderImportService) {
+                              ImportTaskManager importTaskManager) {
         this.saleOrderService = saleOrderService;
-        this.saleOrderImportService = saleOrderImportService;
+        this.importTaskManager = importTaskManager;
     }
     
     @PostMapping("/import")
     @PreAuthorize("hasAuthority('sale_order:import')")
-    public ResponseEntity<ApiResponse<SaleOrderImportResponse>> importSaleOrders(
+    public ResponseEntity<ApiResponse<ImportTaskCreateResponse>> importSaleOrders(
             @RequestParam("file") MultipartFile file) {
         if (file.isEmpty()) {
             return ResponseEntity.badRequest()
@@ -56,8 +58,9 @@ public class SaleOrderController {
         }
         
         try {
-            SaleOrderImportResponse result = saleOrderImportService.importFromExcel(file);
-            return ResponseEntity.ok(ApiResponse.success(result));
+            var task = importTaskManager.createTask("sale-order", file, currentUsername(), Map.of());
+            ImportTaskCreateResponse response = ImportTaskMapper.toCreateResponse(task);
+            return ResponseEntity.ok(ApiResponse.success(response));
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .body(ApiResponse.error("导入失败: " + e.getMessage()));
@@ -102,5 +105,11 @@ public class SaleOrderController {
     public ResponseEntity<ApiResponse<List<OrderAlertDTO>>> getOrderAlerts() {
         List<OrderAlertDTO> alerts = saleOrderService.getOrderAlerts();
         return ResponseEntity.ok(ApiResponse.success(alerts));
+    }
+}
+
+    private String currentUsername() {
+        var authentication = org.springframework.security.core.context.SecurityContextHolder.getContext().getAuthentication();
+        return authentication != null ? authentication.getName() : "system";
     }
 }

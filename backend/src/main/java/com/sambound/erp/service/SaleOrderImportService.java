@@ -53,30 +53,33 @@ public class SaleOrderImportService {
     }
 
     public SaleOrderImportResponse importFromExcel(MultipartFile file) {
-        logger.info("开始导入销售订单Excel文件: {}", file.getOriginalFilename());
-
         try {
-            byte[] fileBytes = file.getBytes();
-            SaleOrderImportProcessor processor = new SaleOrderImportProcessor(
-                    saleOrderRepository,
-                    saleOrderItemRepository,
-                    customerRepository,
-                    materialRepository,
-                    unitRepository,
-                    customerService,
-                    transactionTemplate,
-                    executorService
-            );
-
-            SaleOrderImportResponse result = processor.process(fileBytes);
-            logger.info("销售订单导入完成：总计 {} 条，成功 {} 条，失败 {} 条",
-                    result.saleOrderResult().totalRows(),
-                    result.saleOrderResult().successCount(),
-                    result.saleOrderResult().failureCount());
-            return result;
+            return importFromBytes(file.getBytes(), file.getOriginalFilename());
         } catch (Exception e) {
             logger.error("Excel文件导入失败", e);
             throw new RuntimeException("Excel文件导入失败: " + e.getMessage(), e);
         }
+    }
+
+    public SaleOrderImportResponse importFromBytes(byte[] fileBytes, String fileName) {
+        logger.info("开始导入销售订单Excel文件: {}", fileName);
+
+        SaleOrderImportProcessor processor = new SaleOrderImportProcessor(
+                saleOrderRepository,
+                saleOrderItemRepository,
+                customerRepository,
+                materialRepository,
+                unitRepository,
+                customerService,
+                transactionTemplate,
+                executorService
+        );
+
+        SaleOrderImportResponse result = processor.process(fileBytes);
+        logger.info("销售订单导入完成：总计 {} 条，成功 {} 条，失败 {} 条",
+                result.saleOrderResult().totalRows(),
+                result.saleOrderResult().successCount(),
+                result.saleOrderResult().failureCount());
+        return result;
     }
 }

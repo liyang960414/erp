@@ -50,28 +50,31 @@ public class SaleOutstockImportService {
     }
 
     public SaleOutstockImportResponse importFromExcel(MultipartFile file) {
-        logger.info("开始导入销售出库Excel文件: {}", file.getOriginalFilename());
-
         try {
-            byte[] fileBytes = file.getBytes();
-            SaleOutstockImportProcessor processor = new SaleOutstockImportProcessor(
-                    saleOutstockRepository,
-                    saleOrderItemRepository,
-                    saleOrderRepository,
-                    transactionTemplate,
-                    readOnlyTransactionTemplate,
-                    executorService
-            );
-            SaleOutstockImportResponse response = processor.process(fileBytes);
-            logger.info("销售出库导入完成：总计 {} 条，成功 {} 条，失败 {} 条",
-                    response.result().totalRows(),
-                    response.result().successCount(),
-                    response.result().failureCount());
-            return response;
+            return importFromBytes(file.getBytes(), file.getOriginalFilename());
         } catch (Exception e) {
             logger.error("销售出库Excel导入失败", e);
             throw new RuntimeException("销售出库Excel导入失败: " + e.getMessage(), e);
         }
+    }
+
+    public SaleOutstockImportResponse importFromBytes(byte[] fileBytes, String fileName) {
+        logger.info("开始导入销售出库Excel文件: {}", fileName);
+
+        SaleOutstockImportProcessor processor = new SaleOutstockImportProcessor(
+                saleOutstockRepository,
+                saleOrderItemRepository,
+                saleOrderRepository,
+                transactionTemplate,
+                readOnlyTransactionTemplate,
+                executorService
+        );
+        SaleOutstockImportResponse response = processor.process(fileBytes);
+        logger.info("销售出库导入完成：总计 {} 条，成功 {} 条，失败 {} 条",
+                response.result().totalRows(),
+                response.result().successCount(),
+                response.result().failureCount());
+        return response;
     }
 }
 

@@ -40,29 +40,32 @@ public class BomImportService {
     }
 
     public BomImportResponse importFromExcel(MultipartFile file) {
-        logger.info("开始导入 BOM Excel 文件: {}", file.getOriginalFilename());
         try {
-            byte[] fileBytes = file.getBytes();
-            BomImportProcessor processor = new BomImportProcessor(
-                    bomRepository,
-                    bomItemRepository,
-                    materialRepository,
-                    unitRepository,
-                    transactionTemplate
-            );
-            BomImportResponse response = processor.process(fileBytes);
-            logger.info("BOM 导入完成：BOM {} 条，成功 {} 条，失败 {} 条；明细 {} 条，成功 {} 条，失败 {} 条",
-                    response.bomResult().totalRows(),
-                    response.bomResult().successCount(),
-                    response.bomResult().failureCount(),
-                    response.itemResult().totalRows(),
-                    response.itemResult().successCount(),
-                    response.itemResult().failureCount());
-            return response;
-                } catch (Exception e) {
+            return importFromBytes(file.getBytes(), file.getOriginalFilename());
+        } catch (Exception e) {
             logger.error("BOM Excel 导入失败", e);
             throw new RuntimeException("BOM Excel 导入失败: " + e.getMessage(), e);
         }
+    }
+
+    public BomImportResponse importFromBytes(byte[] fileBytes, String fileName) {
+        logger.info("开始导入 BOM Excel 文件: {}", fileName);
+        BomImportProcessor processor = new BomImportProcessor(
+                bomRepository,
+                bomItemRepository,
+                materialRepository,
+                unitRepository,
+                transactionTemplate
+        );
+        BomImportResponse response = processor.process(fileBytes);
+        logger.info("BOM 导入完成：BOM {} 条，成功 {} 条，失败 {} 条；明细 {} 条，成功 {} 条，失败 {} 条",
+                response.bomResult().totalRows(),
+                response.bomResult().successCount(),
+                response.bomResult().failureCount(),
+                response.itemResult().totalRows(),
+                response.itemResult().successCount(),
+                response.itemResult().failureCount());
+        return response;
     }
 }
 

@@ -54,21 +54,3 @@ export interface SaleOutstockListResponse {
   number?: number
 }
 
-export interface SaleOutstockImportError {
-  sheetName: string
-  rowNumber: number
-  field?: string
-  message: string
-}
-
-export interface SaleOutstockImportResult {
-  totalRows: number
-  successCount: number
-  failureCount: number
-  errors: SaleOutstockImportError[]
-}
-
-export interface SaleOutstockImportResponse {
-  result: SaleOutstockImportResult
-}
-

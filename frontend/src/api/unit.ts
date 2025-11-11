@@ -1,5 +1,6 @@
 import request from '@/utils/request'
-import type { Unit, CreateUnitRequest, UpdateUnitRequest, UnitImportResponse } from '@/types/unit'
+import type { Unit, CreateUnitRequest, UpdateUnitRequest } from '@/types/unit'
+import type { ImportTaskCreateResponse } from '@/types/importTask'
 
 export const unitApi = {
   // 获取所有单位
@@ -32,14 +33,11 @@ export const unitApi = {
     return request.delete(`/units/${id}`)
   },
 
-  // 导入Excel文件
-  importUnits(file: File): Promise<UnitImportResponse> {
+  // 导入Excel文件，返回后台任务信息
+  importUnits(file: File): Promise<ImportTaskCreateResponse> {
     const formData = new FormData()
     formData.append('file', file)
     return request.post('/units/import', formData, {
-      headers: {
-        'Content-Type': 'multipart/form-data',
-      },
       timeout: 300000, // 导入接口设置为5分钟（300秒）
     })
   },

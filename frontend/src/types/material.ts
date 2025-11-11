@@ -16,22 +16,3 @@ export interface Material {
   createdAt: string
   updatedAt: string
 }
-
-export interface MaterialImportResult {
-  totalRows: number
-  successCount: number
-  failureCount: number
-  errors: ImportError[]
-}
-
-export interface MaterialImportResponse {
-  unitGroupResult: MaterialImportResult
-  materialResult: MaterialImportResult
-}
-
-export interface ImportError {
-  sheetName: string
-  rowNumber: number
-  field: string | null
-  message: string
-}

@@ -1,11 +1,6 @@
 import request from '@/utils/request'
-import type {
-  SaleOrder,
-  SaleOrderImportResponse,
-  PageResponse,
-  SaleOrderListResponse,
-  SaleOrderStatus,
-} from '@/types/saleOrder'
+import type { SaleOrder, SaleOrderListResponse, SaleOrderStatus } from '@/types/saleOrder'
+import type { ImportTaskCreateResponse } from '@/types/importTask'
 import type { OrderAlert } from '@/types/orderAlert'
 
 export interface SaleOrderQueryParams {
@@ -31,8 +26,8 @@ export const saleOrderApi = {
     return request.get(`/sale-orders/${id}`)
   },
 
-  // 导入销售订单（Excel文件）
-  importSaleOrders(file: File): Promise<SaleOrderImportResponse> {
+  // 导入销售订单（Excel文件），返回后台任务信息
+  importSaleOrders(file: File): Promise<ImportTaskCreateResponse> {
     const formData = new FormData()
     formData.append('file', file)
     // 不设置 Content-Type，让浏览器自动添加 boundary

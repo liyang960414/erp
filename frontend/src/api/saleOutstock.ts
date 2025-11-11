@@ -1,13 +1,9 @@
 import request from '@/utils/request'
-import type {
-  SaleOutstockImportResponse,
-  SaleOutstockListResponse,
-  SaleOutstockQueryParams,
-  SaleOutstock,
-} from '@/types/saleOutstock'
+import type { SaleOutstockListResponse, SaleOutstockQueryParams, SaleOutstock } from '@/types/saleOutstock'
+import type { ImportTaskCreateResponse } from '@/types/importTask'
 
 export const saleOutstockApi = {
-  importSaleOutstocks(file: File): Promise<SaleOutstockImportResponse> {
+  importSaleOutstocks(file: File): Promise<ImportTaskCreateResponse> {
     const formData = new FormData()
     formData.append('file', file)
     return request.post('/sale-outstocks/import', formData, {

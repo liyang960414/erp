@@ -51,16 +51,3 @@ export interface UpdateUnitRequest {
   conversionNumerator?: number
   conversionDenominator?: number
 }
-
-export interface UnitImportResponse {
-  totalRows: number
-  successCount: number
-  failureCount: number
-  errors: ImportError[]
-}
-
-export interface ImportError {
-  rowNumber: number
-  field?: string
-  message: string
-}

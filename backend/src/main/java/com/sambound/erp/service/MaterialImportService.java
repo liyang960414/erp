@@ -41,25 +41,28 @@ public class MaterialImportService {
     }
 
     public MaterialImportResponse importFromExcel(MultipartFile file) {
-        logger.info("开始导入物料Excel文件: {}", file.getOriginalFilename());
         try {
-            byte[] fileBytes = file.getBytes();
-            MaterialImportProcessor processor = new MaterialImportProcessor(
-                    materialGroupRepository,
-                    materialRepository,
-                    unitRepository,
-                    transactionTemplate,
-                    executorService
-            );
-            MaterialImportResponse response = processor.process(fileBytes);
-            logger.info("物料组总计 {} 条，物料总计 {} 条",
-                    response.unitGroupResult().totalRows(),
-                    response.materialResult().totalRows());
-            return response;
+            return importFromBytes(file.getBytes(), file.getOriginalFilename());
         } catch (Exception e) {
             logger.error("物料Excel文件导入失败", e);
             throw new RuntimeException("物料Excel文件导入失败: " + e.getMessage(), e);
         }
+    }
+
+    public MaterialImportResponse importFromBytes(byte[] fileBytes, String fileName) {
+        logger.info("开始导入物料Excel文件: {}", fileName);
+        MaterialImportProcessor processor = new MaterialImportProcessor(
+                materialGroupRepository,
+                materialRepository,
+                unitRepository,
+                transactionTemplate,
+                executorService
+        );
+        MaterialImportResponse response = processor.process(fileBytes);
+        logger.info("物料组总计 {} 条，物料总计 {} 条",
+                response.unitGroupResult().totalRows(),
+                response.materialResult().totalRows());
+        return response;
     }
 }
 

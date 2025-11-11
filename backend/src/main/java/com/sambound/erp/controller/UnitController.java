@@ -3,10 +3,11 @@ package com.sambound.erp.controller;
 import com.sambound.erp.dto.ApiResponse;
 import com.sambound.erp.dto.CreateUnitRequest;
 import com.sambound.erp.dto.UnitDTO;
-import com.sambound.erp.dto.UnitImportResponse;
+import com.sambound.erp.dto.ImportTaskCreateResponse;
 import com.sambound.erp.dto.UpdateUnitRequest;
-import com.sambound.erp.service.UnitImportService;
 import com.sambound.erp.service.UnitService;
+import com.sambound.erp.service.importing.task.ImportTaskManager;
+import com.sambound.erp.service.importing.task.ImportTaskMapper;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -15,17 +16,18 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
+import java.util.Map;
 
 @RestController
 @RequestMapping("/api/units")
 public class UnitController {
 
     private final UnitService unitService;
-    private final UnitImportService unitImportService;
+    private final ImportTaskManager importTaskManager;
 
-    public UnitController(UnitService unitService, UnitImportService unitImportService) {
+    public UnitController(UnitService unitService, ImportTaskManager importTaskManager) {
         this.unitService = unitService;
-        this.unitImportService = unitImportService;
+        this.importTaskManager = importTaskManager;
     }
 
     @GetMapping
@@ -72,7 +74,7 @@ public class UnitController {
 
     @PostMapping("/import")
     @PreAuthorize("hasRole('ADMIN')")
-    public ResponseEntity<ApiResponse<UnitImportResponse>> importUnits(
+    public ResponseEntity<ApiResponse<ImportTaskCreateResponse>> importUnits(
             @RequestParam("file") MultipartFile file) {
         if (file.isEmpty()) {
             return ResponseEntity.badRequest()
@@ -86,12 +88,18 @@ public class UnitController {
         }
 
         try {
-            UnitImportResponse result = unitImportService.importFromExcel(file);
-            return ResponseEntity.ok(ApiResponse.success(result));
+            var task = importTaskManager.createTask("unit", file, currentUsername(), Map.of());
+            ImportTaskCreateResponse response = ImportTaskMapper.toCreateResponse(task);
+            return ResponseEntity.ok(ApiResponse.success(response));
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .body(ApiResponse.error("导入失败: " + e.getMessage()));
         }
+    }
+
+    private String currentUsername() {
+        var authentication = org.springframework.security.core.context.SecurityContextHolder.getContext().getAuthentication();
+        return authentication != null ? authentication.getName() : "system";
     }
 }
 

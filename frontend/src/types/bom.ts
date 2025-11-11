@@ -34,25 +34,6 @@ export interface BillOfMaterial {
   updatedAt: string
 }
 
-export interface BomImportResult {
-  totalRows: number
-  successCount: number
-  failureCount: number
-  errors: BomImportError[]
-}
-
-export interface BomImportResponse {
-  bomResult: BomImportResult
-  itemResult: BomImportResult
-}
-
-export interface BomImportError {
-  sheetName: string
-  rowNumber: number
-  field: string | null
-  message: string
-}
-
 export interface CreateBomRequest {
   materialId: number
   version: string

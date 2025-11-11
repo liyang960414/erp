@@ -21,66 +21,14 @@
       </template>
     </el-upload>
 
-    <div v-if="importResult" class="import-result" style="margin-top: 20px">
-      <!-- 物料组导入结果 -->
-      <el-card v-if="importResult.unitGroupResult.totalRows > 0" style="margin-bottom: 20px">
-        <template #header>
-          <span>物料组导入结果</span>
-        </template>
-        <el-alert
-          :type="importResult.unitGroupResult.failureCount === 0 ? 'success' : 'warning'"
-          :title="`物料组导入完成：成功 ${importResult.unitGroupResult.successCount} 条，失败 ${importResult.unitGroupResult.failureCount} 条`"
-          :closable="false"
-          show-icon
-        />
-        <div v-if="importResult.unitGroupResult.errors.length > 0" style="margin-top: 10px">
-          <el-collapse>
-            <el-collapse-item title="错误详情" name="errors">
-              <el-table
-                :data="importResult.unitGroupResult.errors"
-                border
-                size="small"
-                max-height="200"
-              >
-                <el-table-column prop="sheetName" label="Sheet" width="120" />
-                <el-table-column prop="rowNumber" label="行号" width="80" />
-                <el-table-column prop="field" label="字段" width="150" />
-                <el-table-column prop="message" label="错误信息" />
-              </el-table>
-            </el-collapse-item>
-          </el-collapse>
-        </div>
-      </el-card>
-
-      <!-- 物料导入结果 -->
-      <el-card v-if="importResult.materialResult.totalRows > 0">
-        <template #header>
-          <span>物料导入结果</span>
-        </template>
-        <el-alert
-          :type="importResult.materialResult.failureCount === 0 ? 'success' : 'warning'"
-          :title="`物料导入完成：成功 ${importResult.materialResult.successCount} 条，失败 ${importResult.materialResult.failureCount} 条`"
-          :closable="false"
-          show-icon
-        />
-        <div v-if="importResult.materialResult.errors.length > 0" style="margin-top: 10px">
-          <el-collapse>
-            <el-collapse-item title="错误详情" name="errors">
-              <el-table
-                :data="importResult.materialResult.errors"
-                border
-                size="small"
-                max-height="200"
-              >
-                <el-table-column prop="sheetName" label="Sheet" width="120" />
-                <el-table-column prop="rowNumber" label="行号" width="80" />
-                <el-table-column prop="field" label="字段" width="150" />
-                <el-table-column prop="message" label="错误信息" />
-              </el-table>
-            </el-collapse-item>
-          </el-collapse>
-        </div>
-      </el-card>
+    <div v-if="taskInfo" class="import-result" style="margin-top: 20px">
+      <el-alert
+        type="success"
+        show-icon
+        :closable="false"
+        :title="`导入任务已提交，任务编号：${taskInfo.taskCode}`"
+        description="系统正在后台处理，请稍后刷新列表查看数据。"
+      />
     </div>
 
     <template #footer>
@@ -102,7 +50,7 @@ import { ref, computed } from 'vue'
 import { ElMessage, type UploadFile, type UploadInstance } from 'element-plus'
 import { UploadFilled } from '@element-plus/icons-vue'
 import { materialApi } from '@/api/material.ts'
-import type { MaterialImportResponse } from '@/types/material.ts'
+import type { ImportTaskCreateResponse } from '@/types/importTask.ts'
 
 interface Props {
   modelValue: boolean
@@ -125,7 +73,7 @@ const uploadRef = ref<UploadInstance>()
 const fileList = ref<UploadFile[]>([])
 const selectedFile = ref<File | null>(null)
 const importing = ref(false)
-const importResult = ref<MaterialImportResponse | null>(null)
+const taskInfo = ref<ImportTaskCreateResponse | null>(null)
 
 const handleFileChange = (file: UploadFile) => {
   if (file.raw) {
@@ -135,7 +83,7 @@ const handleFileChange = (file: UploadFile) => {
       return
     }
     selectedFile.value = file.raw
-    importResult.value = null
+    taskInfo.value = null
   }
 }
 
@@ -148,22 +96,13 @@ const handleImport = async () => {
   importing.value = true
   try {
     const result = await materialApi.importMaterials(selectedFile.value)
-    importResult.value = result
+    taskInfo.value = result
 
-    const totalSuccess =
-      (result.unitGroupResult?.successCount || 0) + (result.materialResult?.successCount || 0)
-    const totalFailure =
-      (result.unitGroupResult?.failureCount || 0) + (result.materialResult?.failureCount || 0)
-
-    if (totalFailure === 0) {
-      ElMessage.success('导入成功')
-      emit('success')
-      setTimeout(() => {
-        handleClose()
-      }, 2000)
-    } else {
-      ElMessage.warning(`导入完成，但有 ${totalFailure} 条记录失败`)
-    }
+    ElMessage.success('导入任务已提交，系统正在后台处理')
+    emit('success')
+    setTimeout(() => {
+      handleClose()
+    }, 2000)
   } catch (error: any) {
     ElMessage.error('导入失败: ' + (error.message || '未知错误'))
   } finally {
@@ -175,7 +114,7 @@ const handleClose = () => {
   dialogVisible.value = false
   fileList.value = []
   selectedFile.value = null
-  importResult.value = null
+  taskInfo.value = null
   uploadRef.value?.clearFiles()
 }
 </script>

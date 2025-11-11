@@ -1,5 +1,6 @@
 import request from '@/utils/request'
-import type { PurchaseOrder, PurchaseOrderImportResponse, PageResponse, PurchaseOrderListResponse } from '@/types/purchaseOrder'
+import type { PurchaseOrder, PurchaseOrderListResponse } from '@/types/purchaseOrder'
+import type { ImportTaskCreateResponse } from '@/types/importTask'
 
 export interface PurchaseOrderQueryParams {
   billNo?: string
@@ -22,8 +23,8 @@ export const purchaseOrderApi = {
     return request.get(`/purchase-orders/${id}`)
   },
 
-  // 导入采购订单（Excel文件）
-  importPurchaseOrders(file: File): Promise<PurchaseOrderImportResponse> {
+  // 导入采购订单（Excel文件），返回后台任务信息
+  importPurchaseOrders(file: File): Promise<ImportTaskCreateResponse> {
     const formData = new FormData()
     formData.append('file', file)
     // 不设置 Content-Type，让浏览器自动添加 boundary

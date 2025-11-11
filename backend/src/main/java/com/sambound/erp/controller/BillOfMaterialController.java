@@ -2,12 +2,13 @@ package com.sambound.erp.controller;
 
 import com.sambound.erp.dto.ApiResponse;
 import com.sambound.erp.dto.BillOfMaterialDTO;
-import com.sambound.erp.dto.BomImportResponse;
 import com.sambound.erp.dto.BomQueryDTO;
 import com.sambound.erp.dto.CreateBomRequest;
+import com.sambound.erp.dto.ImportTaskCreateResponse;
 import com.sambound.erp.dto.UpdateBomRequest;
 import com.sambound.erp.service.BillOfMaterialService;
-import com.sambound.erp.service.BomImportService;
+import com.sambound.erp.service.importing.task.ImportTaskManager;
+import com.sambound.erp.service.importing.task.ImportTaskMapper;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -16,19 +17,20 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
+import java.util.Map;
 
 @RestController
 @RequestMapping("/api/boms")
 public class BillOfMaterialController {
 
     private final BillOfMaterialService bomService;
-    private final BomImportService bomImportService;
+    private final ImportTaskManager importTaskManager;
 
     public BillOfMaterialController(
             BillOfMaterialService bomService,
-            BomImportService bomImportService) {
+            ImportTaskManager importTaskManager) {
         this.bomService = bomService;
-        this.bomImportService = bomImportService;
+        this.importTaskManager = importTaskManager;
     }
 
     @GetMapping
@@ -84,7 +86,7 @@ public class BillOfMaterialController {
 
     @PostMapping("/import")
     @PreAuthorize("hasRole('ADMIN')")
-    public ResponseEntity<ApiResponse<BomImportResponse>> importBoms(
+    public ResponseEntity<ApiResponse<ImportTaskCreateResponse>> importBoms(
             @RequestParam("file") MultipartFile file) {
         if (file.isEmpty()) {
             return ResponseEntity.badRequest()
@@ -105,8 +107,9 @@ public class BillOfMaterialController {
         }
 
         try {
-            BomImportResponse result = bomImportService.importFromExcel(file);
-            return ResponseEntity.ok(ApiResponse.success(result));
+            var task = importTaskManager.createTask("bom", file, currentUsername(), Map.of());
+            ImportTaskCreateResponse response = ImportTaskMapper.toCreateResponse(task);
+            return ResponseEntity.ok(ApiResponse.success(response));
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .body(ApiResponse.error("导入失败: " + e.getMessage()));
@@ -143,6 +146,10 @@ public class BillOfMaterialController {
             @RequestParam(required = false) String version) {
         List<BomQueryDTO> result = bomService.queryBomBackward(materialCode, version);
         return ResponseEntity.ok(ApiResponse.success(result));
+    }
+    private String currentUsername() {
+        var authentication = org.springframework.security.core.context.SecurityContextHolder.getContext().getAuthentication();
+        return authentication != null ? authentication.getName() : "system";
     }
 }
 

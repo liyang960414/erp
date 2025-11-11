@@ -37,26 +37,29 @@ public class UnitImportService {
     }
 
     public UnitImportResponse importFromExcel(MultipartFile file) {
-        logger.info("开始导入单位 Excel 文件: {}", file.getOriginalFilename());
         try {
-            byte[] fileBytes = file.getBytes();
-            UnitImportProcessor processor = new UnitImportProcessor(
-                    unitService,
-                    unitRepository,
-                    unitGroupRepository,
-                    transactionManager,
-                    executorService
-            );
-            UnitImportResponse response = processor.process(fileBytes);
-            logger.info("单位导入完成：总计 {} 条，成功 {} 条，失败 {} 条",
-                    response.totalRows(),
-                    response.successCount(),
-                    response.failureCount());
-            return response;
+            return importFromBytes(file.getBytes(), file.getOriginalFilename());
         } catch (Exception e) {
             logger.error("单位 Excel 导入失败", e);
             throw new RuntimeException("单位 Excel 导入失败: " + e.getMessage(), e);
         }
+    }
+
+    public UnitImportResponse importFromBytes(byte[] fileBytes, String fileName) {
+        logger.info("开始导入单位 Excel 文件: {}", fileName);
+        UnitImportProcessor processor = new UnitImportProcessor(
+                unitService,
+                unitRepository,
+                unitGroupRepository,
+                transactionManager,
+                executorService
+        );
+        UnitImportResponse response = processor.process(fileBytes);
+        logger.info("单位导入完成：总计 {} 条，成功 {} 条，失败 {} 条",
+                response.totalRows(),
+                response.successCount(),
+                response.failureCount());
+        return response;
     }
 }
 

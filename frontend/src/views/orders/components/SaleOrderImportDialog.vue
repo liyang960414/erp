@@ -27,40 +27,14 @@
       <p v-if="progressMessage">{{ progressMessage }}</p>
     </div>
 
-    <div v-if="importResult" class="import-result">
-      <el-divider>导入结果</el-divider>
-      <div class="result-summary">
-        <div class="statistic-group">
-          <el-statistic title="总计" :value="importResult.saleOrderResult.totalRows" />
-          <el-statistic title="成功" :value="importResult.saleOrderResult.successCount">
-            <template #suffix>
-              <el-tag type="success" size="small" style="margin-left: 8px">成功</el-tag>
-            </template>
-          </el-statistic>
-          <el-statistic title="失败" :value="importResult.saleOrderResult.failureCount">
-            <template #suffix>
-              <el-tag type="danger" size="small" style="margin-left: 8px">失败</el-tag>
-            </template>
-          </el-statistic>
-        </div>
-      </div>
-
-      <div v-if="importResult.saleOrderResult.errors.length > 0" class="error-list">
-        <el-alert
-          title="错误详情"
-          type="error"
-          :closable="false"
-          show-icon
-        >
-          <el-scrollbar max-height="300px">
-            <el-table :data="importResult.saleOrderResult.errors" size="small" border>
-              <el-table-column prop="rowNumber" label="行号" width="80" />
-              <el-table-column prop="field" label="字段" width="120" />
-              <el-table-column prop="message" label="错误信息" show-overflow-tooltip />
-            </el-table>
-          </el-scrollbar>
-        </el-alert>
-      </div>
+    <div v-if="taskInfo" class="import-result">
+      <el-alert
+        type="success"
+        show-icon
+        :closable="false"
+        :title="`导入任务已提交，任务编号：${taskInfo.taskCode}`"
+        description="系统正在后台处理，请稍后刷新数据查看结果。"
+      />
     </div>
 
     <template #footer>
@@ -84,7 +58,7 @@ import { ref, watch } from 'vue'
 import { ElMessage, type UploadInstance, type UploadFile } from 'element-plus'
 import { UploadFilled } from '@element-plus/icons-vue'
 import { saleOrderApi } from '@/api/saleOrder'
-import type { SaleOrderImportResponse } from '@/types/saleOrder'
+import type { ImportTaskCreateResponse } from '@/types/importTask'
 
 interface Props {
   modelValue: boolean
@@ -105,7 +79,7 @@ const uploading = ref(false)
 const progress = ref(0)
 const progressStatus = ref<'success' | 'exception' | 'warning' | ''>('')
 const progressMessage = ref('')
-const importResult = ref<SaleOrderImportResponse | null>(null)
+const taskInfo = ref<ImportTaskCreateResponse | null>(null)
 
 watch(
   () => props.modelValue,
@@ -120,7 +94,7 @@ watch(dialogVisible, (newValue) => {
 
 const handleFileChange = (file: UploadFile) => {
   selectedFile.value = file.raw || null
-  importResult.value = null
+  taskInfo.value = null
   progress.value = 0
   progressStatus.value = ''
   progressMessage.value = ''
@@ -128,7 +102,7 @@ const handleFileChange = (file: UploadFile) => {
 
 const handleFileRemove = () => {
   selectedFile.value = null
-  importResult.value = null
+  taskInfo.value = null
   progress.value = 0
   progressStatus.value = ''
   progressMessage.value = ''
@@ -153,23 +127,15 @@ const handleImport = async () => {
 
     progress.value = 100
     progressStatus.value = 'success'
-    progressMessage.value = '导入完成'
+    progressMessage.value = '导入任务已提交'
 
-    importResult.value = result
+    taskInfo.value = result
 
-    if (result.saleOrderResult.failureCount === 0) {
-      ElMessage.success(
-        `导入成功！共导入 ${result.saleOrderResult.successCount} 条订单`,
-      )
-      emit('success')
-      setTimeout(() => {
-        handleClose()
-      }, 2000)
-    } else {
-      ElMessage.warning(
-        `导入完成！成功 ${result.saleOrderResult.successCount} 条，失败 ${result.saleOrderResult.failureCount} 条`,
-      )
-    }
+    ElMessage.success('导入任务已提交，系统正在后台处理')
+    emit('success')
+    setTimeout(() => {
+      handleClose()
+    }, 2000)
   } catch (error: any) {
     progress.value = 0
     progressStatus.value = 'exception'
@@ -186,7 +152,7 @@ const handleImport = async () => {
 const handleClose = () => {
   dialogVisible.value = false
   selectedFile.value = null
-  importResult.value = null
+  taskInfo.value = null
   progress.value = 0
   progressStatus.value = ''
   progressMessage.value = ''

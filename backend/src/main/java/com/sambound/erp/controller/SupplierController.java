@@ -2,7 +2,9 @@ package com.sambound.erp.controller;
 
 import com.sambound.erp.dto.ApiResponse;
 import com.sambound.erp.dto.SupplierDTO;
-import com.sambound.erp.dto.SupplierImportResponse;
+import com.sambound.erp.dto.ImportTaskCreateResponse;
+import com.sambound.erp.service.importing.task.ImportTaskManager;
+import com.sambound.erp.service.importing.task.ImportTaskMapper;
 import com.sambound.erp.service.SupplierImportService;
 import com.sambound.erp.service.SupplierService;
 import org.springframework.http.HttpStatus;
@@ -17,11 +19,11 @@ import java.util.List;
 @RequestMapping("/api/suppliers")
 public class SupplierController {
     
-    private final SupplierImportService supplierImportService;
     private final SupplierService supplierService;
+    private final ImportTaskManager importTaskManager;
     
-    public SupplierController(SupplierImportService supplierImportService, SupplierService supplierService) {
-        this.supplierImportService = supplierImportService;
+    public SupplierController(ImportTaskManager importTaskManager, SupplierService supplierService) {
+        this.importTaskManager = importTaskManager;
         this.supplierService = supplierService;
     }
 
@@ -33,7 +35,7 @@ public class SupplierController {
     
     @PostMapping("/import")
     @PreAuthorize("hasAuthority('supplier:import')")
-    public ResponseEntity<ApiResponse<SupplierImportResponse>> importSuppliers(
+    public ResponseEntity<ApiResponse<ImportTaskCreateResponse>> importSuppliers(
             @RequestParam("file") MultipartFile file) {
         if (file.isEmpty()) {
             return ResponseEntity.badRequest()
@@ -55,12 +57,18 @@ public class SupplierController {
         }
         
         try {
-            SupplierImportResponse result = supplierImportService.importFromExcel(file);
-            return ResponseEntity.ok(ApiResponse.success(result));
+            var task = importTaskManager.createTask("supplier", file, currentUsername(), Map.of());
+            ImportTaskCreateResponse response = ImportTaskMapper.toCreateResponse(task);
+            return ResponseEntity.ok(ApiResponse.success(response));
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .body(ApiResponse.error("导入失败: " + e.getMessage()));
         }
+    }
+
+    private String currentUsername() {
+        var authentication = org.springframework.security.core.context.SecurityContextHolder.getContext().getAuthentication();
+        return authentication != null ? authentication.getName() : "system";
     }
 }
 

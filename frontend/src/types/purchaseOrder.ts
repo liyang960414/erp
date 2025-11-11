@@ -42,24 +42,6 @@ export interface PurchaseOrder {
   items?: PurchaseOrderItem[]
 }
 
-export interface PurchaseOrderImportError {
-  sheetName: string
-  rowNumber: number
-  field?: string
-  message: string
-}
-
-export interface PurchaseOrderImportResult {
-  totalRows: number
-  successCount: number
-  failureCount: number
-  errors: PurchaseOrderImportError[]
-}
-
-export interface PurchaseOrderImportResponse {
-  purchaseOrderResult: PurchaseOrderImportResult
-}
-
 export interface PageResponse<T> {
   content: T[]
   totalElements: number

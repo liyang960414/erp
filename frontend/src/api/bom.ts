@@ -1,5 +1,6 @@
 import request from '@/utils/request'
-import type { BillOfMaterial, BomImportResponse, BomQueryNode } from '@/types/bom'
+import type { BillOfMaterial, BomQueryNode } from '@/types/bom'
+import type { ImportTaskCreateResponse } from '@/types/importTask'
 
 export const bomApi = {
   // 获取所有BOM
@@ -17,8 +18,8 @@ export const bomApi = {
     return request.delete(`/boms/${id}`)
   },
 
-  // 导入BOM（Excel/CSV文件）
-  importBoms(file: File): Promise<BomImportResponse> {
+  // 导入BOM（Excel/CSV文件），返回后台任务信息
+  importBoms(file: File): Promise<ImportTaskCreateResponse> {
     const formData = new FormData()
     formData.append('file', file)
     // 不设置 Content-Type，让浏览器自动添加 boundary

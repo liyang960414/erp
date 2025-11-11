@@ -2,9 +2,10 @@ package com.sambound.erp.controller;
 
 import com.sambound.erp.dto.ApiResponse;
 import com.sambound.erp.dto.SaleOutstockDTO;
-import com.sambound.erp.dto.SaleOutstockImportResponse;
-import com.sambound.erp.service.SaleOutstockImportService;
+import com.sambound.erp.dto.ImportTaskCreateResponse;
 import com.sambound.erp.service.SaleOutstockService;
+import com.sambound.erp.service.importing.task.ImportTaskManager;
+import com.sambound.erp.service.importing.task.ImportTaskMapper;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -21,19 +22,20 @@ import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.time.LocalDate;
+import java.util.Map;
 
 @RestController
 @RequestMapping("/api/sale-outstocks")
 public class SaleOutstockController {
 
     private final SaleOutstockService saleOutstockService;
-    private final SaleOutstockImportService saleOutstockImportService;
+    private final ImportTaskManager importTaskManager;
 
     public SaleOutstockController(
             SaleOutstockService saleOutstockService,
-            SaleOutstockImportService saleOutstockImportService) {
+            ImportTaskManager importTaskManager) {
         this.saleOutstockService = saleOutstockService;
-        this.saleOutstockImportService = saleOutstockImportService;
+        this.importTaskManager = importTaskManager;
     }
 
     @GetMapping
@@ -60,7 +62,7 @@ public class SaleOutstockController {
 
     @PostMapping("/import")
     @PreAuthorize("hasAuthority('sale_outstock:import')")
-    public ResponseEntity<ApiResponse<SaleOutstockImportResponse>> importSaleOutstocks(
+    public ResponseEntity<ApiResponse<ImportTaskCreateResponse>> importSaleOutstocks(
             @RequestParam("file") MultipartFile file) {
         if (file.isEmpty()) {
             return ResponseEntity.badRequest()
@@ -80,12 +82,18 @@ public class SaleOutstockController {
         }
 
         try {
-            SaleOutstockImportResponse result = saleOutstockImportService.importFromExcel(file);
-            return ResponseEntity.ok(ApiResponse.success(result));
+            var task = importTaskManager.createTask("sale-outstock", file, currentUsername(), Map.of());
+            ImportTaskCreateResponse response = ImportTaskMapper.toCreateResponse(task);
+            return ResponseEntity.ok(ApiResponse.success(response));
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .body(ApiResponse.error("导入失败: " + e.getMessage()));
         }
+    }
+
+    private String currentUsername() {
+        var authentication = org.springframework.security.core.context.SecurityContextHolder.getContext().getAuthentication();
+        return authentication != null ? authentication.getName() : "system";
     }
 }
 

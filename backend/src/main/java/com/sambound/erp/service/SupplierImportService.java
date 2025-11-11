@@ -33,26 +33,27 @@ public class SupplierImportService {
     }
 
     public SupplierImportResponse importFromExcel(MultipartFile file) {
-        logger.info("开始导入供应商Excel/CSV文件: {}", file.getOriginalFilename());
-
         try {
-            byte[] fileBytes = file.getBytes();
-            SupplierImportProcessor processor = new SupplierImportProcessor(
-                    supplierRepository,
-                    transactionTemplate,
-                    executorService
-            );
-
-            SupplierImportResponse result = processor.process(fileBytes);
-            logger.info("供应商导入完成：总计 {} 条，成功 {} 条，失败 {} 条",
-                    result.supplierResult().totalRows(),
-                    result.supplierResult().successCount(),
-                    result.supplierResult().failureCount());
-            return result;
+            return importFromBytes(file.getBytes(), file.getOriginalFilename());
         } catch (Exception e) {
             logger.error("Excel/CSV文件导入失败", e);
             throw new RuntimeException("Excel/CSV文件导入失败: " + e.getMessage(), e);
         }
+    }
+
+    public SupplierImportResponse importFromBytes(byte[] fileBytes, String fileName) {
+        logger.info("开始导入供应商Excel/CSV文件: {}", fileName);
+        SupplierImportProcessor processor = new SupplierImportProcessor(
+                supplierRepository,
+                transactionTemplate,
+                executorService
+        );
+        SupplierImportResponse result = processor.process(fileBytes);
+        logger.info("供应商导入完成：总计 {} 条，成功 {} 条，失败 {} 条",
+                result.supplierResult().totalRows(),
+                result.supplierResult().successCount(),
+                result.supplierResult().failureCount());
+        return result;
     }
 }
 

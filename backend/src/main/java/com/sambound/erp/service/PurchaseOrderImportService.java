@@ -54,11 +54,20 @@ public class PurchaseOrderImportService {
     }
 
     public PurchaseOrderImportResponse importFromExcel(MultipartFile file) {
-        logger.info("开始导入采购订单Excel文件: {}，文件大小: {} MB",
-                file.getOriginalFilename(),
-                file.getSize() / (1024.0 * 1024.0));
+        try {
+            return importFromBytes(file.getBytes(), file.getOriginalFilename(), file.getSize());
+        } catch (Exception e) {
+            logger.error("Excel文件导入失败", e);
+            throw new RuntimeException("Excel文件导入失败: " + e.getMessage(), e);
+        }
+    }
 
-        try (InputStream inputStream = file.getInputStream()) {
+    public PurchaseOrderImportResponse importFromBytes(byte[] fileBytes, String fileName, long size) {
+        logger.info("开始导入采购订单Excel文件: {}，文件大小: {} MB",
+                fileName,
+                size / (1024.0 * 1024.0));
+
+        try (InputStream inputStream = new java.io.ByteArrayInputStream(fileBytes)) {
             PurchaseOrderImportProcessor processor = new PurchaseOrderImportProcessor(
                     purchaseOrderRepository,
                     purchaseOrderItemRepository,

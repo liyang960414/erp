@@ -23,56 +23,14 @@
       </template>
     </el-upload>
 
-    <div v-if="importResult" class="import-result" style="margin-top: 20px">
-      <!-- BOM导入结果 -->
-      <el-card v-if="importResult.bomResult.totalRows > 0" style="margin-bottom: 20px">
-        <template #header>
-          <span>BOM导入结果</span>
-        </template>
-        <el-alert
-          :type="importResult.bomResult.failureCount === 0 ? 'success' : 'warning'"
-          :title="`BOM导入完成：成功 ${importResult.bomResult.successCount} 条，失败 ${importResult.bomResult.failureCount} 条`"
-          :closable="false"
-          show-icon
-        />
-        <div v-if="importResult.bomResult.errors.length > 0" style="margin-top: 10px">
-          <el-collapse>
-            <el-collapse-item title="错误详情" name="errors">
-              <el-table :data="importResult.bomResult.errors" border size="small" max-height="200">
-                <el-table-column prop="sheetName" label="Sheet" width="120" />
-                <el-table-column prop="rowNumber" label="行号" width="80" />
-                <el-table-column prop="field" label="字段" width="150" />
-                <el-table-column prop="message" label="错误信息" />
-              </el-table>
-            </el-collapse-item>
-          </el-collapse>
-        </div>
-      </el-card>
-
-      <!-- BOM明细导入结果 -->
-      <el-card v-if="importResult.itemResult.totalRows > 0">
-        <template #header>
-          <span>BOM明细导入结果</span>
-        </template>
-        <el-alert
-          :type="importResult.itemResult.failureCount === 0 ? 'success' : 'warning'"
-          :title="`BOM明细导入完成：成功 ${importResult.itemResult.successCount} 条，失败 ${importResult.itemResult.failureCount} 条`"
-          :closable="false"
-          show-icon
-        />
-        <div v-if="importResult.itemResult.errors.length > 0" style="margin-top: 10px">
-          <el-collapse>
-            <el-collapse-item title="错误详情" name="errors">
-              <el-table :data="importResult.itemResult.errors" border size="small" max-height="200">
-                <el-table-column prop="sheetName" label="Sheet" width="120" />
-                <el-table-column prop="rowNumber" label="行号" width="80" />
-                <el-table-column prop="field" label="字段" width="150" />
-                <el-table-column prop="message" label="错误信息" />
-              </el-table>
-            </el-collapse-item>
-          </el-collapse>
-        </div>
-      </el-card>
+    <div v-if="taskInfo" class="import-result" style="margin-top: 20px">
+      <el-alert
+        type="success"
+        show-icon
+        :closable="false"
+        :title="`导入任务已提交，任务编号：${taskInfo.taskCode}`"
+        description="系统正在后台处理，请稍后刷新列表查看数据。"
+      />
     </div>
 
     <template #footer>
@@ -96,7 +54,7 @@ import { ref, computed } from 'vue'
 import { ElMessage, type UploadFile, type UploadInstance } from 'element-plus'
 import { UploadFilled } from '@element-plus/icons-vue'
 import { bomApi } from '@/api/bom'
-import type { BomImportResponse } from '@/types/bom'
+import type { ImportTaskCreateResponse } from '@/types/importTask'
 
 interface Props {
   modelValue: boolean
@@ -119,7 +77,7 @@ const uploadRef = ref<UploadInstance>()
 const fileList = ref<UploadFile[]>([])
 const selectedFile = ref<File | null>(null)
 const uploading = ref(false)
-const importResult = ref<BomImportResponse | null>(null)
+const taskInfo = ref<ImportTaskCreateResponse | null>(null)
 
 const handleFileChange = (file: UploadFile) => {
   if (file.raw) {
@@ -129,7 +87,7 @@ const handleFileChange = (file: UploadFile) => {
       return
     }
     selectedFile.value = file.raw
-    importResult.value = null
+    taskInfo.value = null
   }
 }
 
@@ -142,17 +100,13 @@ const handleUpload = async () => {
   uploading.value = true
   try {
     const result = await bomApi.importBoms(selectedFile.value)
-    importResult.value = result
+    taskInfo.value = result
 
-    const totalSuccess = result.bomResult.successCount + result.itemResult.successCount
-    const totalFailure = result.bomResult.failureCount + result.itemResult.failureCount
-
-    if (totalFailure === 0) {
-      ElMessage.success('导入成功！')
-      emit('import-success')
-    } else {
-      ElMessage.warning(`导入完成，但有 ${totalFailure} 条失败记录`)
-    }
+    ElMessage.success('导入任务已提交，系统正在后台处理')
+    emit('import-success')
+    setTimeout(() => {
+      handleClose()
+    }, 2000)
   } catch (error: any) {
     ElMessage.error('导入失败：' + (error.message || '未知错误'))
   } finally {
@@ -164,7 +118,7 @@ const handleClose = () => {
   dialogVisible.value = false
   fileList.value = []
   selectedFile.value = null
-  importResult.value = null
+  taskInfo.value = null
   uploadRef.value?.clearFiles()
 }
 </script>

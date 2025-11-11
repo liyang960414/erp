@@ -2,9 +2,10 @@ package com.sambound.erp.controller;
 
 import com.sambound.erp.dto.ApiResponse;
 import com.sambound.erp.dto.MaterialDTO;
-import com.sambound.erp.dto.MaterialImportResponse;
-import com.sambound.erp.service.MaterialImportService;
+import com.sambound.erp.dto.ImportTaskCreateResponse;
 import com.sambound.erp.service.MaterialService;
+import com.sambound.erp.service.importing.task.ImportTaskManager;
+import com.sambound.erp.service.importing.task.ImportTaskMapper;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -12,17 +13,18 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
+import java.util.Map;
 
 @RestController
 @RequestMapping("/api/materials")
 public class MaterialController {
 
     private final MaterialService materialService;
-    private final MaterialImportService materialImportService;
+    private final ImportTaskManager importTaskManager;
 
-    public MaterialController(MaterialService materialService, MaterialImportService materialImportService) {
+    public MaterialController(MaterialService materialService, ImportTaskManager importTaskManager) {
         this.materialService = materialService;
-        this.materialImportService = materialImportService;
+        this.importTaskManager = importTaskManager;
     }
 
     @GetMapping
@@ -36,7 +38,7 @@ public class MaterialController {
 
     @PostMapping("/import")
     @PreAuthorize("hasRole('ADMIN')")
-    public ResponseEntity<ApiResponse<MaterialImportResponse>> importMaterials(
+    public ResponseEntity<ApiResponse<ImportTaskCreateResponse>> importMaterials(
             @RequestParam("file") MultipartFile file) {
         if (file.isEmpty()) {
             return ResponseEntity.badRequest()
@@ -56,8 +58,9 @@ public class MaterialController {
         }
 
         try {
-            MaterialImportResponse result = materialImportService.importFromExcel(file);
-            return ResponseEntity.ok(ApiResponse.success(result));
+            var task = importTaskManager.createTask("material", file, currentUsername(), Map.of());
+            ImportTaskCreateResponse response = ImportTaskMapper.toCreateResponse(task);
+            return ResponseEntity.ok(ApiResponse.success(response));
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .body(ApiResponse.error("导入失败: " + e.getMessage()));
@@ -85,6 +88,10 @@ public class MaterialController {
             @RequestParam(defaultValue = "20") int limit) {
         List<MaterialDTO> materials = materialService.searchMaterials(keyword, limit);
         return ResponseEntity.ok(ApiResponse.success(materials));
+    }
+    private String currentUsername() {
+        var authentication = org.springframework.security.core.context.SecurityContextHolder.getContext().getAuthentication();
+        return authentication != null ? authentication.getName() : "system";
     }
 }
 

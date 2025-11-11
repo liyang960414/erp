@@ -1,5 +1,6 @@
 import request from '@/utils/request'
-import type { Material, MaterialImportResponse } from '@/types/material'
+import type { Material } from '@/types/material'
+import type { ImportTaskCreateResponse } from '@/types/importTask'
 
 export const materialApi = {
   // 获取所有物料
@@ -17,8 +18,8 @@ export const materialApi = {
     return request.get(`/materials/group/${groupId}`)
   },
 
-  // 导入物料（Excel文件）
-  importMaterials(file: File): Promise<MaterialImportResponse> {
+  // 导入物料（Excel文件），返回后台任务信息
+  importMaterials(file: File): Promise<ImportTaskCreateResponse> {
     const formData = new FormData()
     formData.append('file', file)
     // 不设置 Content-Type，让浏览器自动添加 boundary
