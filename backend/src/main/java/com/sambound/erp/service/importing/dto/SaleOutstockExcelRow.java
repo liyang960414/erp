@@ -1,4 +1,4 @@
-package com.sambound.erp.dto;
+package com.sambound.erp.service.importing.dto;
 
 import cn.idev.excel.annotation.ExcelProperty;
 import lombok.Data;

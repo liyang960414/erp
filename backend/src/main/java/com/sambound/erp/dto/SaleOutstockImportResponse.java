@@ -1,5 +1,6 @@
 package com.sambound.erp.dto;
 
+import com.sambound.erp.service.importing.ImportError;
 import java.util.List;
 
 public record SaleOutstockImportResponse(
@@ -11,13 +12,6 @@ public record SaleOutstockImportResponse(
         Integer successCount,
         Integer failureCount,
         List<ImportError> errors
-    ) {}
-
-    public record ImportError(
-        String sheetName,
-        Integer rowNumber,
-        String field,
-        String message
     ) {}
 }
 
