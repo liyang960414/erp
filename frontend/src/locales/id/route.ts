@@ -7,4 +7,5 @@ export default {
   roleManagement: 'Manajemen Peran',
   permissionManagement: 'Manajemen Izin',
   basicSettings: 'Pengaturan Dasar',
+  importTasks: 'Manajemen Tugas Impor',
 }

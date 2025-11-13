@@ -18,4 +18,6 @@ export default {
   basicSettings: 'Cài đặt cơ bản',
   roleManagement: 'Quản lý vai trò',
   permissionManagement: 'Quản lý quyền',
+  auditLogs: 'Nhật ký kiểm toán',
+  importTaskManagement: 'Quản lý nhiệm vụ nhập',
 }

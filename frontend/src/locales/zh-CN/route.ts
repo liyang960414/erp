@@ -7,4 +7,5 @@ export default {
   roleManagement: '角色管理',
   permissionManagement: '权限管理',
   basicSettings: '基本设置',
+  importTasks: '导入任务管理',
 }

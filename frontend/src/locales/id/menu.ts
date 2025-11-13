@@ -18,4 +18,6 @@ export default {
   basicSettings: 'Pengaturan Dasar',
   roleManagement: 'Manajemen Peran',
   permissionManagement: 'Manajemen Izin',
+  auditLogs: 'Log Audit',
+  importTaskManagement: 'Manajemen Tugas Impor',
 }

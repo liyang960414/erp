@@ -4,6 +4,7 @@ import user from './user'
 import role from './role'
 import route from './route'
 import menu from './menu'
+import importTask from './importTask'
 
 export default {
   common,
@@ -12,4 +13,5 @@ export default {
   role,
   route,
   menu,
+  importTask,
 }

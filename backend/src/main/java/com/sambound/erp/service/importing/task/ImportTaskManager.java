@@ -1,16 +1,13 @@
 package com.sambound.erp.service.importing.task;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.sambound.erp.importing.task.ImportDependencyProperties;
-import com.sambound.erp.importing.task.ImportFailureStatus;
-import com.sambound.erp.importing.task.ImportTask;
-import com.sambound.erp.importing.task.ImportTaskDependency;
-import com.sambound.erp.importing.task.ImportTaskItem;
-import com.sambound.erp.importing.task.ImportTaskItemStatus;
-import com.sambound.erp.importing.task.ImportTaskStatus;
+import tools.jackson.core.JacksonException;
+import tools.jackson.databind.ObjectMapper;
+import com.sambound.erp.importing.task.*;
+import com.sambound.erp.dto.ImportTaskDetail;
+import com.sambound.erp.dto.ImportTaskItemSummary;
 import com.sambound.erp.repository.ImportTaskFailureRepository;
 import com.sambound.erp.repository.ImportTaskDependencyRepository;
+import com.sambound.erp.repository.ImportTaskItemRepository;
 import com.sambound.erp.repository.ImportTaskRepository;
 import jakarta.persistence.EntityNotFoundException;
 import org.slf4j.Logger;
@@ -50,17 +47,20 @@ public class ImportTaskManager {
 
     private final ImportTaskRepository taskRepository;
     private final ImportTaskDependencyRepository dependencyRepository;
+    private final ImportTaskItemRepository taskItemRepository;
     private final ImportTaskFailureRepository failureRepository;
     private final ImportDependencyProperties dependencyProperties;
     private final ObjectMapper objectMapper;
 
     public ImportTaskManager(ImportTaskRepository taskRepository,
                              ImportTaskDependencyRepository dependencyRepository,
+                             ImportTaskItemRepository taskItemRepository,
                              ImportTaskFailureRepository failureRepository,
                              ImportDependencyProperties dependencyProperties,
                              ObjectMapper objectMapper) {
         this.taskRepository = taskRepository;
         this.dependencyRepository = dependencyRepository;
+        this.taskItemRepository = taskItemRepository;
         this.failureRepository = failureRepository;
         this.dependencyProperties = dependencyProperties;
         this.objectMapper = objectMapper;
@@ -117,15 +117,18 @@ public class ImportTaskManager {
                                         ImportTaskStatus status,
                                         String createdBy,
                                         Pageable pageable) {
-        Specification<ImportTask> spec = Specification.where(null);
+        Specification<ImportTask> spec = null;
         if (importType != null && !importType.isBlank()) {
-            spec = spec.and((root, query, cb) -> cb.equal(root.get("importType"), importType));
+            spec = and(spec, (root, query, cb) -> cb.equal(root.get("importType"), importType));
         }
         if (status != null) {
-            spec = spec.and((root, query, cb) -> cb.equal(root.get("status"), status));
+            spec = and(spec, (root, query, cb) -> cb.equal(root.get("status"), status));
         }
         if (createdBy != null && !createdBy.isBlank()) {
-            spec = spec.and((root, query, cb) -> cb.equal(root.get("createdBy"), createdBy));
+            spec = and(spec, (root, query, cb) -> cb.equal(root.get("createdBy"), createdBy));
+        }
+        if (spec == null) {
+            spec = (root, query, cb) -> cb.conjunction();
         }
         return taskRepository.findAll(spec, pageable);
     }
@@ -137,9 +140,18 @@ public class ImportTaskManager {
     }
 
     @Transactional(readOnly = true)
-    public Page<com.sambound.erp.importing.task.ImportTaskFailure> findFailures(Long taskId,
-                                                                                ImportFailureStatus status,
-                                                                                Pageable pageable) {
+    public ImportTaskDetail getTaskDetail(Long taskId) {
+        ImportTask task = getTask(taskId);
+        List<ImportTaskItemSummary> items = taskItemRepository.findByTaskIdOrderBySequenceNo(taskId).stream()
+                .map(ImportTaskMapper::toItemSummary)
+                .toList();
+        return new ImportTaskDetail(ImportTaskMapper.toSummary(task), items);
+    }
+
+    @Transactional(readOnly = true)
+    public Page<ImportTaskFailure> findFailures(Long taskId,
+                                                ImportFailureStatus status,
+                                                Pageable pageable) {
         if (status == null) {
             return failureRepository.findByTaskId(taskId, pageable);
         }
@@ -229,7 +241,7 @@ public class ImportTaskManager {
         }
         try {
             return objectMapper.writeValueAsString(options);
-        } catch (JsonProcessingException e) {
+        } catch (JacksonException e) {
             logger.warn("导入任务参数序列化失败: {}", e.getMessage());
             return null;
         }
@@ -256,10 +268,18 @@ public class ImportTaskManager {
                 node.put("requestedBy", createdBy);
             }
             return objectMapper.writeValueAsString(node);
-        } catch (JsonProcessingException e) {
+        } catch (JacksonException e) {
             logger.warn("重试元数据序列化失败: {}", e.getMessage());
             return null;
         }
+    }
+
+    private Specification<ImportTask> and(Specification<ImportTask> base,
+                                          Specification<ImportTask> addition) {
+        if (addition == null) {
+            return base;
+        }
+        return base == null ? Specification.where(addition) : base.and(addition);
     }
 }
 

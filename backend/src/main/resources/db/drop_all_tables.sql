@@ -12,6 +12,12 @@
 -- 按顺序删除表（确保外键约束正确）
 -- ============================================
 
+-- 删除导入任务相关表
+DROP TABLE IF EXISTS import_task_failures CASCADE;
+DROP TABLE IF EXISTS import_task_dependencies CASCADE;
+DROP TABLE IF EXISTS import_task_items CASCADE;
+DROP TABLE IF EXISTS import_tasks CASCADE;
+
 -- 删除物料相关表
 DROP TABLE IF EXISTS materials CASCADE;
 DROP TABLE IF EXISTS material_groups CASCADE;

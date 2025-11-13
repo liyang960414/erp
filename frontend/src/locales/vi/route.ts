@@ -7,4 +7,5 @@ export default {
   roleManagement: 'Quản lý vai trò',
   permissionManagement: 'Quản lý quyền',
   basicSettings: 'Cài đặt cơ bản',
+  importTasks: 'Quản lý nhiệm vụ nhập',
 }

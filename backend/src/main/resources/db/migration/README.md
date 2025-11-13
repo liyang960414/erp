@@ -24,6 +24,16 @@
   psql -h localhost -p 5432 -U postgres -d erp_db -f migration/fix_admin_supplier_permission.sql
   ```
 
+### 005_add_import_tasks_tables.sql
+- **用途**: 添加导入任务主表、任务子项、依赖关系和失败记录表
+- **内容**:
+  - 创建 `import_tasks`、`import_task_items`、`import_task_dependencies`、`import_task_failures` 表
+  - 创建相关索引及唯一约束
+  - 添加表注释和列注释
+  - 提供回滚脚本 `005_add_import_tasks_tables_rollback.sql`
+- **安全性**: 使用 `IF NOT EXISTS` 和索引存在检查，可以安全重复执行
+- **适用场景**: 在现有数据库中启用后台导入任务功能
+
 ## 使用方法
 
 ### 方式一：使用 psql 命令行执行

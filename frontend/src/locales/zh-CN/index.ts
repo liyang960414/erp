@@ -6,6 +6,7 @@ import route from './route'
 import menu from './menu'
 import audit from './audit'
 import purchaseOrder from './purchaseOrder'
+import importTask from './importTask'
 
 export default {
   common,
@@ -16,4 +17,5 @@ export default {
   menu,
   audit,
   purchaseOrder,
+  importTask,
 }

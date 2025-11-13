@@ -139,6 +139,9 @@
               $t('menu.permissionManagement')
             }}</el-menu-item>
             <el-menu-item index="/system/audit-logs">{{ $t('menu.auditLogs') }}</el-menu-item>
+            <el-menu-item index="/system/import-tasks">{{
+              $t('menu.importTaskManagement')
+            }}</el-menu-item>
           </el-sub-menu>
         </el-menu>
       </el-aside>

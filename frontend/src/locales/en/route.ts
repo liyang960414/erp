@@ -7,4 +7,5 @@ export default {
   roleManagement: 'Role Management',
   permissionManagement: 'Permission Management',
   basicSettings: 'Basic Settings',
+  importTasks: 'Import Task Management',
 }

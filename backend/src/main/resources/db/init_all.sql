@@ -13,6 +13,10 @@ BEGIN;
 -- ============================================
 -- 第一步：删除所有现有表（按依赖顺序）
 -- ============================================
+DROP TABLE IF EXISTS import_task_failures CASCADE;
+DROP TABLE IF EXISTS import_task_dependencies CASCADE;
+DROP TABLE IF EXISTS import_task_items CASCADE;
+DROP TABLE IF EXISTS import_tasks CASCADE;
 DROP TABLE IF EXISTS sale_order_items CASCADE;
 DROP TABLE IF EXISTS sale_orders CASCADE;
 DROP TABLE IF EXISTS sale_outstock_items CASCADE;
@@ -109,6 +113,77 @@ CREATE TABLE audit_logs (
     status VARCHAR(20) NOT NULL,
     error_message VARCHAR(1000),
     created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
+
+-- 导入任务主表
+CREATE TABLE import_tasks (
+    id BIGSERIAL PRIMARY KEY,
+    task_code VARCHAR(64) NOT NULL,
+    import_type VARCHAR(64) NOT NULL,
+    status VARCHAR(20) NOT NULL DEFAULT 'WAITING',
+    created_by VARCHAR(64),
+    source_file_name VARCHAR(256),
+    options_json TEXT,
+    total_count INTEGER NOT NULL DEFAULT 0,
+    success_count INTEGER NOT NULL DEFAULT 0,
+    failure_count INTEGER NOT NULL DEFAULT 0,
+    failure_reason TEXT,
+    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    scheduled_at TIMESTAMP,
+    started_at TIMESTAMP,
+    completed_at TIMESTAMP,
+    version BIGINT NOT NULL DEFAULT 0,
+    CONSTRAINT uq_import_tasks_task_code UNIQUE (task_code)
+);
+
+-- 导入任务子项表
+CREATE TABLE import_task_items (
+    id BIGSERIAL PRIMARY KEY,
+    task_id BIGINT NOT NULL REFERENCES import_tasks(id) ON DELETE CASCADE,
+    sequence_no INTEGER NOT NULL,
+    status VARCHAR(20) NOT NULL DEFAULT 'PENDING',
+    source_file_name VARCHAR(256),
+    content_type VARCHAR(128),
+    file_content BYTEA,
+    payload_json TEXT,
+    total_count INTEGER NOT NULL DEFAULT 0,
+    success_count INTEGER NOT NULL DEFAULT 0,
+    failure_count INTEGER NOT NULL DEFAULT 0,
+    failure_reason TEXT,
+    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    scheduled_at TIMESTAMP,
+    started_at TIMESTAMP,
+    completed_at TIMESTAMP,
+    retry_of_item_id BIGINT REFERENCES import_task_items(id) ON DELETE SET NULL,
+    version BIGINT NOT NULL DEFAULT 0,
+    CONSTRAINT chk_import_task_items_sequence CHECK (sequence_no > 0),
+    CONSTRAINT uq_import_task_items_sequence UNIQUE (task_id, sequence_no)
+);
+
+-- 导入任务依赖表
+CREATE TABLE import_task_dependencies (
+    id BIGSERIAL PRIMARY KEY,
+    task_id BIGINT NOT NULL REFERENCES import_tasks(id) ON DELETE CASCADE,
+    depends_on_id BIGINT NOT NULL REFERENCES import_tasks(id) ON DELETE CASCADE,
+    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    CONSTRAINT chk_import_task_dependencies_self CHECK (task_id <> depends_on_id)
+);
+
+-- 导入失败记录表
+CREATE TABLE import_task_failures (
+    id BIGSERIAL PRIMARY KEY,
+    task_id BIGINT NOT NULL REFERENCES import_tasks(id) ON DELETE CASCADE,
+    task_item_id BIGINT REFERENCES import_task_items(id) ON DELETE SET NULL,
+    status VARCHAR(20) NOT NULL DEFAULT 'PENDING',
+    section VARCHAR(128),
+    row_number INTEGER,
+    field_name VARCHAR(128),
+    message TEXT,
+    raw_payload TEXT,
+    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    resolved_at TIMESTAMP
 );
 
 -- 单位组表
@@ -357,6 +432,22 @@ CREATE INDEX idx_audit_logs_status ON audit_logs(status);
 CREATE INDEX idx_audit_logs_created_at ON audit_logs(created_at DESC);
 CREATE INDEX idx_audit_logs_resource ON audit_logs(resource_type, resource_id);
 
+-- 导入任务相关索引
+CREATE INDEX idx_import_tasks_type ON import_tasks(import_type);
+CREATE INDEX idx_import_tasks_status ON import_tasks(status);
+CREATE INDEX idx_import_tasks_created_at ON import_tasks(created_at DESC);
+
+CREATE INDEX idx_import_task_items_task_id ON import_task_items(task_id);
+CREATE INDEX idx_import_task_items_status ON import_task_items(status);
+CREATE INDEX idx_import_task_items_retry ON import_task_items(retry_of_item_id);
+
+CREATE INDEX idx_import_task_dependencies_task_id ON import_task_dependencies(task_id);
+CREATE INDEX idx_import_task_dependencies_depends_on ON import_task_dependencies(depends_on_id);
+
+CREATE INDEX idx_import_task_failures_task_id ON import_task_failures(task_id);
+CREATE INDEX idx_import_task_failures_task_item_id ON import_task_failures(task_item_id);
+CREATE INDEX idx_import_task_failures_status ON import_task_failures(status);
+
 -- 单位组表索引
 CREATE INDEX idx_unit_groups_code ON unit_groups(code);
 
@@ -433,6 +524,38 @@ COMMENT ON TABLE permissions IS '权限表';
 COMMENT ON TABLE user_roles IS '用户角色关联表';
 COMMENT ON TABLE role_permissions IS '角色权限关联表';
 COMMENT ON TABLE audit_logs IS '审计日志表';
+COMMENT ON TABLE import_tasks IS '导入任务主表';
+COMMENT ON COLUMN import_tasks.task_code IS '业务唯一编号，便于日志追踪';
+COMMENT ON COLUMN import_tasks.import_type IS '导入类型（unit、material、bom 等）';
+COMMENT ON COLUMN import_tasks.status IS '任务状态：WAITING、RUNNING、SUCCESS、FAILED 等';
+COMMENT ON COLUMN import_tasks.options_json IS '额外参数或配置（JSON 字符串）';
+COMMENT ON COLUMN import_tasks.total_count IS '待处理总记录数';
+COMMENT ON COLUMN import_tasks.success_count IS '处理成功记录数';
+COMMENT ON COLUMN import_tasks.failure_count IS '处理失败记录数';
+COMMENT ON COLUMN import_tasks.failure_reason IS '任务失败原因描述';
+
+COMMENT ON TABLE import_task_items IS '导入任务子项表';
+COMMENT ON COLUMN import_task_items.task_id IS '关联的导入任务ID';
+COMMENT ON COLUMN import_task_items.sequence_no IS '执行顺序号';
+COMMENT ON COLUMN import_task_items.status IS '任务子项状态：PENDING、PROCESSING、SUCCESS、FAILED 等';
+COMMENT ON COLUMN import_task_items.file_content IS '上传文件的二进制内容';
+COMMENT ON COLUMN import_task_items.payload_json IS '额外参数或过滤条件（JSON 数据）';
+COMMENT ON COLUMN import_task_items.retry_of_item_id IS '重试来源的子项ID';
+
+COMMENT ON TABLE import_task_dependencies IS '导入任务依赖关系表';
+COMMENT ON COLUMN import_task_dependencies.task_id IS '当前任务ID';
+COMMENT ON COLUMN import_task_dependencies.depends_on_id IS '依赖的前序任务ID';
+
+COMMENT ON TABLE import_task_failures IS '导入失败记录表';
+COMMENT ON COLUMN import_task_failures.task_id IS '所属导入任务ID';
+COMMENT ON COLUMN import_task_failures.task_item_id IS '所属导入任务子项ID';
+COMMENT ON COLUMN import_task_failures.status IS '失败记录状态：PENDING、RESOLVED 等';
+COMMENT ON COLUMN import_task_failures.section IS '失败所在模块或分区';
+COMMENT ON COLUMN import_task_failures.row_number IS '失败的行号';
+COMMENT ON COLUMN import_task_failures.field_name IS '失败的字段名称';
+COMMENT ON COLUMN import_task_failures.message IS '失败信息描述';
+COMMENT ON COLUMN import_task_failures.raw_payload IS '原始数据（JSON 字符串）';
+
 COMMENT ON TABLE unit_groups IS '单位组表';
 COMMENT ON TABLE units IS '单位表';
 COMMENT ON TABLE unit_conversions IS '单位转换表';
@@ -690,6 +813,14 @@ SELECT '权限表', COUNT(*) FROM permissions
 UNION ALL
 SELECT '审计日志表', COUNT(*) FROM audit_logs
 UNION ALL
+SELECT '导入任务表', COUNT(*) FROM import_tasks
+UNION ALL
+SELECT '导入任务子项表', COUNT(*) FROM import_task_items
+UNION ALL
+SELECT '导入任务依赖表', COUNT(*) FROM import_task_dependencies
+UNION ALL
+SELECT '导入任务失败表', COUNT(*) FROM import_task_failures
+UNION ALL
 SELECT '单位组表', COUNT(*) FROM unit_groups
 UNION ALL
 SELECT '单位表', COUNT(*) FROM units
@@ -753,6 +884,10 @@ COMMIT;
 \echo '  - user_roles (用户角色关联表)'
 \echo '  - role_permissions (角色权限关联表)'
 \echo '  - audit_logs (审计日志表)'
+\echo '  - import_tasks (导入任务主表)'
+\echo '  - import_task_items (导入任务子项表)'
+\echo '  - import_task_dependencies (导入任务依赖表)'
+\echo '  - import_task_failures (导入失败记录表)'
 \echo '  - unit_groups (单位组表)'
 \echo '  - units (单位表)'
 \echo '  - unit_conversions (单位转换表)'

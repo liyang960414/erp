@@ -106,7 +106,6 @@ public class SaleOrderController {
         List<OrderAlertDTO> alerts = saleOrderService.getOrderAlerts();
         return ResponseEntity.ok(ApiResponse.success(alerts));
     }
-}
 
     private String currentUsername() {
         var authentication = org.springframework.security.core.context.SecurityContextHolder.getContext().getAuthentication();

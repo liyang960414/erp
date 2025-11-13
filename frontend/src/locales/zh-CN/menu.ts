@@ -20,4 +20,5 @@ export default {
   roleManagement: '角色管理',
   permissionManagement: '权限管理',
   auditLogs: '审计日志',
+  importTaskManagement: '导入任务管理',
 }

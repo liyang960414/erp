@@ -1,6 +1,5 @@
 package com.sambound.erp.service.importing.task;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.sambound.erp.importing.task.ImportDependencyProperties;
 import com.sambound.erp.importing.task.ImportFailureStatus;
@@ -325,6 +324,7 @@ public class ImportTaskScheduler {
                     persistFailures(task, item, result.getFailures());
                 }
                 resolveResubmittedFailures(task, item, now);
+                refreshTaskStatistics(task);
                 if (!hasPendingItems(task)) {
                     task.setStatus(ImportTaskStatus.COMPLETED);
                     task.setCompletedAt(now);
@@ -363,6 +363,8 @@ public class ImportTaskScheduler {
             entities.add(failure);
         }
         failureRepository.saveAll(entities);
+        task.getFailures().addAll(entities);
+        item.getFailures().addAll(entities);
     }
 
     private boolean hasPendingItems(ImportTask task) {
@@ -424,6 +426,32 @@ public class ImportTaskScheduler {
         } catch (Exception e) {
             logger.warn("解析重试元数据失败: {}", e.getMessage());
         }
+    }
+
+    private void refreshTaskStatistics(ImportTask task) {
+        int total = task.getItems().stream()
+                .mapToInt(item -> safeInt(item.getTotalCount()))
+                .max()
+                .orElse(0);
+        int successFromCompleted = task.getItems().stream()
+                .filter(item -> item.getStatus() == ImportTaskItemStatus.COMPLETED)
+                .mapToInt(item -> safeInt(item.getSuccessCount()))
+                .sum();
+        long unresolvedFailures = task.getFailures().stream()
+                .filter(failure -> failure.getStatus() != ImportFailureStatus.RESOLVED)
+                .count();
+        int unresolved = unresolvedFailures > Integer.MAX_VALUE
+                ? Integer.MAX_VALUE
+                : (int) unresolvedFailures;
+        int successBasedOnFailures = Math.max(0, total - unresolved);
+        int success = Math.min(total, Math.max(successFromCompleted, successBasedOnFailures));
+        task.setTotalCount(total);
+        task.setFailureCount(unresolved);
+        task.setSuccessCount(success);
+    }
+
+    private int safeInt(Integer value) {
+        return value != null ? value : 0;
     }
 
     private record TaskExecutionContext(

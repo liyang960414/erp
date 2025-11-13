@@ -81,6 +81,12 @@ const router = createRouter({
           meta: { title: '审计日志', requiresAuth: true, roles: ['ADMIN'] },
         },
         {
+          path: 'system/import-tasks',
+          name: 'importTasks',
+          component: () => import('@/views/system/ImportTaskView.vue'),
+          meta: { title: '导入任务管理', requiresAuth: true, roles: ['ADMIN'] },
+        },
+        {
           path: 'basic-info/units',
           name: 'units',
           component: () => import('@/views/basic-info/UnitManagementView.vue'),

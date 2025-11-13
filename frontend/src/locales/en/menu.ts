@@ -20,4 +20,5 @@ export default {
   roleManagement: 'Role Management',
   permissionManagement: 'Permission Management',
   auditLogs: 'Audit Logs',
+  importTaskManagement: 'Import Task Management',
 }

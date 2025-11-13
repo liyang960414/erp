@@ -3,6 +3,7 @@ package com.sambound.erp.repository;
 import com.sambound.erp.importing.task.ImportTask;
 import com.sambound.erp.importing.task.ImportTaskStatus;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 import org.springframework.data.jpa.repository.Lock;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;

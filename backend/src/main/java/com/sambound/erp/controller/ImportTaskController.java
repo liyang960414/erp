@@ -56,8 +56,7 @@ public class ImportTaskController {
     @GetMapping("/{taskId}")
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<ApiResponse<ImportTaskDetail>> getTaskDetail(@PathVariable Long taskId) {
-        var task = importTaskManager.getTask(taskId);
-        ImportTaskDetail detail = ImportTaskMapper.toDetail(task);
+        ImportTaskDetail detail = importTaskManager.getTaskDetail(taskId);
         return ResponseEntity.ok(ApiResponse.success(detail));
     }
 
@@ -101,5 +100,7 @@ public class ImportTaskController {
         return authentication != null ? authentication.getName() : "system";
     }
 }
+
+
 
 
