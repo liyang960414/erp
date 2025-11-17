@@ -96,10 +96,17 @@ erp:
         - unit
       bom:
         - material
+      purchase-order:
+        - material
+        - supplier
+      sale-order:
+        - material
+        - supplier
     type-concurrency:
       unit: ${ERP_IMPORT_CONCURRENCY_UNIT:1}
       material: ${ERP_IMPORT_CONCURRENCY_MATERIAL:1}
       bom: ${ERP_IMPORT_CONCURRENCY_BOM:1}
+      sub-req-order: ${ERP_IMPORT_CONCURRENCY_SUB_REQ_ORDER:1}
 
 # 添加以下配置
 management:

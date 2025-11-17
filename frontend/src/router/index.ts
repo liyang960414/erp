@@ -57,6 +57,12 @@ const router = createRouter({
           meta: { title: '采购订单管理', requiresAuth: true },
         },
         {
+          path: 'sub-req-orders',
+          name: 'subReqOrders',
+          component: () => import('@/views/orders/SubReqOrderView.vue'),
+          meta: { title: '委外订单管理', requiresAuth: true },
+        },
+        {
           path: 'system/settings',
           name: 'systemSettings',
           component: () => import('@/views/system/SystemSettingsView.vue'),

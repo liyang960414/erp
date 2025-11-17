@@ -7,6 +7,7 @@ export default {
   saleOrderManagement: 'Quản lý đơn bán hàng',
   saleOutstockManagement: 'Quản lý phiếu xuất bán',
   purchaseOrderManagement: 'Quản lý đơn mua hàng',
+  subReqOrderManagement: 'Quản lý đơn đặt hàng phụ',
   basicInfoManagement: 'Quản lý thông tin cơ bản',
   unitManagement: 'Quản lý đơn vị',
   materialManagement: 'Quản lý vật liệu',

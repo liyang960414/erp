@@ -7,6 +7,7 @@ export default {
   saleOrderManagement: 'Manajemen Pesanan Penjualan',
   saleOutstockManagement: 'Manajemen Pengeluaran Penjualan',
   purchaseOrderManagement: 'Manajemen Pesanan Pembelian',
+  subReqOrderManagement: 'Manajemen Pesanan Subkontrak',
   basicInfoManagement: 'Manajemen Informasi Dasar',
   unitManagement: 'Manajemen Unit',
   materialManagement: 'Manajemen Material',

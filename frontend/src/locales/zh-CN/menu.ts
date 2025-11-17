@@ -7,6 +7,7 @@ export default {
   saleOrderManagement: '销售订单管理',
   saleOutstockManagement: '销售出库单管理',
   purchaseOrderManagement: '采购订单管理',
+  subReqOrderManagement: '委外订单管理',
   basicInfoManagement: '基础信息管理',
   unitManagement: '单位管理',
   materialManagement: '物料管理',

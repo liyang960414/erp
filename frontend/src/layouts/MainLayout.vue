@@ -94,6 +94,12 @@
               {{ $t('menu.saleOutstockManagement') }}
             </el-menu-item>
             <el-menu-item index="/purchase-orders">{{ $t('menu.purchaseOrderManagement') }}</el-menu-item>
+            <el-menu-item
+              v-if="authStore.hasPermission('sub_req_order:read')"
+              index="/sub-req-orders"
+            >
+              {{ $t('menu.subReqOrderManagement') }}
+            </el-menu-item>
           </el-sub-menu>
 
           <el-sub-menu index="/basic-info">

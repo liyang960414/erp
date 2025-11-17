@@ -26,9 +26,13 @@ DROP TABLE IF EXISTS suppliers CASCADE;
 -- 删除采购订单相关表
 DROP TABLE IF EXISTS purchase_order_items CASCADE;
 DROP TABLE IF EXISTS purchase_orders CASCADE;
+-- 删除委外订单相关表
+DROP TABLE IF EXISTS sub_req_order_items CASCADE;
+DROP TABLE IF EXISTS sub_req_orders CASCADE;
 DROP TYPE IF EXISTS purchase_order_status;
 DROP TYPE IF EXISTS sale_order_item_status;
 DROP TYPE IF EXISTS sale_order_status;
+DROP TYPE IF EXISTS sub_req_order_status;
 
 -- 删除BOM相关表
 DROP TABLE IF EXISTS bom_items CASCADE;
@@ -306,6 +310,9 @@ CREATE TYPE purchase_order_status AS ENUM ('OPEN', 'CLOSED');
 CREATE TYPE sale_order_status AS ENUM ('OPEN', 'CLOSED');
 CREATE TYPE sale_order_item_status AS ENUM ('OPEN', 'CLOSED');
 
+-- 委外订单状态类型
+CREATE TYPE sub_req_order_status AS ENUM ('OPEN', 'CLOSED');
+
 -- 采购订单主表
 CREATE TABLE purchase_orders (
     id BIGSERIAL PRIMARY KEY,
@@ -406,6 +413,38 @@ CREATE TABLE sale_outstock_items (
     updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
     CONSTRAINT chk_sale_outstock_item_sequence CHECK (sequence > 0),
     CONSTRAINT chk_sale_outstock_item_qty CHECK (qty > 0)
+);
+
+-- 委外订单主表
+CREATE TABLE sub_req_orders (
+    id BIGSERIAL PRIMARY KEY,
+    bill_head_seq INTEGER NOT NULL,
+    description TEXT,
+    status sub_req_order_status NOT NULL DEFAULT 'OPEN',
+    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
+
+-- 委外订单明细表
+CREATE TABLE sub_req_order_items (
+    id BIGSERIAL PRIMARY KEY,
+    sub_req_order_id BIGINT NOT NULL REFERENCES sub_req_orders(id) ON DELETE CASCADE,
+    sequence INTEGER NOT NULL,
+    material_id BIGINT NOT NULL REFERENCES materials(id) ON DELETE RESTRICT,
+    unit_id BIGINT NOT NULL REFERENCES units(id) ON DELETE RESTRICT,
+    qty DECIMAL(18, 6) NOT NULL,
+    bom_id BIGINT REFERENCES bill_of_materials(id) ON DELETE SET NULL,
+    supplier_id BIGINT NOT NULL REFERENCES suppliers(id) ON DELETE RESTRICT,
+    lot_master VARCHAR(200),
+    lot_manual VARCHAR(200),
+    base_no_stock_in_qty DECIMAL(18, 6),
+    no_stock_in_qty DECIMAL(18, 6),
+    pick_mtrl_status VARCHAR(50),
+    description TEXT,
+    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    CONSTRAINT chk_sub_req_order_item_sequence CHECK (sequence > 0),
+    CONSTRAINT chk_sub_req_order_item_qty CHECK (qty > 0)
 );
 
 -- ============================================
@@ -514,6 +553,16 @@ CREATE INDEX idx_sale_outstock_items_outstock_id ON sale_outstock_items(sale_out
 CREATE INDEX idx_sale_outstock_items_order_item_id ON sale_outstock_items(sale_order_item_id);
 CREATE INDEX idx_sale_outstock_items_material_id ON sale_outstock_items(material_id);
 
+-- 委外订单主表索引
+CREATE INDEX idx_sub_req_orders_bill_head_seq ON sub_req_orders(bill_head_seq);
+CREATE INDEX idx_sub_req_orders_status ON sub_req_orders(status);
+
+-- 委外订单明细表索引
+CREATE INDEX idx_sub_req_order_items_order_id ON sub_req_order_items(sub_req_order_id);
+CREATE INDEX idx_sub_req_order_items_material_id ON sub_req_order_items(material_id);
+CREATE INDEX idx_sub_req_order_items_supplier_id ON sub_req_order_items(supplier_id);
+CREATE INDEX idx_sub_req_order_items_sequence ON sub_req_order_items(sub_req_order_id, sequence);
+
 -- ============================================
 -- 第四步：添加表注释和列注释
 -- ============================================
@@ -615,6 +664,18 @@ CREATE TRIGGER trigger_purchase_order_items_updated_at
     FOR EACH ROW
     EXECUTE FUNCTION update_purchase_order_updated_at();
 
+-- 为委外订单主表创建触发器
+CREATE TRIGGER trigger_sub_req_orders_updated_at
+    BEFORE UPDATE ON sub_req_orders
+    FOR EACH ROW
+    EXECUTE FUNCTION update_purchase_order_updated_at();
+
+-- 为委外订单明细表创建触发器
+CREATE TRIGGER trigger_sub_req_order_items_updated_at
+    BEFORE UPDATE ON sub_req_order_items
+    FOR EACH ROW
+    EXECUTE FUNCTION update_purchase_order_updated_at();
+
 COMMENT ON COLUMN sale_orders.id IS '销售订单ID';
 COMMENT ON COLUMN sale_orders.bill_no IS '单据编号（唯一）';
 COMMENT ON COLUMN sale_orders.order_date IS '订单日期';
@@ -662,6 +723,32 @@ COMMENT ON COLUMN sale_outstock_items.qty IS '实发数量';
 COMMENT ON COLUMN sale_outstock_items.entry_note IS '明细备注';
 COMMENT ON COLUMN sale_outstock_items.wo_number IS '本司WO编号';
 
+COMMENT ON TABLE sub_req_orders IS '委外订单主表';
+COMMENT ON COLUMN sub_req_orders.id IS '委外订单ID';
+COMMENT ON COLUMN sub_req_orders.bill_head_seq IS '单据头序号';
+COMMENT ON COLUMN sub_req_orders.description IS '备注';
+COMMENT ON COLUMN sub_req_orders.status IS '订单状态：OPEN-进行中，CLOSED-已关闭';
+COMMENT ON COLUMN sub_req_orders.created_at IS '创建时间';
+COMMENT ON COLUMN sub_req_orders.updated_at IS '更新时间';
+
+COMMENT ON TABLE sub_req_order_items IS '委外订单明细表';
+COMMENT ON COLUMN sub_req_order_items.id IS '委外订单明细ID';
+COMMENT ON COLUMN sub_req_order_items.sub_req_order_id IS '委外订单ID';
+COMMENT ON COLUMN sub_req_order_items.sequence IS '序号';
+COMMENT ON COLUMN sub_req_order_items.material_id IS '物料ID';
+COMMENT ON COLUMN sub_req_order_items.unit_id IS '单位ID';
+COMMENT ON COLUMN sub_req_order_items.qty IS '数量';
+COMMENT ON COLUMN sub_req_order_items.bom_id IS 'BOM版本ID';
+COMMENT ON COLUMN sub_req_order_items.supplier_id IS '供应商ID';
+COMMENT ON COLUMN sub_req_order_items.lot_master IS '批号主档';
+COMMENT ON COLUMN sub_req_order_items.lot_manual IS '批号手工';
+COMMENT ON COLUMN sub_req_order_items.base_no_stock_in_qty IS '基本单位未入库数量';
+COMMENT ON COLUMN sub_req_order_items.no_stock_in_qty IS '未入库数量';
+COMMENT ON COLUMN sub_req_order_items.pick_mtrl_status IS '领料状态';
+COMMENT ON COLUMN sub_req_order_items.description IS '备注';
+COMMENT ON COLUMN sub_req_order_items.created_at IS '创建时间';
+COMMENT ON COLUMN sub_req_order_items.updated_at IS '更新时间';
+
 -- ============================================
 -- 第五步：插入初始数据
 -- ============================================
@@ -689,6 +776,9 @@ INSERT INTO permissions (name, description) VALUES
 ('purchase_order:read', '查看采购订单'),
 ('purchase_order:import', '导入采购订单'),
 ('purchase_order:update', '更新采购订单'),
+-- 委外订单权限
+('sub_req_order:read', '查看委外订单'),
+('sub_req_order:import', '导入委外订单'),
 -- 供应商权限
 ('supplier:import', '导入供应商'),
 -- 系统权限
@@ -734,6 +824,7 @@ WHERE r.name = 'MANAGER'
         'order:read', 'order:write', 'order:delete', 
         'sale_order:read', 'sale_order:import', 'sale_outstock:read', 'sale_outstock:import',
         'purchase_order:read', 'purchase_order:import', 'purchase_order:update',
+        'sub_req_order:read', 'sub_req_order:import',
         'supplier:import',
         'system:read'
     );
@@ -841,7 +932,11 @@ SELECT '销售订单明细表', COUNT(*) FROM sale_order_items
 UNION ALL
 SELECT '销售出库表', COUNT(*) FROM sale_outstocks
 UNION ALL
-SELECT '销售出库明细表', COUNT(*) FROM sale_outstock_items;
+SELECT '销售出库明细表', COUNT(*) FROM sale_outstock_items
+UNION ALL
+SELECT '委外订单表', COUNT(*) FROM sub_req_orders
+UNION ALL
+SELECT '委外订单明细表', COUNT(*) FROM sub_req_order_items;
 
 SELECT 
     u.username,
@@ -901,5 +996,7 @@ COMMIT;
 \echo '  - sale_outstock_items (销售出库明细表)'
 \echo '  - purchase_orders (采购订单表)'
 \echo '  - purchase_order_items (采购订单明细表)'
+\echo '  - sub_req_orders (委外订单表)'
+\echo '  - sub_req_order_items (委外订单明细表)'
 \echo ''
 

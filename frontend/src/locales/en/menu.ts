@@ -7,6 +7,7 @@ export default {
   saleOrderManagement: 'Sale Order Management',
   saleOutstockManagement: 'Sale Outstock Management',
   purchaseOrderManagement: 'Purchase Order Management',
+  subReqOrderManagement: 'Subcontract Order Management',
   basicInfoManagement: 'Basic Information Management',
   unitManagement: 'Unit Management',
   materialManagement: 'Material Management',
