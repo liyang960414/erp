@@ -27,7 +27,15 @@ public record PurchaseOrderItemDTO(
     String remarks,
     BigDecimal salBaseQty,
     BigDecimal deliveredQty,  // 已交货数量汇总
+    SubReqOrderItemSummary subReqOrderItem,  // 关联的委外订单明细
     LocalDateTime createdAt,
     LocalDateTime updatedAt
-) {}
+) {
+    public record SubReqOrderItemSummary(
+        Long id,
+        Integer sequence,
+        Long subReqOrderId,
+        Integer subReqOrderBillHeadSeq
+    ) {}
+}
 

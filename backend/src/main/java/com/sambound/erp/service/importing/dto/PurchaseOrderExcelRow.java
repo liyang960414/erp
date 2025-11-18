@@ -98,5 +98,8 @@ public class PurchaseOrderExcelRow {
 
     @ExcelProperty(value = {"FTRLT", "(交货明细)运输提前期"})
     private String transportLeadTime;
+
+    @ExcelProperty(value = {"FSUBREQENTRYID", "(明细信息)委外订单分录内码"})
+    private String subReqOrderSequence;
 }
 

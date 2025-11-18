@@ -5,6 +5,7 @@ import com.sambound.erp.repository.BillOfMaterialRepository;
 import com.sambound.erp.repository.MaterialRepository;
 import com.sambound.erp.repository.PurchaseOrderItemRepository;
 import com.sambound.erp.repository.PurchaseOrderRepository;
+import com.sambound.erp.repository.SubReqOrderItemRepository;
 import com.sambound.erp.repository.SupplierRepository;
 import com.sambound.erp.repository.UnitRepository;
 import com.sambound.erp.service.importing.purchase.PurchaseOrderImportProcessor;
@@ -30,6 +31,7 @@ public class PurchaseOrderImportService {
     private final MaterialRepository materialRepository;
     private final UnitRepository unitRepository;
     private final BillOfMaterialRepository bomRepository;
+    private final SubReqOrderItemRepository subReqOrderItemRepository;
     private final TransactionTemplate transactionTemplate;
     private final ExecutorService executorService;
 
@@ -40,6 +42,7 @@ public class PurchaseOrderImportService {
             MaterialRepository materialRepository,
             UnitRepository unitRepository,
             BillOfMaterialRepository bomRepository,
+            SubReqOrderItemRepository subReqOrderItemRepository,
             PlatformTransactionManager transactionManager) {
         this.purchaseOrderRepository = purchaseOrderRepository;
         this.purchaseOrderItemRepository = purchaseOrderItemRepository;
@@ -47,6 +50,7 @@ public class PurchaseOrderImportService {
         this.materialRepository = materialRepository;
         this.unitRepository = unitRepository;
         this.bomRepository = bomRepository;
+        this.subReqOrderItemRepository = subReqOrderItemRepository;
         this.transactionTemplate = new TransactionTemplate(transactionManager);
         this.transactionTemplate.setPropagationBehavior(TransactionTemplate.PROPAGATION_REQUIRES_NEW);
         this.transactionTemplate.setTimeout(1800);
@@ -75,6 +79,7 @@ public class PurchaseOrderImportService {
                     materialRepository,
                     unitRepository,
                     bomRepository,
+                    subReqOrderItemRepository,
                     transactionTemplate,
                     executorService
             );

@@ -7,6 +7,8 @@ import com.sambound.erp.entity.PurchaseOrderItem;
 import com.sambound.erp.exception.BusinessException;
 import com.sambound.erp.repository.PurchaseOrderItemRepository;
 import com.sambound.erp.repository.PurchaseOrderRepository;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
@@ -19,6 +21,8 @@ import java.util.stream.Collectors;
 @Service
 @Transactional(readOnly = true)
 public class PurchaseOrderService {
+    
+    private static final Logger logger = LoggerFactory.getLogger(PurchaseOrderService.class);
     
     private final PurchaseOrderRepository purchaseOrderRepository;
     private final PurchaseOrderItemRepository purchaseOrderItemRepository;
@@ -103,6 +107,42 @@ public class PurchaseOrderService {
         // 交货明细已移除，默认返回0
         BigDecimal deliveredQty = BigDecimal.ZERO;
         
+        // 转换委外订单明细信息
+        PurchaseOrderItemDTO.SubReqOrderItemSummary subReqOrderItemSummary = null;
+        try {
+            if (item.getSubReqOrderItem() != null) {
+                var subReqOrderItem = item.getSubReqOrderItem();
+                logger.debug("找到委外订单明细，ID: {}, sequence: {}", subReqOrderItem.getId(), subReqOrderItem.getSequence());
+                // 确保委外订单也被加载
+                if (subReqOrderItem.getSubReqOrder() != null) {
+                    subReqOrderItemSummary = new PurchaseOrderItemDTO.SubReqOrderItemSummary(
+                            subReqOrderItem.getId(),
+                            subReqOrderItem.getSequence(),
+                            subReqOrderItem.getSubReqOrder().getId(),
+                            subReqOrderItem.getSubReqOrder().getBillHeadSeq()
+                    );
+                    logger.debug("委外订单明细转换成功，委外订单ID: {}, billHeadSeq: {}", 
+                            subReqOrderItem.getSubReqOrder().getId(), 
+                            subReqOrderItem.getSubReqOrder().getBillHeadSeq());
+                } else {
+                    logger.warn("委外订单明细存在但委外订单未加载，明细ID: {}", subReqOrderItem.getId());
+                    // 如果委外订单未加载，至少返回明细信息
+                    subReqOrderItemSummary = new PurchaseOrderItemDTO.SubReqOrderItemSummary(
+                            subReqOrderItem.getId(),
+                            subReqOrderItem.getSequence(),
+                            null,
+                            null
+                    );
+                }
+            } else {
+                logger.debug("采购订单明细ID: {} 未关联委外订单明细", item.getId());
+            }
+        } catch (Exception e) {
+            logger.error("转换委外订单明细信息失败，采购订单明细ID: {}", item.getId(), e);
+            // 如果懒加载失败，忽略错误，返回null
+            // 这通常发生在事务已关闭的情况下
+        }
+        
         return new PurchaseOrderItemDTO(
                 item.getId(),
                 item.getPurchaseOrder() != null ? item.getPurchaseOrder().getId() : null,
@@ -127,6 +167,7 @@ public class PurchaseOrderService {
                 item.getRemarks(),
                 item.getSalBaseQty(),
                 deliveredQty,
+                subReqOrderItemSummary,
                 item.getCreatedAt(),
                 item.getUpdatedAt()
         );

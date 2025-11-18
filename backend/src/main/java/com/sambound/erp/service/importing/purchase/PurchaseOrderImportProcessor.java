@@ -8,12 +8,14 @@ import com.sambound.erp.entity.BillOfMaterial;
 import com.sambound.erp.entity.Material;
 import com.sambound.erp.entity.PurchaseOrder;
 import com.sambound.erp.entity.PurchaseOrderItem;
+import com.sambound.erp.entity.SubReqOrderItem;
 import com.sambound.erp.entity.Supplier;
 import com.sambound.erp.entity.Unit;
 import com.sambound.erp.repository.BillOfMaterialRepository;
 import com.sambound.erp.repository.MaterialRepository;
 import com.sambound.erp.repository.PurchaseOrderItemRepository;
 import com.sambound.erp.repository.PurchaseOrderRepository;
+import com.sambound.erp.repository.SubReqOrderItemRepository;
 import com.sambound.erp.repository.SupplierRepository;
 import com.sambound.erp.repository.UnitRepository;
 import com.sambound.erp.service.importing.ImportError;
@@ -58,6 +60,7 @@ public class PurchaseOrderImportProcessor implements ReadListener<PurchaseOrderE
     private final MaterialRepository materialRepository;
     private final UnitRepository unitRepository;
     private final BillOfMaterialRepository bomRepository;
+    private final SubReqOrderItemRepository subReqOrderItemRepository;
     private final TransactionTemplate transactionTemplate;
     private final ExecutorService executorService;
 
@@ -71,6 +74,7 @@ public class PurchaseOrderImportProcessor implements ReadListener<PurchaseOrderE
                                         MaterialRepository materialRepository,
                                         UnitRepository unitRepository,
                                         BillOfMaterialRepository bomRepository,
+                                        SubReqOrderItemRepository subReqOrderItemRepository,
                                         TransactionTemplate transactionTemplate,
                                         ExecutorService executorService) {
         this.purchaseOrderRepository = purchaseOrderRepository;
@@ -79,6 +83,7 @@ public class PurchaseOrderImportProcessor implements ReadListener<PurchaseOrderE
         this.materialRepository = materialRepository;
         this.unitRepository = unitRepository;
         this.bomRepository = bomRepository;
+        this.subReqOrderItemRepository = subReqOrderItemRepository;
         this.transactionTemplate = transactionTemplate;
         this.executorService = executorService;
     }
@@ -117,9 +122,24 @@ public class PurchaseOrderImportProcessor implements ReadListener<PurchaseOrderE
         if (purchaseOrderEntry != null && currentHeader != null) {
             Integer sequence = null;
             try {
-                sequence = Integer.parseInt(purchaseOrderEntry);
+                // 去除千分符（逗号）和其他可能的格式字符
+                String cleaned = purchaseOrderEntry.replace(",", "").replace(" ", "").trim();
+                sequence = Integer.parseInt(cleaned);
             } catch (NumberFormatException e) {
+                logger.warn("无法解析采购订单明细序号：{}，行号: {}", purchaseOrderEntry, rowNum);
                 // ignore
+            }
+            Integer subReqOrderSequence = null;
+            String subReqOrderSequenceStr = trimOrNull(data.getSubReqOrderSequence());
+            if (subReqOrderSequenceStr != null) {
+                try {
+                    // 去除千分符（逗号）和其他可能的格式字符
+                    String cleaned = subReqOrderSequenceStr.replace(",", "").replace(" ", "").trim();
+                    subReqOrderSequence = Integer.parseInt(cleaned);
+                } catch (NumberFormatException e) {
+                    logger.warn("无法解析委外订单分录内码：{}，行号: {}", subReqOrderSequenceStr, rowNum);
+                    // ignore
+                }
             }
             PurchaseOrderItemHeader itemHeader = new PurchaseOrderItemHeader(
                     rowNum,
@@ -135,7 +155,8 @@ public class PurchaseOrderImportProcessor implements ReadListener<PurchaseOrderE
                     data.getSalJoinQty(),
                     data.getBaseSalJoinQty(),
                     data.getRemarks(),
-                    data.getSalBaseQty()
+                    data.getSalBaseQty(),
+                    subReqOrderSequence
             );
             orderDataList.add(new PurchaseOrderData(currentHeader, itemHeader));
         }
@@ -187,7 +208,8 @@ public class PurchaseOrderImportProcessor implements ReadListener<PurchaseOrderE
                         data.itemHeader().salJoinQty(),
                         data.itemHeader().baseSalJoinQty(),
                         data.itemHeader().remarks(),
-                        data.itemHeader().salBaseQty()
+                        data.itemHeader().salBaseQty(),
+                        data.itemHeader().subReqOrderSequence()
                 );
             }
             items.putIfAbsent(sequence, itemHeader);
@@ -392,6 +414,22 @@ public class PurchaseOrderImportProcessor implements ReadListener<PurchaseOrderE
                         BigDecimal baseSalJoinQty = parseOptionalDecimal(itemHeader.baseSalJoinQty());
                         BigDecimal salBaseQty = parseOptionalDecimal(itemHeader.salBaseQty());
 
+                        // 查找并关联委外订单明细
+                        SubReqOrderItem subReqOrderItem = null;
+                        if (itemHeader.subReqOrderSequence() != null) {
+                            logger.debug("尝试关联委外订单明细：物料编码={}, sequence={}, 行号={}", 
+                                    material.getCode(), itemHeader.subReqOrderSequence(), itemHeader.rowNumber());
+                            subReqOrderItem = resolveSubReqOrderItem(material, itemHeader.subReqOrderSequence(), itemHeader.rowNumber(), errors);
+                            if (subReqOrderItem != null) {
+                                logger.debug("成功关联委外订单明细：ID={}", subReqOrderItem.getId());
+                            } else {
+                                logger.debug("未能关联委外订单明细：物料编码={}, sequence={}", 
+                                        material.getCode(), itemHeader.subReqOrderSequence());
+                            }
+                        } else {
+                            logger.debug("采购订单明细行号={}未提供subReqOrderSequence，跳过关联", itemHeader.rowNumber());
+                        }
+
                         PurchaseOrderItem item = PurchaseOrderItem.builder()
                                 .purchaseOrder(purchaseOrder)
                                 .sequence(sequence)
@@ -407,6 +445,7 @@ public class PurchaseOrderImportProcessor implements ReadListener<PurchaseOrderE
                                 .baseSalJoinQty(baseSalJoinQty)
                                 .remarks(itemHeader.remarks())
                                 .salBaseQty(salBaseQty)
+                                .subReqOrderItem(subReqOrderItem)
                                 .build();
 
                         itemsToSave.add(new OrderItemData(billNo, sequence, item, itemHeader.rowNumber()));
@@ -547,6 +586,43 @@ public class PurchaseOrderImportProcessor implements ReadListener<PurchaseOrderE
             return null;
         }
         return unitCache.get(salUnitCode);
+    }
+
+    private SubReqOrderItem resolveSubReqOrderItem(Material material,
+                                                    Integer sequence,
+                                                    int rowNumber,
+                                                    List<ImportError> errors) {
+        if (material == null || sequence == null) {
+            logger.debug("resolveSubReqOrderItem: material或sequence为null，material={}, sequence={}", material, sequence);
+            return null;
+        }
+        try {
+            logger.debug("查找委外订单明细：物料ID={}, 物料编码={}, sequence={}", material.getId(), material.getCode(), sequence);
+            List<SubReqOrderItem> items = subReqOrderItemRepository.findByMaterialIdAndSequence(material.getId(), sequence);
+            logger.debug("查询结果：找到{}个委外订单明细", items.size());
+            
+            if (items.isEmpty()) {
+                String errorMsg = String.format("未找到对应的委外订单明细：物料编码=%s, sequence=%d", material.getCode(), sequence);
+                logger.warn("{}，行号: {}", errorMsg, rowNumber);
+                addError(errors, "采购订单明细", rowNumber, "委外订单分录内码", errorMsg);
+                return null;
+            }
+            if (items.size() > 1) {
+                logger.warn("找到多个委外订单明细，物料ID={}, sequence={}，使用第一个", material.getId(), sequence);
+                addError(errors, "采购订单明细", rowNumber, "委外订单分录内码",
+                        String.format("找到多个委外订单明细，物料编码=%s, sequence=%d，使用第一个", material.getCode(), sequence));
+            }
+            SubReqOrderItem foundItem = items.get(0);
+            logger.debug("成功找到委外订单明细：ID={}, sequence={}, 委外订单ID={}", 
+                    foundItem.getId(), foundItem.getSequence(), 
+                    foundItem.getSubReqOrder() != null ? foundItem.getSubReqOrder().getId() : null);
+            return foundItem;
+        } catch (Exception e) {
+            logger.error("查找委外订单明细失败，物料ID={}, sequence={}", material.getId(), sequence, e);
+            addError(errors, "采购订单明细", rowNumber, "委外订单分录内码",
+                    String.format("查找委外订单明细失败：%s", e.getMessage()));
+            return null;
+        }
     }
 
     private BigDecimal parseRequiredDecimal(String value,
@@ -782,7 +858,8 @@ public class PurchaseOrderImportProcessor implements ReadListener<PurchaseOrderE
             String salJoinQty,
             String baseSalJoinQty,
             String remarks,
-            String salBaseQty
+            String salBaseQty,
+            Integer subReqOrderSequence
     ) {
     }
 

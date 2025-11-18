@@ -69,7 +69,7 @@ logging:
   level:
     # 使用环境变量避免循环引用
     root: ${LOG_LEVEL_ROOT:INFO}
-    com.sambound.erp: ${LOG_LEVEL_APP:INFO}
+    com.sambound.erp: ${LOG_LEVEL_APP:debug}
     com.zaxxer.hikari: ${LOG_LEVEL_HIKARI:INFO}
   file:
     # 直接使用环境变量，避免循环引用。如需配置可通过环境变量 LOGGING_FILE_NAME 设置
@@ -99,9 +99,15 @@ erp:
       purchase-order:
         - material
         - supplier
+        - sub-req-order
       sale-order:
         - material
+      sale-outstock:
+        - sale-order
+      sub-req-order:
+        - material
         - supplier
+        - bom
     type-concurrency:
       unit: ${ERP_IMPORT_CONCURRENCY_UNIT:1}
       material: ${ERP_IMPORT_CONCURRENCY_MATERIAL:1}

@@ -1,5 +1,12 @@
 export type PurchaseOrderStatus = 'OPEN' | 'CLOSED'
 
+export interface SubReqOrderItemSummary {
+  id: number
+  sequence: number
+  subReqOrderId: number
+  subReqOrderBillHeadSeq: number
+}
+
 export interface PurchaseOrderItem {
   id: number
   purchaseOrderId: number
@@ -24,6 +31,7 @@ export interface PurchaseOrderItem {
   remarks?: string
   salBaseQty?: number
   deliveredQty: number
+  subReqOrderItem?: SubReqOrderItemSummary
   createdAt: string
   updatedAt: string
 }

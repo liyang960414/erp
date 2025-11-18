@@ -17,13 +17,15 @@ public interface PurchaseOrderItemRepository extends JpaRepository<PurchaseOrder
     List<PurchaseOrderItem> findByPurchaseOrderId(Long purchaseOrderId);
     
     /**
-     * 根据采购订单ID查询所有明细，包含关联的物料、单位、BOM信息
+     * 根据采购订单ID查询所有明细，包含关联的物料、单位、BOM信息和委外订单明细
      */
-    @Query("SELECT poi FROM PurchaseOrderItem poi " +
+    @Query("SELECT DISTINCT poi FROM PurchaseOrderItem poi " +
            "LEFT JOIN FETCH poi.material " +
            "LEFT JOIN FETCH poi.unit " +
            "LEFT JOIN FETCH poi.bom " +
            "LEFT JOIN FETCH poi.salUnit " +
+           "LEFT JOIN FETCH poi.subReqOrderItem sroi " +
+           "LEFT JOIN FETCH sroi.subReqOrder " +
            "WHERE poi.purchaseOrder.id = :orderId " +
            "ORDER BY poi.sequence")
     List<PurchaseOrderItem> findByPurchaseOrderIdWithDetails(@Param("orderId") Long orderId);

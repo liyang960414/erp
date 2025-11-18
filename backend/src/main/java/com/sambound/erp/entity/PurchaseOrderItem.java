@@ -71,6 +71,10 @@ public class PurchaseOrderItem {
     @Column(name = "sal_base_qty", precision = 18, scale = 6)
     private BigDecimal salBaseQty;
 
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "sub_req_order_item_id")
+    private SubReqOrderItem subReqOrderItem;
+
     @Column(nullable = false, updatable = false)
     @Builder.Default
     private LocalDateTime createdAt = LocalDateTime.now();

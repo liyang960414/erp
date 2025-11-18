@@ -342,6 +342,7 @@ CREATE TABLE purchase_order_items (
     base_sal_join_qty DECIMAL(18, 6),
     remarks TEXT,
     sal_base_qty DECIMAL(18, 6),
+    sub_req_order_item_id BIGINT,
     created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
     CONSTRAINT chk_purchase_order_item_sequence CHECK (sequence > 0),
@@ -386,7 +387,7 @@ CREATE TABLE sale_order_items (
 );
 
 ALTER TABLE sale_order_items
-    ADD CONSTRAINT uq_sale_order_items_sequence UNIQUE (sequence);
+    ADD CONSTRAINT uq_sale_order_items_sequence UNIQUE (sale_order_id, sequence);
 
 -- 销售出库主表
 CREATE TABLE sale_outstocks (
@@ -403,7 +404,7 @@ CREATE TABLE sale_outstock_items (
     id BIGSERIAL PRIMARY KEY,
     sale_outstock_id BIGINT NOT NULL REFERENCES sale_outstocks(id) ON DELETE CASCADE,
     sequence INTEGER NOT NULL,
-    sale_order_item_id INTEGER NOT NULL REFERENCES sale_order_items(id) ON DELETE RESTRICT,
+    sale_order_item_id BIGINT NOT NULL REFERENCES sale_order_items(id) ON DELETE RESTRICT,
     material_id BIGINT NOT NULL REFERENCES materials(id) ON DELETE RESTRICT,
     unit_id BIGINT NOT NULL REFERENCES units(id) ON DELETE RESTRICT,
     qty DECIMAL(18, 6) NOT NULL,
@@ -446,6 +447,12 @@ CREATE TABLE sub_req_order_items (
     CONSTRAINT chk_sub_req_order_item_sequence CHECK (sequence > 0),
     CONSTRAINT chk_sub_req_order_item_qty CHECK (qty > 0)
 );
+
+-- 为采购订单明细表添加委外订单明细外键约束（需要在委外订单明细表创建后添加）
+ALTER TABLE purchase_order_items
+    ADD CONSTRAINT fk_purchase_order_items_sub_req_order_item_id 
+    FOREIGN KEY (sub_req_order_item_id) 
+    REFERENCES sub_req_order_items(id) ON DELETE SET NULL;
 
 -- ============================================
 -- 第三步：创建索引
@@ -531,6 +538,7 @@ CREATE INDEX idx_purchase_orders_status ON purchase_orders(status);
 -- 采购订单明细表索引
 CREATE INDEX idx_purchase_order_items_order_id ON purchase_order_items(purchase_order_id);
 CREATE INDEX idx_purchase_order_items_material_id ON purchase_order_items(material_id);
+CREATE INDEX idx_purchase_order_items_sub_req_order_item_id ON purchase_order_items(sub_req_order_item_id);
 
 -- 销售订单表索引
 CREATE INDEX idx_sale_orders_bill_no ON sale_orders(bill_no);
@@ -640,6 +648,7 @@ COMMENT ON COLUMN purchase_order_items.sal_join_qty IS '销售订单关联数量
 COMMENT ON COLUMN purchase_order_items.base_sal_join_qty IS '销售订单关联基本数量';
 COMMENT ON COLUMN purchase_order_items.remarks IS '备注';
 COMMENT ON COLUMN purchase_order_items.sal_base_qty IS '销售基本数量';
+COMMENT ON COLUMN purchase_order_items.sub_req_order_item_id IS '关联的委外订单明细ID';
 COMMENT ON COLUMN purchase_order_items.created_at IS '创建时间';
 COMMENT ON COLUMN purchase_order_items.updated_at IS '更新时间';
 

@@ -67,6 +67,17 @@
               <el-tag v-else type="info" size="small">否</el-tag>
             </template>
           </el-table-column>
+          <el-table-column prop="subReqOrderItem" label="委外订单" width="180" align="center">
+            <template #default="{ row }">
+              <div v-if="row.subReqOrderItem" class="sub-req-order-info">
+                <el-tag type="warning" size="small">
+                  单据头序号: {{ row.subReqOrderItem.subReqOrderBillHeadSeq }}
+                </el-tag>
+                <span class="sequence-text">序号: {{ row.subReqOrderItem.sequence }}</span>
+              </div>
+              <span v-else class="no-data">-</span>
+            </template>
+          </el-table-column>
           <el-table-column prop="salQty" label="销售数量" width="120" align="right">
             <template #default="{ row }">
               {{ row.salQty ? formatNumber(row.salQty) : '-' }}
@@ -255,6 +266,22 @@ const formatDateTime = (value: string): string => {
   display: flex;
   justify-content: flex-end;
   padding: 12px 0 0 0;
+}
+
+.sub-req-order-info {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  align-items: center;
+}
+
+.sub-req-order-info .sequence-text {
+  font-size: 12px;
+  color: var(--el-text-color-secondary);
+}
+
+.no-data {
+  color: var(--el-text-color-placeholder);
 }
 
 /* 响应式设计 */
