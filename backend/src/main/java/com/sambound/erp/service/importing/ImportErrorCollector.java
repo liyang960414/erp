@@ -17,10 +17,14 @@ public class ImportErrorCollector {
     }
 
     public boolean addError(String section, int rowNumber, String field, String message) {
+        return addError(section, rowNumber, field, message, null);
+    }
+
+    public boolean addError(String section, int rowNumber, String field, String message, String originalValue) {
         if (errors.size() >= maxErrorCount) {
             return false;
         }
-        errors.add(new ImportError(section, rowNumber, field, message));
+        errors.add(new ImportError(section, rowNumber, field, message, originalValue));
         return true;
     }
 

@@ -3,6 +3,7 @@ package com.sambound.erp.service.importing.bom;
 import cn.idev.excel.FastExcel;
 import cn.idev.excel.context.AnalysisContext;
 import cn.idev.excel.read.listener.ReadListener;
+import com.sambound.erp.config.ImportConfiguration;
 import com.sambound.erp.dto.BomImportResponse;
 import com.sambound.erp.entity.BillOfMaterial;
 import com.sambound.erp.entity.BomItem;
@@ -13,6 +14,7 @@ import com.sambound.erp.repository.BomItemRepository;
 import com.sambound.erp.repository.MaterialRepository;
 import com.sambound.erp.repository.UnitRepository;
 import com.sambound.erp.service.importing.dto.BomExcelRow;
+import com.sambound.erp.service.importing.exception.ImportProcessingException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.transaction.support.TransactionTemplate;
@@ -36,40 +38,39 @@ public class BomImportProcessor {
 
     private static final Logger logger = LoggerFactory.getLogger(BomImportProcessor.class);
 
-    private static final int MAX_ERROR_COUNT = 1000;
-    private static final int BATCH_QUERY_CHUNK_SIZE = 1000;
-    private static final int BOM_BATCH_SIZE = 500;
-
     private final BillOfMaterialRepository bomRepository;
     private final BomItemRepository bomItemRepository;
     private final MaterialRepository materialRepository;
     private final UnitRepository unitRepository;
     private final TransactionTemplate transactionTemplate;
+    private final ImportConfiguration importConfig;
 
     public BomImportProcessor(
             BillOfMaterialRepository bomRepository,
             BomItemRepository bomItemRepository,
             MaterialRepository materialRepository,
             UnitRepository unitRepository,
-            TransactionTemplate transactionTemplate) {
+            TransactionTemplate transactionTemplate,
+            ImportConfiguration importConfig) {
         this.bomRepository = bomRepository;
         this.bomItemRepository = bomItemRepository;
         this.materialRepository = materialRepository;
         this.unitRepository = unitRepository;
         this.transactionTemplate = transactionTemplate;
+        this.importConfig = importConfig;
     }
 
-    public BomImportResponse process(byte[] fileBytes) {
+    public BomImportResponse process(byte[] fileBytes, String fileName) {
         try {
-            BomDataCollector collector = new BomDataCollector();
+            BomDataCollector collector = new BomDataCollector(importConfig);
             FastExcel.read(new ByteArrayInputStream(fileBytes), BomExcelRow.class, collector)
                     .sheet("物料清单#单据头(FBillHead)")
                     .headRowNumber(2)
                     .doRead();
-            return collector.importToDatabase();
+            return collector.importToDatabase(fileName);
         } catch (Exception e) {
             logger.error("BOM Excel 导入失败", e);
-            throw new RuntimeException("BOM Excel 导入失败: " + e.getMessage(), e);
+            throw new ImportProcessingException("BOM Excel 导入失败: " + e.getMessage(), e);
         }
     }
 
@@ -77,7 +78,12 @@ public class BomImportProcessor {
 
         private final List<BomData> bomDataList = new ArrayList<>();
         private final AtomicInteger totalRows = new AtomicInteger(0);
+        private final ImportConfiguration importConfig;
         private BomHeader currentHeader = null;
+
+        public BomDataCollector(ImportConfiguration importConfig) {
+            this.importConfig = importConfig;
+        }
 
         @Override
         public void invoke(BomExcelRow data, AnalysisContext context) {
@@ -124,7 +130,7 @@ public class BomImportProcessor {
             logger.info("BOM 数据收集完成，共 {} 条明细记录", bomDataList.size());
         }
 
-        public BomImportResponse importToDatabase() {
+        public BomImportResponse importToDatabase(String fileName) {
             if (bomDataList.isEmpty()) {
                 logger.info("未找到 BOM 数据");
                 return new BomImportResponse(
@@ -156,12 +162,13 @@ public class BomImportProcessor {
             Map<String, BillOfMaterial> existingBomMap = preloadExistingBoms(bomGroups, materialCache);
 
             List<Map.Entry<BomHeader, List<BomItemData>>> bomList = new ArrayList<>(bomGroups.entrySet());
+            int batchSize = importConfig.getBatch().getInsertSize();
 
-            for (int i = 0; i < bomList.size(); i += BOM_BATCH_SIZE) {
-                int end = Math.min(i + BOM_BATCH_SIZE, bomList.size());
+            for (int i = 0; i < bomList.size(); i += batchSize) {
+                int end = Math.min(i + batchSize, bomList.size());
                 List<Map.Entry<BomHeader, List<BomItemData>>> batch = bomList.subList(i, end);
-                int batchIndex = (i / BOM_BATCH_SIZE) + 1;
-                int totalBatches = (bomList.size() + BOM_BATCH_SIZE - 1) / BOM_BATCH_SIZE;
+                int batchIndex = (i / batchSize) + 1;
+                int totalBatches = (bomList.size() + batchSize - 1) / batchSize;
 
                 logger.info("处理 BOM 批次 {}/{}，数量 {}", batchIndex, totalBatches, batch.size());
                 long batchStart = System.currentTimeMillis();
@@ -176,7 +183,7 @@ public class BomImportProcessor {
                 } catch (Exception e) {
                     logger.error("BOM 批次 {} 导入失败", batchIndex, e);
                     for (Map.Entry<BomHeader, List<BomItemData>> entry : batch) {
-                        if (bomErrors.size() < MAX_ERROR_COUNT) {
+                        if (bomErrors.size() < importConfig.getError().getMaxErrorCount()) {
                             bomErrors.add(new BomImportResponse.ImportError(
                                     "BOM", entry.getKey().rowNumber(), null,
                                     "批次导入失败: " + e.getMessage()));
@@ -191,7 +198,8 @@ public class BomImportProcessor {
             }
 
             long totalDuration = System.currentTimeMillis() - startTime;
-            logger.info("BOM 导入完成，总耗时 {}ms，BOM 成功 {} / {}，BOM 明细成功 {} / {}",
+            logger.info("BOM 导入完成 [{}]，总耗时 {}ms，BOM 成功 {} / {}，BOM 明细成功 {} / {}",
+                    fileName,
                     totalDuration,
                     bomSuccessCount.get(), totalBomCount,
                     itemSuccessCount.get(), totalItemCount);
@@ -346,16 +354,17 @@ public class BomImportProcessor {
             }
 
             List<String> materialCodeList = new ArrayList<>(materialCodes);
-            for (int i = 0; i < materialCodeList.size(); i += BATCH_QUERY_CHUNK_SIZE) {
-                int end = Math.min(i + BATCH_QUERY_CHUNK_SIZE, materialCodeList.size());
+            int queryChunkSize = importConfig.getBatch().getQueryChunkSize();
+            for (int i = 0; i < materialCodeList.size(); i += queryChunkSize) {
+                int end = Math.min(i + queryChunkSize, materialCodeList.size());
                 List<String> chunk = materialCodeList.subList(i, end);
                 materialRepository.findByCodeIn(chunk).forEach(m -> materialCache.put(m.getCode(), m));
             }
 
             if (!unitCodes.isEmpty()) {
                 List<String> unitCodeList = new ArrayList<>(unitCodes);
-                for (int i = 0; i < unitCodeList.size(); i += BATCH_QUERY_CHUNK_SIZE) {
-                    int end = Math.min(i + BATCH_QUERY_CHUNK_SIZE, unitCodeList.size());
+                for (int i = 0; i < unitCodeList.size(); i += queryChunkSize) {
+                    int end = Math.min(i + queryChunkSize, unitCodeList.size());
                     List<String> chunk = unitCodeList.subList(i, end);
                     unitRepository.findByCodeIn(chunk).forEach(u -> unitCache.put(u.getCode(), u));
                 }
@@ -377,8 +386,9 @@ public class BomImportProcessor {
             }
 
             List<Long> materialIdList = new ArrayList<>(materialIds);
-            for (int i = 0; i < materialIdList.size(); i += BATCH_QUERY_CHUNK_SIZE) {
-                int end = Math.min(i + BATCH_QUERY_CHUNK_SIZE, materialIdList.size());
+            int queryChunkSize = importConfig.getBatch().getQueryChunkSize();
+            for (int i = 0; i < materialIdList.size(); i += queryChunkSize) {
+                int end = Math.min(i + queryChunkSize, materialIdList.size());
                 List<Long> chunk = materialIdList.subList(i, end);
                 List<BillOfMaterial> boms = bomRepository.findByMaterialIdIn(chunk);
                 for (BillOfMaterial bom : boms) {
@@ -394,7 +404,7 @@ public class BomImportProcessor {
                                   int rowNumber,
                                   String field,
                                   String message) {
-            if (itemErrors.size() < MAX_ERROR_COUNT) {
+            if (itemErrors.size() < importConfig.getError().getMaxErrorCount()) {
                 itemErrors.add(new BomImportResponse.ImportError("BOM明细", rowNumber, field, message));
             }
         }
@@ -477,4 +487,3 @@ public class BomImportProcessor {
         }
     }
 }
-

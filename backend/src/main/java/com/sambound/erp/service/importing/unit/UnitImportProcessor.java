@@ -3,6 +3,7 @@ package com.sambound.erp.service.importing.unit;
 import cn.idev.excel.FastExcel;
 import cn.idev.excel.context.AnalysisContext;
 import cn.idev.excel.read.listener.ReadListener;
+import com.sambound.erp.config.ImportConfiguration;
 import com.sambound.erp.dto.UnitImportResponse;
 import com.sambound.erp.entity.Unit;
 import com.sambound.erp.entity.UnitGroup;
@@ -10,6 +11,7 @@ import com.sambound.erp.repository.UnitGroupRepository;
 import com.sambound.erp.repository.UnitRepository;
 import com.sambound.erp.service.UnitService;
 import com.sambound.erp.service.importing.dto.UnitExcelRow;
+import com.sambound.erp.service.importing.exception.ImportProcessingException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.transaction.PlatformTransactionManager;
@@ -26,36 +28,34 @@ public class UnitImportProcessor {
 
     private static final Logger logger = LoggerFactory.getLogger(UnitImportProcessor.class);
 
-    // 批次大小：每批处理100条记录
-    private static final int BATCH_SIZE = 100;
-    
     private final UnitService unitService;
     private final UnitRepository unitRepository;
     private final UnitGroupRepository unitGroupRepository;
     private final PlatformTransactionManager transactionManager;
     private final TransactionTemplate transactionTemplate;
     private final ExecutorService executorService;
+    private final ImportConfiguration importConfig;
 
     public UnitImportProcessor(
             UnitService unitService,
             UnitRepository unitRepository,
             UnitGroupRepository unitGroupRepository,
             PlatformTransactionManager transactionManager,
-            ExecutorService executorService) {
+            ExecutorService executorService,
+            ImportConfiguration importConfig) {
         this.unitService = unitService;
         this.unitRepository = unitRepository;
         this.unitGroupRepository = unitGroupRepository;
         this.transactionManager = transactionManager;
-        // 创建TransactionTemplate用于程序式事务管理
-        // 使用 PROPAGATION_REQUIRES_NEW 确保独立事务，避免嵌套事务问题
         this.transactionTemplate = new TransactionTemplate(transactionManager);
         this.transactionTemplate.setPropagationBehavior(TransactionDefinition.PROPAGATION_REQUIRES_NEW);
         this.transactionTemplate.setIsolationLevel(TransactionDefinition.ISOLATION_READ_COMMITTED);
-        this.transactionTemplate.setTimeout(30); // 30秒超时
+        this.transactionTemplate.setTimeout(importConfig.getTimeout().getTransactionTimeoutSeconds());
         this.executorService = executorService;
+        this.importConfig = importConfig;
     }
 
-    public UnitImportResponse process(byte[] fileBytes) {
+    public UnitImportResponse process(byte[] fileBytes, String fileName) {
         try {
             // 第一遍读取：收集所有唯一的单位组编码
             UnitGroupCollector collector = new UnitGroupCollector();
@@ -69,7 +69,7 @@ public class UnitImportProcessor {
             logger.info("预加载了 {} 个单位组", unitGroupCache.size());
             
             // 第二遍读取：导入单位数据
-            UnitDataImporter importer = new UnitDataImporter(unitGroupCache);
+            UnitDataImporter importer = new UnitDataImporter(unitGroupCache, importConfig);
             FastExcel.read(new ByteArrayInputStream(fileBytes), UnitExcelRow.class, importer)
                     .sheet()
                     .headRowNumber(2)
@@ -78,10 +78,13 @@ public class UnitImportProcessor {
             // 等待所有异步批次处理完成
             importer.waitForCompletion();
             
-            return importer.getResult();
+            UnitImportResponse result = importer.getResult();
+            logger.info("单位导入完成 [{}]: 总计 {} 条，成功 {} 条，失败 {} 条",
+                    fileName, result.totalRows(), result.successCount(), result.failureCount());
+            return result;
         } catch (Exception e) {
-            logger.error("Excel文件导入失败", e);
-            throw new RuntimeException("Excel文件导入失败: " + e.getMessage(), e);
+            logger.error("单位Excel导入失败", e);
+            throw new ImportProcessingException("单位Excel导入失败: " + e.getMessage(), e);
         }
     }
     
@@ -165,14 +168,18 @@ public class UnitImportProcessor {
      */
     private class UnitDataImporter implements ReadListener<UnitExcelRow> {
         private final Map<String, UnitGroup> unitGroupCache;
+        private final ImportConfiguration importConfig;
         private final List<UnitExcelRow> batch = new ArrayList<>();
         private final List<CompletableFuture<BatchResult>> futures = new ArrayList<>();
         private final AtomicInteger successCount = new AtomicInteger(0);
         private final AtomicInteger totalRows = new AtomicInteger(0);
         private final List<UnitImportResponse.ImportError> errors = Collections.synchronizedList(new ArrayList<>());
+        private final Semaphore semaphore;
         
-        public UnitDataImporter(Map<String, UnitGroup> unitGroupCache) {
+        public UnitDataImporter(Map<String, UnitGroup> unitGroupCache, ImportConfiguration importConfig) {
             this.unitGroupCache = unitGroupCache;
+            this.importConfig = importConfig;
+            this.semaphore = new Semaphore(importConfig.getConcurrency().getMaxConcurrentBatches());
         }
         
         @Override
@@ -181,7 +188,7 @@ public class UnitImportProcessor {
             
             // 累积批次
             batch.add(data);
-            if (batch.size() >= BATCH_SIZE) {
+            if (batch.size() >= importConfig.getBatch().getInsertSize()) {
                 // 异步提交批次处理任务
                 processBatchAsync(new ArrayList<>(batch));
                 batch.clear();
@@ -200,7 +207,17 @@ public class UnitImportProcessor {
         private void processBatchAsync(List<UnitExcelRow> batchData) {
             // 异步提交批次处理任务到线程池
             CompletableFuture<BatchResult> future = CompletableFuture.supplyAsync(() -> {
-                return processBatch(batchData);
+                try {
+                    semaphore.acquire();
+                    try {
+                        return processBatch(batchData);
+                    } finally {
+                        semaphore.release();
+                    }
+                } catch (InterruptedException e) {
+                    Thread.currentThread().interrupt();
+                    return new BatchResult(0, List.of(new UnitImportResponse.ImportError(null, null, "批次处理被中断")));
+                }
             }, executorService);
             futures.add(future);
         }
@@ -217,7 +234,9 @@ public class UnitImportProcessor {
                         batchSuccessCount.incrementAndGet();
                     } catch (Exception e) {
                         logger.warn("导入单位数据失败: {}", e.getMessage());
-                        batchErrors.add(new UnitImportResponse.ImportError(null, null, e.getMessage()));
+                        if (batchErrors.size() < importConfig.getError().getMaxErrorCount()) {
+                            batchErrors.add(new UnitImportResponse.ImportError(null, null, e.getMessage()));
+                        }
                     }
                 }
                 return null;
@@ -236,9 +255,9 @@ public class UnitImportProcessor {
             }
 
             try {
-                // 等待所有批次完成（最多10分钟）
+                // 等待所有批次完成
                 CompletableFuture.allOf(futures.toArray(new CompletableFuture[0]))
-                        .get(10, TimeUnit.MINUTES);
+                        .get(importConfig.getTimeout().getProcessingTimeoutMinutes(), TimeUnit.MINUTES);
                 
                 // 收集所有批次的结果
                 collectResults();
@@ -246,12 +265,12 @@ public class UnitImportProcessor {
                 logger.error("导入超时", e);
                 // 取消未完成的任务
                 futures.forEach(f -> f.cancel(true));
-                throw new RuntimeException("导入超时，请检查数据量或重试", e);
+                throw new ImportProcessingException("导入超时，请检查数据量或重试", e);
             } catch (Exception e) {
                 logger.error("批次处理失败", e);
                 // 取消未完成的任务
                 futures.forEach(f -> f.cancel(true));
-                throw new RuntimeException("导入失败: " + e.getMessage(), e);
+                throw new ImportProcessingException("导入失败: " + e.getMessage(), e);
             }
         }
 
@@ -263,7 +282,9 @@ public class UnitImportProcessor {
                 try {
                     BatchResult result = future.get();
                     successCount.addAndGet(result.successCount());
-                    errors.addAll(result.errors());
+                    if (errors.size() < importConfig.getError().getMaxErrorCount()) {
+                        errors.addAll(result.errors());
+                    }
                 } catch (CancellationException e) {
                     logger.warn("批次被取消");
                 } catch (Exception e) {

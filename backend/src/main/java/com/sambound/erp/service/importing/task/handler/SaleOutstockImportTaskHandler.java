@@ -2,16 +2,15 @@ package com.sambound.erp.service.importing.task.handler;
 
 import com.sambound.erp.dto.SaleOutstockImportResponse;
 import com.sambound.erp.service.SaleOutstockImportService;
-import com.sambound.erp.service.importing.task.ImportTaskContext;
+import com.sambound.erp.service.importing.ExcelImportService;
 import com.sambound.erp.service.importing.task.ImportTaskExecutionResult;
 import com.sambound.erp.service.importing.task.ImportTaskFailureDetail;
-import com.sambound.erp.service.importing.task.ImportTaskHandler;
 import org.springframework.stereotype.Component;
 
 import java.util.List;
 
 @Component
-public class SaleOutstockImportTaskHandler implements ImportTaskHandler {
+public class SaleOutstockImportTaskHandler extends AbstractImportTaskHandler<SaleOutstockImportResponse> {
 
     private final SaleOutstockImportService saleOutstockImportService;
 
@@ -25,9 +24,12 @@ public class SaleOutstockImportTaskHandler implements ImportTaskHandler {
     }
 
     @Override
-    public ImportTaskExecutionResult execute(ImportTaskContext context) {
-        SaleOutstockImportResponse response = saleOutstockImportService.importFromBytes(
-                context.fileContent(), context.fileName());
+    protected ExcelImportService<SaleOutstockImportResponse> getImportService() {
+        return saleOutstockImportService;
+    }
+
+    @Override
+    protected ImportTaskExecutionResult convertToExecutionResult(SaleOutstockImportResponse response) {
         SaleOutstockImportResponse.SaleOutstockImportResult result = response.result();
         int total = safeInt(result.totalRows());
         int success = safeInt(result.successCount());
@@ -50,5 +52,3 @@ public class SaleOutstockImportTaskHandler implements ImportTaskHandler {
         return value != null ? value : 0;
     }
 }
-
-

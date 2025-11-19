@@ -2,16 +2,15 @@ package com.sambound.erp.service.importing.task.handler;
 
 import com.sambound.erp.dto.SaleOrderImportResponse;
 import com.sambound.erp.service.SaleOrderImportService;
-import com.sambound.erp.service.importing.task.ImportTaskContext;
+import com.sambound.erp.service.importing.ExcelImportService;
 import com.sambound.erp.service.importing.task.ImportTaskExecutionResult;
 import com.sambound.erp.service.importing.task.ImportTaskFailureDetail;
-import com.sambound.erp.service.importing.task.ImportTaskHandler;
 import org.springframework.stereotype.Component;
 
 import java.util.List;
 
 @Component
-public class SaleOrderImportTaskHandler implements ImportTaskHandler {
+public class SaleOrderImportTaskHandler extends AbstractImportTaskHandler<SaleOrderImportResponse> {
 
     private final SaleOrderImportService saleOrderImportService;
 
@@ -25,9 +24,12 @@ public class SaleOrderImportTaskHandler implements ImportTaskHandler {
     }
 
     @Override
-    public ImportTaskExecutionResult execute(ImportTaskContext context) {
-        SaleOrderImportResponse response = saleOrderImportService.importFromBytes(
-                context.fileContent(), context.fileName());
+    protected ExcelImportService<SaleOrderImportResponse> getImportService() {
+        return saleOrderImportService;
+    }
+
+    @Override
+    protected ImportTaskExecutionResult convertToExecutionResult(SaleOrderImportResponse response) {
         SaleOrderImportResponse.SaleOrderImportResult result = response.saleOrderResult();
         int total = safeInt(result.totalRows());
         int success = safeInt(result.successCount());
@@ -50,5 +52,3 @@ public class SaleOrderImportTaskHandler implements ImportTaskHandler {
         return value != null ? value : 0;
     }
 }
-
-

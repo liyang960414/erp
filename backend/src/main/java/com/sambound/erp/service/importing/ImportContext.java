@@ -11,6 +11,12 @@ public class ImportContext {
     private final Map<String, Object> attributes = new HashMap<>();
 
     public void setAttribute(String key, Object value) {
+        if (key == null) {
+            throw new IllegalArgumentException("key cannot be null");
+        }
+        if (key.trim().isEmpty()) {
+            throw new IllegalArgumentException("key cannot be blank");
+        }
         attributes.put(key, value);
     }
 

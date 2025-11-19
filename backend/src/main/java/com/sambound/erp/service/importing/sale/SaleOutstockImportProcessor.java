@@ -3,6 +3,7 @@ package com.sambound.erp.service.importing.sale;
 import cn.idev.excel.FastExcel;
 import cn.idev.excel.context.AnalysisContext;
 import cn.idev.excel.read.listener.ReadListener;
+import com.sambound.erp.config.ImportConfiguration;
 import com.sambound.erp.dto.SaleOutstockImportResponse;
 import com.sambound.erp.entity.SaleOrder;
 import com.sambound.erp.entity.SaleOrderItem;
@@ -15,9 +16,10 @@ import com.sambound.erp.repository.SaleOrderRepository;
 import com.sambound.erp.repository.SaleOutstockRepository;
 import com.sambound.erp.service.importing.ImportError;
 import com.sambound.erp.service.importing.dto.SaleOutstockExcelRow;
+import com.sambound.erp.service.importing.exception.ImportException;
+import com.sambound.erp.service.importing.exception.ImportProcessingException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.transaction.TransactionDefinition;
 import org.springframework.transaction.support.TransactionTemplate;
 
 import java.io.ByteArrayInputStream;
@@ -45,19 +47,16 @@ import java.util.stream.Collectors;
 public class SaleOutstockImportProcessor {
 
     private static final Logger logger = LoggerFactory.getLogger(SaleOutstockImportProcessor.class);
-    private static final int MAX_ERROR_COUNT = 1000;
     private static final DateTimeFormatter DATE_FORMATTER = DateTimeFormatter.ofPattern("yyyy-MM-dd");
-    private static final int BATCH_SIZE = 500;
-    private static final int IMPORT_BATCH_SIZE = 50;
-    private static final int MAX_CONCURRENT_IMPORTS = 10;
 
     private final SaleOutstockRepository saleOutstockRepository;
     private final SaleOrderItemRepository saleOrderItemRepository;
     private final SaleOrderRepository saleOrderRepository;
     private final TransactionTemplate transactionTemplate;
     private final TransactionTemplate readOnlyTransactionTemplate;
-    private final Semaphore importConcurrencySemaphore = new Semaphore(MAX_CONCURRENT_IMPORTS, true);
     private final ExecutorService executorService;
+    private final ImportConfiguration importConfig;
+    private final Semaphore importConcurrencySemaphore;
 
     public SaleOutstockImportProcessor(
             SaleOutstockRepository saleOutstockRepository,
@@ -65,16 +64,20 @@ public class SaleOutstockImportProcessor {
             SaleOrderRepository saleOrderRepository,
             TransactionTemplate transactionTemplate,
             TransactionTemplate readOnlyTransactionTemplate,
-            ExecutorService executorService) {
+            ExecutorService executorService,
+            ImportConfiguration importConfig) {
         this.saleOutstockRepository = saleOutstockRepository;
         this.saleOrderItemRepository = saleOrderItemRepository;
         this.saleOrderRepository = saleOrderRepository;
         this.transactionTemplate = transactionTemplate;
         this.readOnlyTransactionTemplate = readOnlyTransactionTemplate;
         this.executorService = executorService;
+        this.importConfig = importConfig;
+        this.importConcurrencySemaphore = new Semaphore(importConfig.getConcurrency().getMaxConcurrentBatches(), true);
     }
 
-    public SaleOutstockImportResponse process(byte[] fileBytes) {
+    public SaleOutstockImportResponse process(byte[] fileBytes, String fileName) {
+        logger.info("开始处理销售出库导入: {}", fileName);
         try {
             SaleOutstockDataCollector collector = new SaleOutstockDataCollector();
             FastExcel.read(new ByteArrayInputStream(fileBytes), SaleOutstockExcelRow.class, collector)
@@ -82,8 +85,9 @@ public class SaleOutstockImportProcessor {
                     .headRowNumber(2)
                     .doRead();
 
-            SaleOutstockImportResponse result = collector.importToDatabase();
-            logger.info("销售出库导入完成：总计 {} 条，成功 {} 条，失败 {} 条",
+            SaleOutstockImportResponse result = collector.importToDatabase(fileName);
+            logger.info("销售出库导入完成 [{}]: 总计 {} 条，成功 {} 条，失败 {} 条",
+                    fileName,
                     result.result().totalRows(),
                     result.result().successCount(),
                     result.result().failureCount());
@@ -91,7 +95,7 @@ public class SaleOutstockImportProcessor {
             return result;
         } catch (Exception e) {
             logger.error("销售出库Excel导入失败", e);
-            throw new RuntimeException("销售出库Excel导入失败: " + e.getMessage(), e);
+            throw new ImportProcessingException("销售出库Excel导入失败: " + e.getMessage(), e);
         }
     }
 
@@ -162,7 +166,7 @@ public class SaleOutstockImportProcessor {
             logger.info("销售出库数据收集完成，共 {} 条出库明细数据", outstockDataList.size());
         }
 
-        public SaleOutstockImportResponse importToDatabase() {
+        public SaleOutstockImportResponse importToDatabase(String fileName) {
             if (outstockDataList.isEmpty()) {
                 logger.info("未找到销售出库数据");
                 return new SaleOutstockImportResponse(
@@ -205,55 +209,58 @@ public class SaleOutstockImportProcessor {
             Map<Long, Integer> saleOrderFirstRowMap = new ConcurrentHashMap<>();
             ConcurrentHashMap<Integer, ReentrantLock> sequenceLocks = new ConcurrentHashMap<>();
 
-            for (int start = 0; start < entries.size() && errors.size() < MAX_ERROR_COUNT; start += IMPORT_BATCH_SIZE) {
-                int end = Math.min(start + IMPORT_BATCH_SIZE, entries.size());
+            int importBatchSize = importConfig.getBatch().getInsertSize(); // Use insert size for batch processing
+            int maxErrorCount = importConfig.getError().getMaxErrorCount();
+
+            for (int start = 0; start < entries.size() && errors.size() < maxErrorCount; start += importBatchSize) {
+                int end = Math.min(start + importBatchSize, entries.size());
                 List<Map.Entry<SaleOutstockHeader, List<SaleOutstockItemData>>> batch = entries.subList(start, end);
 
                 List<Future<ImportTaskResult>> futures = new ArrayList<>();
                 Map<Future<ImportTaskResult>, SaleOutstockHeader> futureHeaders = new HashMap<>();
 
-                    for (Map.Entry<SaleOutstockHeader, List<SaleOutstockItemData>> entry : batch) {
-                        if (errors.size() >= MAX_ERROR_COUNT) {
-                            break;
-                        }
-
-                        SaleOutstockHeader header = entry.getKey();
-                        List<SaleOutstockItemData> items = entry.getValue();
-                        String billNo = trimToNull(header.billNo());
-
-                        if (billNo != null) {
-                            if (duplicateBillNoByRow.containsKey(header.rowNumber())) {
-                                addError(errors, header.rowNumber(), "单据编号",
-                                        "Excel 中存在重复的销售出库单编号: " + billNo);
-                                continue;
-                            }
-                            if (existingBillNos.contains(billNo)) {
-                                addError(errors, header.rowNumber(), "单据编号",
-                                        "销售出库单已存在: " + billNo);
-                                continue;
-                            }
-                        }
-
-                        Callable<ImportTaskResult> task = () -> {
-                            importConcurrencySemaphore.acquireUninterruptibly();
-                            try {
-                                Set<Long> affectedSaleOrders = transactionTemplate.execute(status ->
-                                        processOutstock(header, items, sequenceLocks));
-                                return new ImportTaskResult(
-                                        affectedSaleOrders == null ? Collections.emptySet() : affectedSaleOrders
-                                );
-                            } finally {
-                                importConcurrencySemaphore.release();
-                            }
-                        };
-
-                        Future<ImportTaskResult> future = executorService.submit(task);
-                        futures.add(future);
-                        futureHeaders.put(future, header);
+                for (Map.Entry<SaleOutstockHeader, List<SaleOutstockItemData>> entry : batch) {
+                    if (errors.size() >= maxErrorCount) {
+                        break;
                     }
 
+                    SaleOutstockHeader header = entry.getKey();
+                    List<SaleOutstockItemData> items = entry.getValue();
+                    String billNo = trimToNull(header.billNo());
+
+                    if (billNo != null) {
+                        if (duplicateBillNoByRow.containsKey(header.rowNumber())) {
+                            addError(errors, header.rowNumber(), "单据编号",
+                                    "Excel 中存在重复的销售出库单编号: " + billNo, billNo);
+                            continue;
+                        }
+                        if (existingBillNos.contains(billNo)) {
+                            addError(errors, header.rowNumber(), "单据编号",
+                                    "销售出库单已存在: " + billNo, billNo);
+                            continue;
+                        }
+                    }
+
+                    Callable<ImportTaskResult> task = () -> {
+                        importConcurrencySemaphore.acquireUninterruptibly();
+                        try {
+                            Set<Long> affectedSaleOrders = transactionTemplate.execute(status ->
+                                    processOutstock(header, items, sequenceLocks));
+                            return new ImportTaskResult(
+                                    affectedSaleOrders == null ? Collections.emptySet() : affectedSaleOrders
+                            );
+                        } finally {
+                            importConcurrencySemaphore.release();
+                        }
+                    };
+
+                    Future<ImportTaskResult> future = executorService.submit(task);
+                    futures.add(future);
+                    futureHeaders.put(future, header);
+                }
+
                 for (Future<ImportTaskResult> future : futures) {
-                    if (errors.size() >= MAX_ERROR_COUNT) {
+                    if (errors.size() >= maxErrorCount) {
                         future.cancel(false);
                         continue;
                     }
@@ -274,11 +281,11 @@ public class SaleOutstockImportProcessor {
                     } catch (Exception e) {
                         Throwable cause = e.getCause() != null ? e.getCause() : e;
                         if (cause instanceof ImportException importException) {
-                            addError(errors, importException.rowNumber, importException.field, importException.getMessage());
+                            addError(errors, importException.getRowNumber(), importException.getField(), importException.getMessage(), null);
                         } else {
                             logger.error("导入销售出库单失败，单据编号: {}", billNo, cause);
                             if (header != null) {
-                                addError(errors, header.rowNumber(), "单据编号", "导入失败: " + cause.getMessage());
+                                addError(errors, header.rowNumber(), "单据编号", "导入失败: " + cause.getMessage(), billNo);
                             }
                         }
                     }
@@ -289,7 +296,7 @@ public class SaleOutstockImportProcessor {
                 try {
                     refreshSaleOrderStatus(saleOrdersToRefresh, saleOrderFirstRowMap);
                 } catch (ImportException e) {
-                    addError(errors, e.rowNumber, e.field, e.getMessage());
+                    addError(errors, e.getRowNumber(), e.getField(), e.getMessage(), null);
                 }
             }
 
@@ -428,8 +435,10 @@ public class SaleOutstockImportProcessor {
             List<Long> ids = new ArrayList<>(saleOrderIds);
             ids.sort(Long::compareTo);
 
-            for (int i = 0; i < ids.size(); i += BATCH_SIZE) {
-                int end = Math.min(i + BATCH_SIZE, ids.size());
+            int batchSize = importConfig.getBatch().getInsertSize();
+
+            for (int i = 0; i < ids.size(); i += batchSize) {
+                int end = Math.min(i + batchSize, ids.size());
                 List<Long> batchIds = ids.subList(i, end);
                 transactionTemplate.executeWithoutResult(status -> {
                     Map<Long, SaleOrder> saleOrderMap = saleOrderRepository.findAllById(batchIds)
@@ -464,11 +473,12 @@ public class SaleOutstockImportProcessor {
             orderedIds.sort(Long::compareTo);
 
             Map<Long, Boolean> result = new HashMap<>();
-            List<Long> batchIds = new ArrayList<>(BATCH_SIZE);
+            int batchSize = importConfig.getBatch().getQueryChunkSize();
+            List<Long> batchIds = new ArrayList<>(batchSize);
 
             for (Long id : orderedIds) {
                 batchIds.add(id);
-                if (batchIds.size() >= BATCH_SIZE) {
+                if (batchIds.size() >= batchSize) {
                     queryOpenItems(batchIds, result);
                     batchIds.clear();
                 }
@@ -554,8 +564,9 @@ public class SaleOutstockImportProcessor {
             }
             List<String> billNoList = new ArrayList<>(billNos);
             List<List<String>> batches = new ArrayList<>();
-            for (int i = 0; i < billNoList.size(); i += BATCH_SIZE) {
-                int end = Math.min(i + BATCH_SIZE, billNoList.size());
+            int batchSize = importConfig.getBatch().getQueryChunkSize();
+            for (int i = 0; i < billNoList.size(); i += batchSize) {
+                int end = Math.min(i + batchSize, billNoList.size());
                 batches.add(new ArrayList<>(billNoList.subList(i, end)));
             }
 
@@ -587,13 +598,14 @@ public class SaleOutstockImportProcessor {
             return existing;
         }
 
-        private void addError(List<ImportError> errors, int rowNumber, String field, String message) {
-            if (errors.size() < MAX_ERROR_COUNT) {
+        private void addError(List<ImportError> errors, int rowNumber, String field, String message, String originalValue) {
+            if (errors.size() < importConfig.getError().getMaxErrorCount()) {
                 errors.add(new ImportError(
                         "销售出库",
                         rowNumber,
                         field,
-                        appendBillNo(rowNumber, message)
+                        appendBillNo(rowNumber, message),
+                        originalValue
                 ));
             }
         }
@@ -712,16 +724,4 @@ public class SaleOutstockImportProcessor {
         ) {
         }
     }
-
-    private static class ImportException extends RuntimeException {
-        private final int rowNumber;
-        private final String field;
-
-        private ImportException(int rowNumber, String field, String message) {
-            super(message);
-            this.rowNumber = rowNumber;
-            this.field = field;
-        }
-    }
 }
-

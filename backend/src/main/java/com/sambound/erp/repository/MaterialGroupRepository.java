@@ -47,13 +47,22 @@ public interface MaterialGroupRepository extends JpaRepository<MaterialGroup, Lo
     );
     
     /**
-     * 批量查询物料组（按编码列表）
+     * 批量查询物料组(按编码列表)
      * 
      * @param codes 物料组编码列表
      * @return 物料组列表
      */
     @Query("SELECT mg FROM MaterialGroup mg WHERE mg.code IN :codes")
     List<MaterialGroup> findByCodeIn(@Param("codes") List<String> codes);
+    
+    /**
+     * 查询所有物料组编码（优化查询，只返回编码，避免加载完整实体）
+     * 用于前缀匹配等场景，提升查询性能
+     * 
+     * @return 所有物料组编码列表
+     */
+    @Query("SELECT mg.code FROM MaterialGroup mg")
+    List<String> findAllCodes();
     
     /**
      * 物料组批量插入数据

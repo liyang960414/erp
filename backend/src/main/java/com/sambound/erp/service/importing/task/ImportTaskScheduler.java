@@ -295,7 +295,7 @@ public class ImportTaskScheduler {
                     item.getSourceFileName(),
                     item.getContentType(),
                     task.getOptionsJson(),
-                    fileContent != null ? fileContent.clone() : new byte[0]
+                    fileContent != null ? fileContent : new byte[0]
             );
         });
     }

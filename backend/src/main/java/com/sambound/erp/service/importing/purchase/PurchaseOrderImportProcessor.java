@@ -3,6 +3,7 @@ package com.sambound.erp.service.importing.purchase;
 import cn.idev.excel.FastExcel;
 import cn.idev.excel.context.AnalysisContext;
 import cn.idev.excel.read.listener.ReadListener;
+import com.sambound.erp.config.ImportConfiguration;
 import com.sambound.erp.dto.PurchaseOrderImportResponse;
 import com.sambound.erp.entity.BillOfMaterial;
 import com.sambound.erp.entity.Material;
@@ -20,11 +21,12 @@ import com.sambound.erp.repository.SupplierRepository;
 import com.sambound.erp.repository.UnitRepository;
 import com.sambound.erp.service.importing.ImportError;
 import com.sambound.erp.service.importing.dto.PurchaseOrderExcelRow;
+import com.sambound.erp.service.importing.exception.ImportProcessingException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.transaction.support.TransactionTemplate;
 
-import java.io.InputStream;
+import java.io.ByteArrayInputStream;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
@@ -49,9 +51,6 @@ import java.util.concurrent.atomic.AtomicInteger;
 public class PurchaseOrderImportProcessor implements ReadListener<PurchaseOrderExcelRow> {
 
     private static final Logger logger = LoggerFactory.getLogger(PurchaseOrderImportProcessor.class);
-    private static final int MAX_ERROR_COUNT = 1000;
-    private static final int BATCH_SIZE = 100;
-    private static final int MAX_CONCURRENT_BATCHES = 10;
     private static final DateTimeFormatter DATE_FORMATTER = DateTimeFormatter.ofPattern("yyyy-MM-dd");
 
     private final PurchaseOrderRepository purchaseOrderRepository;
@@ -63,6 +62,7 @@ public class PurchaseOrderImportProcessor implements ReadListener<PurchaseOrderE
     private final SubReqOrderItemRepository subReqOrderItemRepository;
     private final TransactionTemplate transactionTemplate;
     private final ExecutorService executorService;
+    private final ImportConfiguration importConfig;
 
     private final List<PurchaseOrderData> orderDataList = new ArrayList<>();
     private final AtomicInteger totalRows = new AtomicInteger(0);
@@ -76,7 +76,8 @@ public class PurchaseOrderImportProcessor implements ReadListener<PurchaseOrderE
                                         BillOfMaterialRepository bomRepository,
                                         SubReqOrderItemRepository subReqOrderItemRepository,
                                         TransactionTemplate transactionTemplate,
-                                        ExecutorService executorService) {
+                                        ExecutorService executorService,
+                                        ImportConfiguration importConfig) {
         this.purchaseOrderRepository = purchaseOrderRepository;
         this.purchaseOrderItemRepository = purchaseOrderItemRepository;
         this.supplierRepository = supplierRepository;
@@ -86,19 +87,26 @@ public class PurchaseOrderImportProcessor implements ReadListener<PurchaseOrderE
         this.subReqOrderItemRepository = subReqOrderItemRepository;
         this.transactionTemplate = transactionTemplate;
         this.executorService = executorService;
+        this.importConfig = importConfig;
     }
 
-    public PurchaseOrderImportResponse process(InputStream inputStream) {
+    public PurchaseOrderImportResponse process(byte[] fileBytes, String fileName) {
+        logger.info("开始处理采购订单导入: {}", fileName);
         orderDataList.clear();
         totalRows.set(0);
         currentHeader = null;
 
-        FastExcel.read(inputStream, PurchaseOrderExcelRow.class, this)
-                .sheet("采购订单#基本信息(FBillHead)")
-                .headRowNumber(2)
-                .doRead();
+        try {
+            FastExcel.read(new ByteArrayInputStream(fileBytes), PurchaseOrderExcelRow.class, this)
+                    .sheet("采购订单#基本信息(FBillHead)")
+                    .headRowNumber(2)
+                    .doRead();
 
-        return importToDatabase();
+            return importToDatabase(fileName);
+        } catch (Exception e) {
+            logger.error("采购订单导入处理失败", e);
+            throw new ImportProcessingException("采购订单导入处理失败: " + e.getMessage(), e);
+        }
     }
 
     @Override
@@ -167,7 +175,7 @@ public class PurchaseOrderImportProcessor implements ReadListener<PurchaseOrderE
         logger.info("采购订单数据收集完成，共 {} 条订单明细数据", orderDataList.size());
     }
 
-    private PurchaseOrderImportResponse importToDatabase() {
+    private PurchaseOrderImportResponse importToDatabase(String fileName) {
         if (orderDataList.isEmpty()) {
             logger.info("未找到采购订单数据");
             return new PurchaseOrderImportResponse(
@@ -241,14 +249,16 @@ public class PurchaseOrderImportProcessor implements ReadListener<PurchaseOrderE
                 new ArrayList<>(itemHeaderMap.entrySet());
 
         List<CompletableFuture<BatchResult>> futures = new ArrayList<>();
-        Semaphore batchSemaphore = new Semaphore(MAX_CONCURRENT_BATCHES);
-        int totalBatches = (orderList.size() + BATCH_SIZE - 1) / BATCH_SIZE;
+        int maxConcurrentBatches = importConfig.getConcurrency().getMaxConcurrentBatches();
+        Semaphore batchSemaphore = new Semaphore(maxConcurrentBatches);
+        int batchSize = importConfig.getBatch().getInsertSize();
+        int totalBatches = (orderList.size() + batchSize - 1) / batchSize;
 
-        for (int i = 0; i < orderList.size(); i += BATCH_SIZE) {
-            int end = Math.min(i + BATCH_SIZE, orderList.size());
+        for (int i = 0; i < orderList.size(); i += batchSize) {
+            int end = Math.min(i + batchSize, orderList.size());
             List<Map.Entry<String, Map<Integer, PurchaseOrderItemHeader>>> batch =
                     new ArrayList<>(orderList.subList(i, end));
-            int batchIndex = (i / BATCH_SIZE) + 1;
+            int batchIndex = (i / batchSize) + 1;
 
             CompletableFuture<BatchResult> future = CompletableFuture.supplyAsync(() -> {
                 try {
@@ -287,8 +297,8 @@ public class PurchaseOrderImportProcessor implements ReadListener<PurchaseOrderE
         waitForBatches(futures, successCount, errors);
 
         long totalDuration = System.currentTimeMillis() - startTime;
-        logger.info("采购订单导入完成：总耗时 {}ms，总计 {} 条，成功 {} 条，失败 {} 条",
-                totalDuration, totalOrderCount, successCount.get(), totalOrderCount - successCount.get());
+        logger.info("采购订单导入完成 [{}]: 总耗时 {}ms，总计 {} 条，成功 {} 条，失败 {} 条",
+                fileName, totalDuration, totalOrderCount, successCount.get(), totalOrderCount - successCount.get());
 
         return new PurchaseOrderImportResponse(
                 new PurchaseOrderImportResponse.PurchaseOrderImportResult(
@@ -303,8 +313,9 @@ public class PurchaseOrderImportProcessor implements ReadListener<PurchaseOrderE
                                 AtomicInteger successCount,
                                 List<ImportError> errors) {
         try {
+            int timeoutMinutes = importConfig.getTimeout().getProcessingTimeoutMinutes();
             CompletableFuture.allOf(futures.toArray(new CompletableFuture[0]))
-                    .get(30, TimeUnit.MINUTES);
+                    .get(timeoutMinutes, TimeUnit.MINUTES);
 
             for (CompletableFuture<BatchResult> future : futures) {
                 try {
@@ -353,7 +364,7 @@ public class PurchaseOrderImportProcessor implements ReadListener<PurchaseOrderE
             try {
                 if (items == null || items.isEmpty()) {
                     addError(errors, "采购订单", header.rowNumber(), "订单明细",
-                            "采购订单必须至少有一个订单明细，订单编号: " + billNo);
+                            "采购订单必须至少有一个订单明细，订单编号: " + billNo, null);
                     logger.warn("订单 {} 没有订单明细，跳过导入", billNo);
                     continue;
                 }
@@ -453,13 +464,13 @@ public class PurchaseOrderImportProcessor implements ReadListener<PurchaseOrderE
                     } catch (Exception e) {
                         logger.error("处理订单明细失败，行号: {}", itemHeader.rowNumber(), e);
                         addError(errors, "采购订单明细", itemHeader.rowNumber(), null,
-                                "处理失败: " + e.getMessage());
+                                "处理失败: " + e.getMessage(), null);
                     }
                 }
             } catch (Exception e) {
                 logger.error("处理订单失败，单据编号: {}", header.billNo(), e);
                 addError(errors, "采购订单", header.rowNumber(), "单据编号",
-                        "处理失败: " + e.getMessage());
+                        "处理失败: " + e.getMessage(), header.billNo());
             }
         }
 
@@ -505,7 +516,7 @@ public class PurchaseOrderImportProcessor implements ReadListener<PurchaseOrderE
                 PurchaseOrderHeader header = headerMap.get(billNo);
                 if (header != null) {
                     addError(errors, "采购订单", header.rowNumber(), "单据编号",
-                            "批量保存失败: " + e.getMessage());
+                            "批量保存失败: " + e.getMessage(), billNo);
                 }
             }
         }
@@ -518,13 +529,13 @@ public class PurchaseOrderImportProcessor implements ReadListener<PurchaseOrderE
                                      List<ImportError> errors) {
         String supplierCode = trimOrNull(header.supplierCode());
         if (supplierCode == null) {
-            addError(errors, "采购订单", header.rowNumber(), "供应商编码", "供应商编码为空");
+            addError(errors, "采购订单", header.rowNumber(), "供应商编码", "供应商编码为空", null);
             return null;
         }
         Supplier supplier = supplierCache.get(supplierCode);
         if (supplier == null) {
             addError(errors, "采购订单", header.rowNumber(), "供应商编码",
-                    "供应商不存在: " + supplierCode);
+                    "供应商不存在: " + supplierCode, supplierCode);
         }
         return supplier;
     }
@@ -534,13 +545,13 @@ public class PurchaseOrderImportProcessor implements ReadListener<PurchaseOrderE
                                      List<ImportError> errors) {
         String materialCode = trimOrNull(itemHeader.materialCode());
         if (materialCode == null) {
-            addError(errors, "采购订单明细", itemHeader.rowNumber(), "物料编码", "物料编码为空");
+            addError(errors, "采购订单明细", itemHeader.rowNumber(), "物料编码", "物料编码为空", null);
             return null;
         }
         Material material = materialCache.get(materialCode);
         if (material == null) {
             addError(errors, "采购订单明细", itemHeader.rowNumber(), "物料编码",
-                    "物料不存在: " + materialCode);
+                    "物料不存在: " + materialCode, materialCode);
         }
         return material;
     }
@@ -550,13 +561,13 @@ public class PurchaseOrderImportProcessor implements ReadListener<PurchaseOrderE
                              List<ImportError> errors) {
         String unitCode = trimOrNull(itemHeader.unitCode());
         if (unitCode == null) {
-            addError(errors, "采购订单明细", itemHeader.rowNumber(), "单位编码", "单位编码为空");
+            addError(errors, "采购订单明细", itemHeader.rowNumber(), "单位编码", "单位编码为空", null);
             return null;
         }
         Unit unit = unitCache.get(unitCode);
         if (unit == null) {
             addError(errors, "采购订单明细", itemHeader.rowNumber(), "单位编码",
-                    "单位不存在: " + unitCode);
+                    "单位不存在: " + unitCode, unitCode);
         }
         return unit;
     }
@@ -604,13 +615,13 @@ public class PurchaseOrderImportProcessor implements ReadListener<PurchaseOrderE
             if (items.isEmpty()) {
                 String errorMsg = String.format("未找到对应的委外订单明细：物料编码=%s, sequence=%d", material.getCode(), sequence);
                 logger.warn("{}，行号: {}", errorMsg, rowNumber);
-                addError(errors, "采购订单明细", rowNumber, "委外订单分录内码", errorMsg);
+                addError(errors, "采购订单明细", rowNumber, "委外订单分录内码", errorMsg, String.valueOf(sequence));
                 return null;
             }
             if (items.size() > 1) {
                 logger.warn("找到多个委外订单明细，物料ID={}, sequence={}，使用第一个", material.getId(), sequence);
                 addError(errors, "采购订单明细", rowNumber, "委外订单分录内码",
-                        String.format("找到多个委外订单明细，物料编码=%s, sequence=%d，使用第一个", material.getCode(), sequence));
+                        String.format("找到多个委外订单明细，物料编码=%s, sequence=%d，使用第一个", material.getCode(), sequence), String.valueOf(sequence));
             }
             SubReqOrderItem foundItem = items.get(0);
             logger.debug("成功找到委外订单明细：ID={}, sequence={}, 委外订单ID={}", 
@@ -620,7 +631,7 @@ public class PurchaseOrderImportProcessor implements ReadListener<PurchaseOrderE
         } catch (Exception e) {
             logger.error("查找委外订单明细失败，物料ID={}, sequence={}", material.getId(), sequence, e);
             addError(errors, "采购订单明细", rowNumber, "委外订单分录内码",
-                    String.format("查找委外订单明细失败：%s", e.getMessage()));
+                    String.format("查找委外订单明细失败：%s", e.getMessage()), String.valueOf(sequence));
             return null;
         }
     }
@@ -630,14 +641,14 @@ public class PurchaseOrderImportProcessor implements ReadListener<PurchaseOrderE
                                             String field,
                                             List<ImportError> errors) {
         if (value == null || value.trim().isEmpty()) {
-            addError(errors, "采购订单明细", rowNumber, field, field + "为空");
+            addError(errors, "采购订单明细", rowNumber, field, field + "为空", null);
             return null;
         }
         try {
             return new BigDecimal(value.trim().replace(",", ""));
         } catch (Exception e) {
             addError(errors, "采购订单明细", rowNumber, field,
-                    "数量格式错误: " + value);
+                    "数量格式错误: " + value, value);
             return null;
         }
     }
@@ -657,7 +668,7 @@ public class PurchaseOrderImportProcessor implements ReadListener<PurchaseOrderE
                                 int rowNumber,
                                 List<ImportError> errors) {
         if (value == null || value.trim().isEmpty()) {
-            addError(errors, "采购订单", rowNumber, "日期", "订单日期为空");
+            addError(errors, "采购订单", rowNumber, "日期", "订单日期为空", null);
             return null;
         }
         try {
@@ -668,7 +679,7 @@ public class PurchaseOrderImportProcessor implements ReadListener<PurchaseOrderE
             return LocalDate.parse(dateStr, DATE_FORMATTER);
         } catch (Exception e) {
             addError(errors, "采购订单", rowNumber, "日期",
-                    "日期格式错误: " + value);
+                    "日期格式错误: " + value, value);
             return null;
         }
     }
@@ -695,8 +706,9 @@ public class PurchaseOrderImportProcessor implements ReadListener<PurchaseOrderE
 
         Map<String, Supplier> supplierCache = new HashMap<>(supplierCodes.size());
         List<String> codesToQuery = new ArrayList<>(supplierCodes);
-        for (int i = 0; i < codesToQuery.size(); i += 1000) {
-            int end = Math.min(i + 1000, codesToQuery.size());
+        int chunkSize = importConfig.getBatch().getQueryChunkSize();
+        for (int i = 0; i < codesToQuery.size(); i += chunkSize) {
+            int end = Math.min(i + chunkSize, codesToQuery.size());
             List<String> chunk = codesToQuery.subList(i, end);
             List<Supplier> suppliers = supplierRepository.findByCodeIn(chunk);
             for (Supplier supplier : suppliers) {
@@ -707,7 +719,7 @@ public class PurchaseOrderImportProcessor implements ReadListener<PurchaseOrderE
         for (String code : supplierCodes) {
             if (!supplierCache.containsKey(code)) {
                 addError(errors, "供应商", 0, "供应商编码",
-                        String.format("供应商不存在: %s", code));
+                        String.format("供应商不存在: %s", code), code);
             }
         }
 
@@ -750,10 +762,12 @@ public class PurchaseOrderImportProcessor implements ReadListener<PurchaseOrderE
             }
         }
 
+        int chunkSize = importConfig.getBatch().getQueryChunkSize();
+
         if (!materialCodes.isEmpty()) {
             List<String> materialCodeList = new ArrayList<>(materialCodes);
-            for (int i = 0; i < materialCodeList.size(); i += 1000) {
-                int end = Math.min(i + 1000, materialCodeList.size());
+            for (int i = 0; i < materialCodeList.size(); i += chunkSize) {
+                int end = Math.min(i + chunkSize, materialCodeList.size());
                 List<String> chunk = materialCodeList.subList(i, end);
                 List<Material> materials = materialRepository.findByCodeIn(chunk);
                 for (Material material : materials) {
@@ -767,8 +781,8 @@ public class PurchaseOrderImportProcessor implements ReadListener<PurchaseOrderE
         allUnitCodes.addAll(salUnitCodes);
         if (!allUnitCodes.isEmpty()) {
             List<String> unitCodeList = new ArrayList<>(allUnitCodes);
-            for (int i = 0; i < unitCodeList.size(); i += 1000) {
-                int end = Math.min(i + 1000, unitCodeList.size());
+            for (int i = 0; i < unitCodeList.size(); i += chunkSize) {
+                int end = Math.min(i + chunkSize, unitCodeList.size());
                 List<String> chunk = unitCodeList.subList(i, end);
                 List<Unit> units = unitRepository.findByCodeIn(chunk);
                 for (Unit unit : units) {
@@ -806,11 +820,12 @@ public class PurchaseOrderImportProcessor implements ReadListener<PurchaseOrderE
             Map<String, PurchaseOrderHeader> headerMap,
             String message) {
         List<ImportError> batchErrors = new ArrayList<>();
+        int maxErrorCount = importConfig.getError().getMaxErrorCount();
         for (Map.Entry<String, Map<Integer, PurchaseOrderItemHeader>> entry : batch) {
             PurchaseOrderHeader header = headerMap.get(entry.getKey());
-            if (header != null && batchErrors.size() < MAX_ERROR_COUNT) {
+            if (header != null && batchErrors.size() < maxErrorCount) {
                 batchErrors.add(new ImportError(
-                        "采购订单", header.rowNumber(), "单据编号", message));
+                        "采购订单", header.rowNumber(), "单据编号", message, header.billNo()));
             }
         }
         return batchErrors;
@@ -820,9 +835,10 @@ public class PurchaseOrderImportProcessor implements ReadListener<PurchaseOrderE
                           String section,
                           int rowNumber,
                           String field,
-                          String message) {
-        if (errors.size() < MAX_ERROR_COUNT) {
-            errors.add(new ImportError(section, rowNumber, field, message));
+                          String message,
+                          String originalValue) {
+        if (errors.size() < importConfig.getError().getMaxErrorCount()) {
+            errors.add(new ImportError(section, rowNumber, field, message, originalValue));
         }
     }
 
@@ -883,4 +899,3 @@ public class PurchaseOrderImportProcessor implements ReadListener<PurchaseOrderE
     ) {
     }
 }
-

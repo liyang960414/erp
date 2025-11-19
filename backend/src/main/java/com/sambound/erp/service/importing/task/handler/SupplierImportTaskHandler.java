@@ -2,17 +2,15 @@ package com.sambound.erp.service.importing.task.handler;
 
 import com.sambound.erp.dto.SupplierImportResponse;
 import com.sambound.erp.service.SupplierImportService;
-import com.sambound.erp.service.importing.ImportError;
-import com.sambound.erp.service.importing.task.ImportTaskContext;
+import com.sambound.erp.service.importing.ExcelImportService;
 import com.sambound.erp.service.importing.task.ImportTaskExecutionResult;
 import com.sambound.erp.service.importing.task.ImportTaskFailureDetail;
-import com.sambound.erp.service.importing.task.ImportTaskHandler;
 import org.springframework.stereotype.Component;
 
 import java.util.List;
 
 @Component
-public class SupplierImportTaskHandler implements ImportTaskHandler {
+public class SupplierImportTaskHandler extends AbstractImportTaskHandler<SupplierImportResponse> {
 
     private final SupplierImportService supplierImportService;
 
@@ -26,23 +24,21 @@ public class SupplierImportTaskHandler implements ImportTaskHandler {
     }
 
     @Override
-    public ImportTaskExecutionResult execute(ImportTaskContext context) {
-        SupplierImportResponse response = supplierImportService.importFromBytes(
-                context.fileContent(), context.fileName());
+    protected ExcelImportService<SupplierImportResponse> getImportService() {
+        return supplierImportService;
+    }
+
+    @Override
+    protected ImportTaskExecutionResult convertToExecutionResult(SupplierImportResponse response) {
         SupplierImportResponse.SupplierImportResult result = response.supplierResult();
         int total = safeInt(result.totalRows());
         int success = safeInt(result.successCount());
         int failure = safeInt(result.failureCount());
         List<ImportTaskFailureDetail> failures = result.errors() == null ? List.of()
                 : result.errors().stream()
-                .map(err -> new ImportTaskFailureDetail(
-                        new ImportError(
-                                err.sheetName(),
-                                err.rowNumber() != null ? err.rowNumber() : 0,
-                                err.field(),
-                                err.message()),
-                        null))
+                .map(err -> new ImportTaskFailureDetail(err, null))
                 .toList();
+
         return ImportTaskExecutionResult.builder()
                 .totalCount(total)
                 .successCount(success)
@@ -56,5 +52,3 @@ public class SupplierImportTaskHandler implements ImportTaskHandler {
         return value != null ? value : 0;
     }
 }
-
-

@@ -7,7 +7,7 @@ import org.springframework.web.multipart.MultipartFile;
  *
  * @param <R> 导入结果类型
  */
-@FunctionalInterface
+
 public interface ExcelImportService<R> {
 
     /**
@@ -17,5 +17,14 @@ public interface ExcelImportService<R> {
      * @return 导入结果
      */
     R importFromExcel(MultipartFile file);
+
+    /**
+     * 从字节数组执行导入。
+     *
+     * @param fileBytes 文件内容
+     * @param fileName  文件名
+     * @return 导入结果
+     */
+    R importFromBytes(byte[] fileBytes, String fileName);
 }
 

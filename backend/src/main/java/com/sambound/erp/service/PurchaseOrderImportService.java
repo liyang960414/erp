@@ -1,5 +1,6 @@
 package com.sambound.erp.service;
 
+import com.sambound.erp.config.ImportConfiguration;
 import com.sambound.erp.dto.PurchaseOrderImportResponse;
 import com.sambound.erp.repository.BillOfMaterialRepository;
 import com.sambound.erp.repository.MaterialRepository;
@@ -8,6 +9,10 @@ import com.sambound.erp.repository.PurchaseOrderRepository;
 import com.sambound.erp.repository.SubReqOrderItemRepository;
 import com.sambound.erp.repository.SupplierRepository;
 import com.sambound.erp.repository.UnitRepository;
+import com.sambound.erp.service.importing.ExcelImportService;
+import com.sambound.erp.service.importing.exception.ImportException;
+import com.sambound.erp.service.importing.exception.ImportProcessingException;
+import com.sambound.erp.service.importing.monitor.Monitored;
 import com.sambound.erp.service.importing.purchase.PurchaseOrderImportProcessor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -16,12 +21,11 @@ import org.springframework.transaction.PlatformTransactionManager;
 import org.springframework.transaction.support.TransactionTemplate;
 import org.springframework.web.multipart.MultipartFile;
 
-import java.io.InputStream;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
 @Service
-public class PurchaseOrderImportService {
+public class PurchaseOrderImportService implements ExcelImportService<PurchaseOrderImportResponse> {
 
     private static final Logger logger = LoggerFactory.getLogger(PurchaseOrderImportService.class);
 
@@ -34,6 +38,7 @@ public class PurchaseOrderImportService {
     private final SubReqOrderItemRepository subReqOrderItemRepository;
     private final TransactionTemplate transactionTemplate;
     private final ExecutorService executorService;
+    private final ImportConfiguration importConfig;
 
     public PurchaseOrderImportService(
             PurchaseOrderRepository purchaseOrderRepository,
@@ -43,7 +48,8 @@ public class PurchaseOrderImportService {
             UnitRepository unitRepository,
             BillOfMaterialRepository bomRepository,
             SubReqOrderItemRepository subReqOrderItemRepository,
-            PlatformTransactionManager transactionManager) {
+            PlatformTransactionManager transactionManager,
+            ImportConfiguration importConfig) {
         this.purchaseOrderRepository = purchaseOrderRepository;
         this.purchaseOrderItemRepository = purchaseOrderItemRepository;
         this.supplierRepository = supplierRepository;
@@ -53,47 +59,48 @@ public class PurchaseOrderImportService {
         this.subReqOrderItemRepository = subReqOrderItemRepository;
         this.transactionTemplate = new TransactionTemplate(transactionManager);
         this.transactionTemplate.setPropagationBehavior(TransactionTemplate.PROPAGATION_REQUIRES_NEW);
-        this.transactionTemplate.setTimeout(1800);
+        this.transactionTemplate.setTimeout(importConfig.getTimeout().getTransactionTimeoutSeconds());
         this.executorService = Executors.newVirtualThreadPerTaskExecutor();
+        this.importConfig = importConfig;
     }
 
     public PurchaseOrderImportResponse importFromExcel(MultipartFile file) {
         try {
-            return importFromBytes(file.getBytes(), file.getOriginalFilename(), file.getSize());
+            return importFromBytes(file.getBytes(), file.getOriginalFilename());
+        } catch (ImportException e) {
+            logger.error("采购订单Excel文件导入失败: {}", e.getMessage());
+            throw e;
         } catch (Exception e) {
-            logger.error("Excel文件导入失败", e);
-            throw new RuntimeException("Excel文件导入失败: " + e.getMessage(), e);
+            logger.error("采购订单Excel文件导入失败", e);
+            throw new ImportProcessingException("采购订单Excel文件导入失败: " + e.getMessage(), e);
         }
     }
 
-    public PurchaseOrderImportResponse importFromBytes(byte[] fileBytes, String fileName, long size) {
+    @Override
+    @Monitored("采购订单导入")
+    public PurchaseOrderImportResponse importFromBytes(byte[] fileBytes, String fileName) {
         logger.info("开始导入采购订单Excel文件: {}，文件大小: {} MB",
                 fileName,
-                size / (1024.0 * 1024.0));
+                fileBytes.length / (1024.0 * 1024.0));
 
-        try (InputStream inputStream = new java.io.ByteArrayInputStream(fileBytes)) {
-            PurchaseOrderImportProcessor processor = new PurchaseOrderImportProcessor(
-                    purchaseOrderRepository,
-                    purchaseOrderItemRepository,
-                    supplierRepository,
-                    materialRepository,
-                    unitRepository,
-                    bomRepository,
-                    subReqOrderItemRepository,
-                    transactionTemplate,
-                    executorService
-            );
+        PurchaseOrderImportProcessor processor = new PurchaseOrderImportProcessor(
+                purchaseOrderRepository,
+                purchaseOrderItemRepository,
+                supplierRepository,
+                materialRepository,
+                unitRepository,
+                bomRepository,
+                subReqOrderItemRepository,
+                transactionTemplate,
+                executorService,
+                importConfig
+        );
 
-            PurchaseOrderImportResponse result = processor.process(inputStream);
-            logger.info("采购订单导入完成：总计 {} 条，成功 {} 条，失败 {} 条",
-                    result.purchaseOrderResult().totalRows(),
-                    result.purchaseOrderResult().successCount(),
-                    result.purchaseOrderResult().failureCount());
-            return result;
-        } catch (Exception e) {
-            logger.error("Excel文件导入失败", e);
-            throw new RuntimeException("Excel文件导入失败: " + e.getMessage(), e);
-        }
+        PurchaseOrderImportResponse result = processor.process(fileBytes, fileName);
+        logger.info("采购订单导入完成：总计 {} 条，成功 {} 条，失败 {} 条",
+                result.purchaseOrderResult().totalRows(),
+                result.purchaseOrderResult().successCount(),
+                result.purchaseOrderResult().failureCount());
+        return result;
     }
 }
-

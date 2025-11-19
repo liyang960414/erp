@@ -3,6 +3,7 @@ package com.sambound.erp.service.importing.sale;
 import cn.idev.excel.FastExcel;
 import cn.idev.excel.context.AnalysisContext;
 import cn.idev.excel.read.listener.ReadListener;
+import com.sambound.erp.config.ImportConfiguration;
 import com.sambound.erp.dto.SaleOrderImportResponse;
 import com.sambound.erp.entity.Customer;
 import com.sambound.erp.entity.Material;
@@ -17,6 +18,7 @@ import com.sambound.erp.repository.UnitRepository;
 import com.sambound.erp.service.CustomerService;
 import com.sambound.erp.service.importing.ImportError;
 import com.sambound.erp.service.importing.dto.SaleOrderExcelRow;
+import com.sambound.erp.service.importing.exception.ImportProcessingException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.transaction.support.TransactionTemplate;
@@ -47,9 +49,6 @@ import java.util.concurrent.atomic.AtomicInteger;
 public class SaleOrderImportProcessor implements ReadListener<SaleOrderExcelRow> {
 
     private static final Logger logger = LoggerFactory.getLogger(SaleOrderImportProcessor.class);
-    private static final int MAX_ERROR_COUNT = 1000;
-    private static final int BATCH_SIZE = 100;
-    private static final int MAX_CONCURRENT_BATCHES = 10;
     private static final DateTimeFormatter DATE_FORMATTER = DateTimeFormatter.ofPattern("yyyy-MM-dd");
     private static final DateTimeFormatter DATETIME_FORMATTER = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm");
 
@@ -61,6 +60,7 @@ public class SaleOrderImportProcessor implements ReadListener<SaleOrderExcelRow>
     private final CustomerService customerService;
     private final TransactionTemplate transactionTemplate;
     private final ExecutorService executorService;
+    private final ImportConfiguration importConfig;
 
     private final List<SaleOrderData> orderDataList = new ArrayList<>();
     private final AtomicInteger totalRows = new AtomicInteger(0);
@@ -74,7 +74,8 @@ public class SaleOrderImportProcessor implements ReadListener<SaleOrderExcelRow>
             UnitRepository unitRepository,
             CustomerService customerService,
             TransactionTemplate transactionTemplate,
-            ExecutorService executorService) {
+            ExecutorService executorService,
+            ImportConfiguration importConfig) {
         this.saleOrderRepository = saleOrderRepository;
         this.saleOrderItemRepository = saleOrderItemRepository;
         this.customerRepository = customerRepository;
@@ -83,15 +84,26 @@ public class SaleOrderImportProcessor implements ReadListener<SaleOrderExcelRow>
         this.customerService = customerService;
         this.transactionTemplate = transactionTemplate;
         this.executorService = executorService;
+        this.importConfig = importConfig;
     }
 
-    public SaleOrderImportResponse process(byte[] fileBytes) {
-        FastExcel.read(new ByteArrayInputStream(fileBytes), SaleOrderExcelRow.class, this)
-                .sheet()
-                .headRowNumber(2)
-                .doRead();
+    public SaleOrderImportResponse process(byte[] fileBytes, String fileName) {
+        logger.info("开始处理销售订单导入: {}", fileName);
+        orderDataList.clear();
+        totalRows.set(0);
+        currentHeader = null;
 
-        return importToDatabase();
+        try {
+            FastExcel.read(new ByteArrayInputStream(fileBytes), SaleOrderExcelRow.class, this)
+                    .sheet()
+                    .headRowNumber(2)
+                    .doRead();
+
+            return importToDatabase(fileName);
+        } catch (Exception e) {
+            logger.error("销售订单导入处理失败", e);
+            throw new ImportProcessingException("销售订单导入处理失败: " + e.getMessage(), e);
+        }
     }
 
     @Override
@@ -146,7 +158,7 @@ public class SaleOrderImportProcessor implements ReadListener<SaleOrderExcelRow>
         logger.info("销售订单数据收集完成，共 {} 条明细", orderDataList.size());
     }
 
-    private SaleOrderImportResponse importToDatabase() {
+    private SaleOrderImportResponse importToDatabase(String fileName) {
         if (orderDataList.isEmpty()) {
             return new SaleOrderImportResponse(
                     new SaleOrderImportResponse.SaleOrderImportResult(0, 0, 0, new ArrayList<>())
@@ -170,14 +182,16 @@ public class SaleOrderImportProcessor implements ReadListener<SaleOrderExcelRow>
                 new ArrayList<>(orderGroups.entrySet());
 
         List<CompletableFuture<BatchResult>> futures = new ArrayList<>();
-        Semaphore batchSemaphore = new Semaphore(MAX_CONCURRENT_BATCHES);
-        int totalBatches = (orderList.size() + BATCH_SIZE - 1) / BATCH_SIZE;
+        int maxConcurrentBatches = importConfig.getConcurrency().getMaxConcurrentBatches();
+        Semaphore batchSemaphore = new Semaphore(maxConcurrentBatches);
+        int batchSize = importConfig.getBatch().getInsertSize();
+        int totalBatches = (orderList.size() + batchSize - 1) / batchSize;
 
-        for (int i = 0; i < orderList.size(); i += BATCH_SIZE) {
-            int end = Math.min(i + BATCH_SIZE, orderList.size());
+        for (int i = 0; i < orderList.size(); i += batchSize) {
+            int end = Math.min(i + batchSize, orderList.size());
             List<Map.Entry<SaleOrderHeader, List<SaleOrderItemData>>> batch =
                     new ArrayList<>(orderList.subList(i, end));
-            int batchIndex = (i / BATCH_SIZE) + 1;
+            int batchIndex = (i / batchSize) + 1;
 
             CompletableFuture<BatchResult> future = CompletableFuture.supplyAsync(() -> {
                 try {
@@ -214,8 +228,8 @@ public class SaleOrderImportProcessor implements ReadListener<SaleOrderExcelRow>
         waitForBatches(futures, successCount, errors);
 
         long totalDuration = System.currentTimeMillis() - startTime;
-        logger.info("销售订单导入完成：总耗时 {}ms，总计 {} 条，成功 {} 条，失败 {} 条",
-                totalDuration, totalOrderCount, successCount.get(), totalOrderCount - successCount.get());
+        logger.info("销售订单导入完成 [{}]: 总耗时 {}ms，总计 {} 条，成功 {} 条，失败 {} 条",
+                fileName, totalDuration, totalOrderCount, successCount.get(), totalOrderCount - successCount.get());
 
         return new SaleOrderImportResponse(
                 new SaleOrderImportResponse.SaleOrderImportResult(
@@ -230,8 +244,9 @@ public class SaleOrderImportProcessor implements ReadListener<SaleOrderExcelRow>
                                 AtomicInteger successCount,
                                 List<ImportError> errors) {
         try {
+            int timeoutMinutes = importConfig.getTimeout().getProcessingTimeoutMinutes();
             CompletableFuture.allOf(futures.toArray(new CompletableFuture[0]))
-                    .get(30, TimeUnit.MINUTES);
+                    .get(timeoutMinutes, TimeUnit.MINUTES);
 
             for (CompletableFuture<BatchResult> future : futures) {
                 try {
@@ -266,6 +281,7 @@ public class SaleOrderImportProcessor implements ReadListener<SaleOrderExcelRow>
             List<ImportError> errors) {
 
         int successCount = 0;
+        int maxErrorCount = importConfig.getError().getMaxErrorCount();
 
         for (Map.Entry<SaleOrderHeader, List<SaleOrderItemData>> entry : batch) {
             SaleOrderHeader header = entry.getKey();
@@ -304,10 +320,10 @@ public class SaleOrderImportProcessor implements ReadListener<SaleOrderExcelRow>
                 }
             } catch (Exception e) {
                 logger.error("保存订单失败，单据编号: {}", header.billNo(), e);
-                if (errors.size() < MAX_ERROR_COUNT) {
+                if (errors.size() < maxErrorCount) {
                     errors.add(new ImportError(
                             "销售订单", header.rowNumber(), "单据编号",
-                            "保存失败: " + e.getMessage()));
+                            "保存失败: " + e.getMessage(), header.billNo()));
                 }
             }
         }
@@ -320,20 +336,21 @@ public class SaleOrderImportProcessor implements ReadListener<SaleOrderExcelRow>
                                      List<ImportError> errors) {
         String customerCode = trimToNull(header.customerCode());
         String customerName = trimToNull(header.customerName());
+        int maxErrorCount = importConfig.getError().getMaxErrorCount();
 
         if (customerCode != null && customerName != null) {
             Customer customer = customerCache.get(customerCode);
-            if (customer == null && errors.size() < MAX_ERROR_COUNT) {
+            if (customer == null && errors.size() < maxErrorCount) {
                 errors.add(new ImportError(
                         "销售订单", header.rowNumber(), "客户编码",
-                        "客户不存在: " + customerCode));
+                        "客户不存在: " + customerCode, customerCode));
             }
             return customer;
         }
-        if (errors.size() < MAX_ERROR_COUNT) {
+        if (errors.size() < maxErrorCount) {
             errors.add(new ImportError(
                     "销售订单", header.rowNumber(), "客户编码",
-                    "客户编码或名称为空"));
+                    "客户编码或名称为空", null));
         }
         return null;
     }
@@ -344,6 +361,7 @@ public class SaleOrderImportProcessor implements ReadListener<SaleOrderExcelRow>
                                                 Map<String, Unit> unitCache,
                                                 List<ImportError> errors) {
         List<SaleOrderItem> itemsToSave = new ArrayList<>();
+        int maxErrorCount = importConfig.getError().getMaxErrorCount();
 
         for (SaleOrderItemData itemData : items) {
             try {
@@ -385,10 +403,10 @@ public class SaleOrderImportProcessor implements ReadListener<SaleOrderExcelRow>
                 itemsToSave.add(item);
             } catch (Exception e) {
                 logger.error("处理订单明细失败，行号: {}", itemData.rowNumber(), e);
-                if (errors.size() < MAX_ERROR_COUNT) {
+                if (errors.size() < maxErrorCount) {
                     errors.add(new ImportError(
                             "销售订单明细", itemData.rowNumber(), null,
-                            "处理失败: " + e.getMessage()));
+                            "处理失败: " + e.getMessage(), null));
                 }
             }
         }
@@ -400,20 +418,22 @@ public class SaleOrderImportProcessor implements ReadListener<SaleOrderExcelRow>
                                      Map<String, Material> materialCache,
                                      List<ImportError> errors) {
         String materialCode = trimToNull(itemData.materialCode());
+        int maxErrorCount = importConfig.getError().getMaxErrorCount();
+
         if (materialCode == null) {
-            if (errors.size() < MAX_ERROR_COUNT) {
+            if (errors.size() < maxErrorCount) {
                 errors.add(new ImportError(
                         "销售订单明细", itemData.rowNumber(), "物料编码",
-                        "物料编码为空"));
+                        "物料编码为空", null));
             }
             return null;
         }
 
         Material material = materialCache.get(materialCode);
-        if (material == null && errors.size() < MAX_ERROR_COUNT) {
+        if (material == null && errors.size() < maxErrorCount) {
             errors.add(new ImportError(
                     "销售订单明细", itemData.rowNumber(), "物料编码",
-                    "物料不存在: " + materialCode));
+                    "物料不存在: " + materialCode, materialCode));
         }
         return material;
     }
@@ -422,20 +442,22 @@ public class SaleOrderImportProcessor implements ReadListener<SaleOrderExcelRow>
                              Map<String, Unit> unitCache,
                              List<ImportError> errors) {
         String unitCode = trimToNull(itemData.unitCode());
+        int maxErrorCount = importConfig.getError().getMaxErrorCount();
+
         if (unitCode == null) {
-            if (errors.size() < MAX_ERROR_COUNT) {
+            if (errors.size() < maxErrorCount) {
                 errors.add(new ImportError(
                         "销售订单明细", itemData.rowNumber(), "单位编码",
-                        "单位编码为空"));
+                        "单位编码为空", null));
             }
             return null;
         }
 
         Unit unit = unitCache.get(unitCode);
-        if (unit == null && errors.size() < MAX_ERROR_COUNT) {
+        if (unit == null && errors.size() < maxErrorCount) {
             errors.add(new ImportError(
                     "销售订单明细", itemData.rowNumber(), "单位编码",
-                    "单位不存在: " + unitCode));
+                    "单位不存在: " + unitCode, unitCode));
         }
         return unit;
     }
@@ -467,8 +489,9 @@ public class SaleOrderImportProcessor implements ReadListener<SaleOrderExcelRow>
 
         Map<String, Customer> customerCache = new HashMap<>();
         List<String> codesToQuery = new ArrayList<>(customerCodeToName.keySet());
-        for (int i = 0; i < codesToQuery.size(); i += 1000) {
-            int end = Math.min(i + 1000, codesToQuery.size());
+        int chunkSize = importConfig.getBatch().getQueryChunkSize();
+        for (int i = 0; i < codesToQuery.size(); i += chunkSize) {
+            int end = Math.min(i + chunkSize, codesToQuery.size());
             List<Customer> existingCustomers = customerRepository.findByCodeIn(codesToQuery.subList(i, end));
             for (Customer customer : existingCustomers) {
                 customerCache.put(customer.getCode(), customer);
@@ -484,6 +507,8 @@ public class SaleOrderImportProcessor implements ReadListener<SaleOrderExcelRow>
             }
         }
 
+        int maxErrorCount = importConfig.getError().getMaxErrorCount();
+
         if (!codesToCreate.isEmpty()) {
             try {
                 transactionTemplate.executeWithoutResult(status -> {
@@ -494,12 +519,12 @@ public class SaleOrderImportProcessor implements ReadListener<SaleOrderExcelRow>
                             customerCache.put(customer.getCode(), customer);
                         } catch (Exception e) {
                             logger.error("创建客户失败: {}", codesToCreate.get(i), e);
-                            if (errors.size() < MAX_ERROR_COUNT) {
+                            if (errors.size() < maxErrorCount) {
                                 synchronized (errors) {
-                                    if (errors.size() < MAX_ERROR_COUNT) {
+                                    if (errors.size() < maxErrorCount) {
                                         errors.add(new ImportError(
                                                 "客户", 0, "客户编码",
-                                                String.format("创建客户失败 %s: %s", codesToCreate.get(i), e.getMessage())));
+                                                String.format("创建客户失败 %s: %s", codesToCreate.get(i), e.getMessage()), codesToCreate.get(i)));
                                     }
                                 }
                             }
@@ -508,12 +533,12 @@ public class SaleOrderImportProcessor implements ReadListener<SaleOrderExcelRow>
                 });
             } catch (Exception e) {
                 logger.error("批量创建客户失败", e);
-                if (errors.size() < MAX_ERROR_COUNT) {
+                if (errors.size() < maxErrorCount) {
                     synchronized (errors) {
-                        if (errors.size() < MAX_ERROR_COUNT) {
+                        if (errors.size() < maxErrorCount) {
                             errors.add(new ImportError(
                                     "客户", 0, "客户编码",
-                                    "批量创建客户失败: " + e.getMessage()));
+                                    "批量创建客户失败: " + e.getMessage(), null));
                         }
                     }
                 }
@@ -544,10 +569,12 @@ public class SaleOrderImportProcessor implements ReadListener<SaleOrderExcelRow>
             }
         }
 
+        int chunkSize = importConfig.getBatch().getQueryChunkSize();
+
         if (!materialCodes.isEmpty()) {
             List<String> materialCodeList = new ArrayList<>(materialCodes);
-            for (int i = 0; i < materialCodeList.size(); i += 1000) {
-                int end = Math.min(i + 1000, materialCodeList.size());
+            for (int i = 0; i < materialCodeList.size(); i += chunkSize) {
+                int end = Math.min(i + chunkSize, materialCodeList.size());
                 List<Material> materials = materialRepository.findByCodeIn(materialCodeList.subList(i, end));
                 for (Material material : materials) {
                     materialCache.put(material.getCode(), material);
@@ -557,8 +584,8 @@ public class SaleOrderImportProcessor implements ReadListener<SaleOrderExcelRow>
 
         if (!unitCodes.isEmpty()) {
             List<String> unitCodeList = new ArrayList<>(unitCodes);
-            for (int i = 0; i < unitCodeList.size(); i += 1000) {
-                int end = Math.min(i + 1000, unitCodeList.size());
+            for (int i = 0; i < unitCodeList.size(); i += chunkSize) {
+                int end = Math.min(i + chunkSize, unitCodeList.size());
                 List<Unit> units = unitRepository.findByCodeIn(unitCodeList.subList(i, end));
                 for (Unit unit : units) {
                     unitCache.put(unit.getCode(), unit);
@@ -589,10 +616,11 @@ public class SaleOrderImportProcessor implements ReadListener<SaleOrderExcelRow>
             List<Map.Entry<SaleOrderHeader, List<SaleOrderItemData>>> batch,
             String message) {
         List<ImportError> batchErrors = new ArrayList<>();
+        int maxErrorCount = importConfig.getError().getMaxErrorCount();
         for (Map.Entry<SaleOrderHeader, List<SaleOrderItemData>> entry : batch) {
-            if (batchErrors.size() < MAX_ERROR_COUNT) {
+            if (batchErrors.size() < maxErrorCount) {
                 batchErrors.add(new ImportError(
-                        "销售订单", entry.getKey().rowNumber(), "单据编号", message));
+                        "销售订单", entry.getKey().rowNumber(), "单据编号", message, entry.getKey().billNo()));
             }
         }
         return batchErrors;
@@ -612,17 +640,18 @@ public class SaleOrderImportProcessor implements ReadListener<SaleOrderExcelRow>
                                        String errorMessage,
                                        int rowNumber,
                                        List<ImportError> errors) {
+        int maxErrorCount = importConfig.getError().getMaxErrorCount();
         if (value == null || value.trim().isEmpty()) {
-            if (errors.size() < MAX_ERROR_COUNT) {
-                errors.add(new ImportError("销售订单明细", rowNumber, "销售数量", emptyMessage));
+            if (errors.size() < maxErrorCount) {
+                errors.add(new ImportError("销售订单明细", rowNumber, "销售数量", emptyMessage, null));
             }
             return null;
         }
         try {
             return new BigDecimal(value.trim().replace(",", ""));
         } catch (Exception e) {
-            if (errors.size() < MAX_ERROR_COUNT) {
-                errors.add(new ImportError("销售订单明细", rowNumber, "销售数量", errorMessage + ": " + value));
+            if (errors.size() < maxErrorCount) {
+                errors.add(new ImportError("销售订单明细", rowNumber, "销售数量", errorMessage + ": " + value, value));
             }
             return null;
         }
@@ -644,17 +673,18 @@ public class SaleOrderImportProcessor implements ReadListener<SaleOrderExcelRow>
                                 String errorMessage,
                                 int rowNumber,
                                 List<ImportError> errors) {
+        int maxErrorCount = importConfig.getError().getMaxErrorCount();
         if (value == null || value.trim().isEmpty()) {
-            if (errors.size() < MAX_ERROR_COUNT) {
-                errors.add(new ImportError("销售订单", rowNumber, "日期", emptyMessage));
+            if (errors.size() < maxErrorCount) {
+                errors.add(new ImportError("销售订单", rowNumber, "日期", emptyMessage, null));
             }
             return null;
         }
         try {
             return LocalDate.parse(value.trim(), DATE_FORMATTER);
         } catch (Exception e) {
-            if (errors.size() < MAX_ERROR_COUNT) {
-                errors.add(new ImportError("销售订单", rowNumber, "日期", errorMessage + ": " + value));
+            if (errors.size() < maxErrorCount) {
+                errors.add(new ImportError("销售订单", rowNumber, "日期", errorMessage + ": " + value, value));
             }
             return null;
         }
@@ -760,4 +790,3 @@ public class SaleOrderImportProcessor implements ReadListener<SaleOrderExcelRow>
     ) {
     }
 }
-

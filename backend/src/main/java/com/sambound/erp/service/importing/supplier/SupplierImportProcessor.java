@@ -3,11 +3,13 @@ package com.sambound.erp.service.importing.supplier;
 import cn.idev.excel.FastExcel;
 import cn.idev.excel.context.AnalysisContext;
 import cn.idev.excel.read.listener.ReadListener;
+import com.sambound.erp.config.ImportConfiguration;
 import com.sambound.erp.dto.SupplierImportResponse;
 import com.sambound.erp.entity.Supplier;
 import com.sambound.erp.repository.SupplierRepository;
 import com.sambound.erp.service.importing.ImportError;
 import com.sambound.erp.service.importing.dto.SupplierExcelRow;
+import com.sambound.erp.service.importing.exception.ImportProcessingException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.transaction.support.TransactionTemplate;
@@ -31,35 +33,40 @@ import java.util.stream.Collectors;
 public class SupplierImportProcessor implements ReadListener<SupplierExcelRow> {
 
     private static final Logger logger = LoggerFactory.getLogger(SupplierImportProcessor.class);
-    private static final int MAX_ERROR_COUNT = 1000;
-    private static final int BATCH_SIZE = 100;
-    private static final int MAX_CONCURRENT_BATCHES = 10;
 
     private final SupplierRepository supplierRepository;
     private final TransactionTemplate transactionTemplate;
     private final ExecutorService executorService;
+    private final ImportConfiguration importConfig;
 
     private final List<SupplierData> supplierDataList = new ArrayList<>();
     private final AtomicInteger totalRows = new AtomicInteger(0);
 
     public SupplierImportProcessor(SupplierRepository supplierRepository,
                                    TransactionTemplate transactionTemplate,
-                                   ExecutorService executorService) {
+                                   ExecutorService executorService,
+                                   ImportConfiguration importConfig) {
         this.supplierRepository = supplierRepository;
         this.transactionTemplate = transactionTemplate;
         this.executorService = executorService;
+        this.importConfig = importConfig;
     }
 
-    public SupplierImportResponse process(byte[] fileBytes) {
+    public SupplierImportResponse process(byte[] fileBytes, String fileName) {
         supplierDataList.clear();
         totalRows.set(0);
 
-        FastExcel.read(new ByteArrayInputStream(fileBytes), SupplierExcelRow.class, this)
-                .sheet("供应商#单据头(FBillHead)")
-                .headRowNumber(2)
-                .doRead();
+        try {
+            FastExcel.read(new ByteArrayInputStream(fileBytes), SupplierExcelRow.class, this)
+                    .sheet("供应商#单据头(FBillHead)")
+                    .headRowNumber(2)
+                    .doRead();
 
-        return importToDatabase();
+            return importToDatabase(fileName);
+        } catch (Exception e) {
+            logger.error("供应商Excel导入失败", e);
+            throw new ImportProcessingException("供应商Excel导入失败: " + e.getMessage(), e);
+        }
     }
 
     @Override
@@ -84,7 +91,7 @@ public class SupplierImportProcessor implements ReadListener<SupplierExcelRow> {
         logger.info("供应商数据收集完成，共 {} 条有效数据", supplierDataList.size());
     }
 
-    private SupplierImportResponse importToDatabase() {
+    private SupplierImportResponse importToDatabase(String fileName) {
         if (supplierDataList.isEmpty()) {
             logger.info("未找到供应商数据");
             return new SupplierImportResponse(
@@ -97,9 +104,11 @@ public class SupplierImportProcessor implements ReadListener<SupplierExcelRow> {
         AtomicInteger successCount = new AtomicInteger(0);
         Map<String, Supplier> existingSupplierMap = preloadExistingSuppliers();
 
-        List<List<SupplierData>> batches = partition(supplierDataList, BATCH_SIZE);
+        int batchSize = importConfig.getBatch().getInsertSize();
+        List<List<SupplierData>> batches = partition(supplierDataList, batchSize);
         List<CompletableFuture<BatchResult>> futures = new ArrayList<>();
-        Semaphore semaphore = new Semaphore(MAX_CONCURRENT_BATCHES);
+        int maxConcurrentBatches = importConfig.getConcurrency().getMaxConcurrentBatches();
+        Semaphore semaphore = new Semaphore(maxConcurrentBatches);
 
         for (int i = 0; i < batches.size(); i++) {
             List<SupplierData> batch = batches.get(i);
@@ -131,8 +140,8 @@ public class SupplierImportProcessor implements ReadListener<SupplierExcelRow> {
         waitForBatches(futures, successCount, errors);
 
         long duration = System.currentTimeMillis() - startTime;
-        logger.info("供应商导入完成：耗时 {}ms，总计 {} 条，成功 {} 条，失败 {} 条",
-                duration, supplierDataList.size(), successCount.get(), supplierDataList.size() - successCount.get());
+        logger.info("供应商导入完成 [{}]: 耗时 {}ms，总计 {} 条，成功 {} 条，失败 {} 条",
+                fileName, duration, supplierDataList.size(), successCount.get(), supplierDataList.size() - successCount.get());
 
         List<SupplierImportResponse.ImportError> responseErrors = errors.stream()
                 .map(err -> new SupplierImportResponse.ImportError(
@@ -179,10 +188,10 @@ public class SupplierImportProcessor implements ReadListener<SupplierExcelRow> {
                 successCount++;
             } catch (Exception e) {
                 logger.error("导入供应商失败，编码: {}", data.code(), e);
-                if (errors.size() < MAX_ERROR_COUNT) {
+                if (errors.size() < importConfig.getError().getMaxErrorCount()) {
                     errors.add(new ImportError(
                             "供应商", data.rowNumber(), "供应商编码",
-                            "导入失败: " + e.getMessage()));
+                            "导入失败: " + e.getMessage(), data.code()));
                 }
             }
         }
@@ -200,7 +209,7 @@ public class SupplierImportProcessor implements ReadListener<SupplierExcelRow> {
                                 List<ImportError> errors) {
         try {
             CompletableFuture.allOf(futures.toArray(new CompletableFuture[0]))
-                    .get(10, TimeUnit.MINUTES);
+                    .get(importConfig.getTimeout().getProcessingTimeoutMinutes(), TimeUnit.MINUTES);
 
             for (CompletableFuture<BatchResult> future : futures) {
                 try {
@@ -218,19 +227,20 @@ public class SupplierImportProcessor implements ReadListener<SupplierExcelRow> {
         } catch (TimeoutException e) {
             logger.error("导入超时", e);
             futures.forEach(f -> f.cancel(true));
-            throw new RuntimeException("导入超时，请检查数据量或重试", e);
+            throw new ImportProcessingException("导入超时，请检查数据量或重试", e);
         } catch (Exception e) {
             logger.error("批次处理失败", e);
             futures.forEach(f -> f.cancel(true));
-            throw new RuntimeException("批次处理失败: " + e.getMessage(), e);
+            throw new ImportProcessingException("批次处理失败: " + e.getMessage(), e);
         }
     }
 
     private List<ImportError> buildBatchErrors(List<SupplierData> batch, String message) {
         List<ImportError> batchErrors = new ArrayList<>();
+        int maxErrorCount = importConfig.getError().getMaxErrorCount();
         for (SupplierData data : batch) {
-            if (batchErrors.size() < MAX_ERROR_COUNT) {
-                batchErrors.add(new ImportError("供应商", data.rowNumber(), "供应商编码", message));
+            if (batchErrors.size() < maxErrorCount) {
+                batchErrors.add(new ImportError("供应商", data.rowNumber(), "供应商编码", message, data.code()));
             }
         }
         return batchErrors;
@@ -272,4 +282,3 @@ public class SupplierImportProcessor implements ReadListener<SupplierExcelRow> {
     ) {
     }
 }
-

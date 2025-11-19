@@ -1,5 +1,6 @@
 package com.sambound.erp.service.importing;
 
+import java.time.LocalDateTime;
 import java.util.Objects;
 
 /**
@@ -11,12 +12,20 @@ public final class ImportError {
     private final int rowNumber;
     private final String field;
     private final String message;
+    private final String originalValue;
+    private final LocalDateTime timestamp;
 
     public ImportError(String section, int rowNumber, String field, String message) {
+        this(section, rowNumber, field, message, null);
+    }
+
+    public ImportError(String section, int rowNumber, String field, String message, String originalValue) {
         this.section = section;
         this.rowNumber = rowNumber;
         this.field = field;
         this.message = message;
+        this.originalValue = originalValue;
+        this.timestamp = LocalDateTime.now();
     }
 
     public String getSection() {
@@ -35,6 +44,14 @@ public final class ImportError {
         return message;
     }
 
+    public String getOriginalValue() {
+        return originalValue;
+    }
+
+    public LocalDateTime getTimestamp() {
+        return timestamp;
+    }
+
     @Override
     public boolean equals(Object o) {
         if (this == o) {
@@ -47,12 +64,13 @@ public final class ImportError {
         return rowNumber == that.rowNumber
                 && Objects.equals(section, that.section)
                 && Objects.equals(field, that.field)
-                && Objects.equals(message, that.message);
+                && Objects.equals(message, that.message)
+                && Objects.equals(originalValue, that.originalValue);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(section, rowNumber, field, message);
+        return Objects.hash(section, rowNumber, field, message, originalValue);
     }
 
     @Override
@@ -62,6 +80,8 @@ public final class ImportError {
                 + ", rowNumber=" + rowNumber
                 + ", field='" + field + '\''
                 + ", message='" + message + '\''
+                + ", originalValue='" + originalValue + '\''
+                + ", timestamp=" + timestamp
                 + '}';
     }
 }

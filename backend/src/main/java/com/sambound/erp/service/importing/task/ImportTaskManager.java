@@ -1,8 +1,15 @@
 package com.sambound.erp.service.importing.task;
 
-import tools.jackson.core.JacksonException;
-import tools.jackson.databind.ObjectMapper;
-import com.sambound.erp.importing.task.*;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.sambound.erp.importing.task.ImportDependencyProperties;
+import com.sambound.erp.importing.task.ImportTask;
+import com.sambound.erp.importing.task.ImportTaskDependency;
+import com.sambound.erp.importing.task.ImportTaskItem;
+import com.sambound.erp.importing.task.ImportTaskItemStatus;
+import com.sambound.erp.importing.task.ImportTaskStatus;
+import com.sambound.erp.importing.task.ImportFailureStatus;
+import com.sambound.erp.importing.task.ImportTaskFailure;
 import com.sambound.erp.dto.ImportTaskDetail;
 import com.sambound.erp.dto.ImportTaskItemSummary;
 import com.sambound.erp.repository.ImportTaskFailureRepository;
@@ -12,6 +19,7 @@ import com.sambound.erp.repository.ImportTaskRepository;
 import jakarta.persistence.EntityNotFoundException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.data.domain.Page;
@@ -27,6 +35,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.Set;
 import java.util.Comparator;
 
@@ -57,13 +66,13 @@ public class ImportTaskManager {
                              ImportTaskItemRepository taskItemRepository,
                              ImportTaskFailureRepository failureRepository,
                              ImportDependencyProperties dependencyProperties,
-                             ObjectMapper objectMapper) {
+                             ObjectProvider<ObjectMapper> objectMapperProvider) {
         this.taskRepository = taskRepository;
         this.dependencyRepository = dependencyRepository;
         this.taskItemRepository = taskItemRepository;
         this.failureRepository = failureRepository;
         this.dependencyProperties = dependencyProperties;
-        this.objectMapper = objectMapper;
+        this.objectMapper = Optional.ofNullable(objectMapperProvider.getIfAvailable()).orElseGet(ObjectMapper::new);
     }
 
     /**
@@ -80,8 +89,15 @@ public class ImportTaskManager {
                                  MultipartFile file,
                                  String createdBy,
                                  Map<String, Object> options) {
-        Objects.requireNonNull(importType, "importType");
-        Objects.requireNonNull(file, "file");
+        if (importType == null || importType.trim().isEmpty()) {
+            throw new IllegalArgumentException("Import type cannot be null or empty");
+        }
+        if (file == null || file.isEmpty()) {
+            throw new IllegalArgumentException("File cannot be null or empty");
+        }
+        if (createdBy == null || createdBy.trim().isEmpty()) {
+            throw new IllegalArgumentException("CreatedBy cannot be null or empty");
+        }
         String fileName = file.getOriginalFilename();
         try {
             ImportTask task = ImportTask.builder()
@@ -241,7 +257,7 @@ public class ImportTaskManager {
         }
         try {
             return objectMapper.writeValueAsString(options);
-        } catch (JacksonException e) {
+        } catch (JsonProcessingException e) {
             logger.warn("导入任务参数序列化失败: {}", e.getMessage());
             return null;
         }
@@ -268,7 +284,7 @@ public class ImportTaskManager {
                 node.put("requestedBy", createdBy);
             }
             return objectMapper.writeValueAsString(node);
-        } catch (JacksonException e) {
+        } catch (JsonProcessingException e) {
             logger.warn("重试元数据序列化失败: {}", e.getMessage());
             return null;
         }

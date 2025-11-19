@@ -11,8 +11,10 @@ import org.springframework.stereotype.Component;
 import java.util.ArrayList;
 import java.util.List;
 
+import com.sambound.erp.service.importing.ExcelImportService;
+
 @Component
-public class MaterialImportTaskHandler implements ImportTaskHandler {
+public class MaterialImportTaskHandler extends AbstractImportTaskHandler<MaterialImportResponse> {
 
     private final MaterialImportService materialImportService;
 
@@ -26,9 +28,12 @@ public class MaterialImportTaskHandler implements ImportTaskHandler {
     }
 
     @Override
-    public ImportTaskExecutionResult execute(ImportTaskContext context) {
-        MaterialImportResponse response = materialImportService.importFromBytes(
-                context.fileContent(), context.fileName());
+    protected ExcelImportService<MaterialImportResponse> getImportService() {
+        return materialImportService;
+    }
+
+    @Override
+    protected ImportTaskExecutionResult convertToExecutionResult(MaterialImportResponse response) {
         MaterialImportResponse.UnitGroupImportResult groupResult = response.unitGroupResult();
         MaterialImportResponse.MaterialImportResult materialResult = response.materialResult();
 

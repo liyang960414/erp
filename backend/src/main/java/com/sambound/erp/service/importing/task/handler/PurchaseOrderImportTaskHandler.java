@@ -2,16 +2,15 @@ package com.sambound.erp.service.importing.task.handler;
 
 import com.sambound.erp.dto.PurchaseOrderImportResponse;
 import com.sambound.erp.service.PurchaseOrderImportService;
-import com.sambound.erp.service.importing.task.ImportTaskContext;
+import com.sambound.erp.service.importing.ExcelImportService;
 import com.sambound.erp.service.importing.task.ImportTaskExecutionResult;
 import com.sambound.erp.service.importing.task.ImportTaskFailureDetail;
-import com.sambound.erp.service.importing.task.ImportTaskHandler;
 import org.springframework.stereotype.Component;
 
 import java.util.List;
 
 @Component
-public class PurchaseOrderImportTaskHandler implements ImportTaskHandler {
+public class PurchaseOrderImportTaskHandler extends AbstractImportTaskHandler<PurchaseOrderImportResponse> {
 
     private final PurchaseOrderImportService purchaseOrderImportService;
 
@@ -25,9 +24,12 @@ public class PurchaseOrderImportTaskHandler implements ImportTaskHandler {
     }
 
     @Override
-    public ImportTaskExecutionResult execute(ImportTaskContext context) {
-        PurchaseOrderImportResponse response = purchaseOrderImportService.importFromBytes(
-                context.fileContent(), context.fileName(), context.fileContent().length);
+    protected ExcelImportService<PurchaseOrderImportResponse> getImportService() {
+        return purchaseOrderImportService;
+    }
+
+    @Override
+    protected ImportTaskExecutionResult convertToExecutionResult(PurchaseOrderImportResponse response) {
         PurchaseOrderImportResponse.PurchaseOrderImportResult result = response.purchaseOrderResult();
         int total = safeInt(result.totalRows());
         int success = safeInt(result.successCount());
@@ -50,5 +52,3 @@ public class PurchaseOrderImportTaskHandler implements ImportTaskHandler {
         return value != null ? value : 0;
     }
 }
-
-

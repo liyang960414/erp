@@ -2,17 +2,15 @@ package com.sambound.erp.service.importing.task.handler;
 
 import com.sambound.erp.dto.UnitImportResponse;
 import com.sambound.erp.service.UnitImportService;
-import com.sambound.erp.service.importing.ImportError;
-import com.sambound.erp.service.importing.task.ImportTaskContext;
+import com.sambound.erp.service.importing.ExcelImportService;
 import com.sambound.erp.service.importing.task.ImportTaskExecutionResult;
 import com.sambound.erp.service.importing.task.ImportTaskFailureDetail;
-import com.sambound.erp.service.importing.task.ImportTaskHandler;
 import org.springframework.stereotype.Component;
 
 import java.util.List;
 
 @Component
-public class UnitImportTaskHandler implements ImportTaskHandler {
+public class UnitImportTaskHandler extends AbstractImportTaskHandler<UnitImportResponse> {
 
     private final UnitImportService unitImportService;
 
@@ -26,23 +24,24 @@ public class UnitImportTaskHandler implements ImportTaskHandler {
     }
 
     @Override
-    public ImportTaskExecutionResult execute(ImportTaskContext context) {
-        UnitImportResponse response = unitImportService.importFromBytes(
-                context.fileContent(), context.fileName());
+    protected ExcelImportService<UnitImportResponse> getImportService() {
+        return unitImportService;
+    }
+
+    @Override
+    protected ImportTaskExecutionResult convertToExecutionResult(UnitImportResponse response) {
+        int total = safeInt(response.totalRows());
+        int success = safeInt(response.successCount());
+        int failure = safeInt(response.failureCount());
         List<ImportTaskFailureDetail> failures = response.errors() == null ? List.of()
                 : response.errors().stream()
-                .map(err -> new ImportTaskFailureDetail(
-                        new ImportError(
-                                "单位",
-                                err.rowNumber() != null ? err.rowNumber() : 0,
-                                err.field(),
-                                err.message()),
-                        null))
+                .map(err -> new ImportTaskFailureDetail(err, null))
                 .toList();
+
         return ImportTaskExecutionResult.builder()
-                .totalCount(safeInt(response.totalRows()))
-                .successCount(safeInt(response.successCount()))
-                .failureCount(safeInt(response.failureCount()))
+                .totalCount(total)
+                .successCount(success)
+                .failureCount(failure)
                 .failures(failures)
                 .summary(response)
                 .build();
@@ -52,5 +51,3 @@ public class UnitImportTaskHandler implements ImportTaskHandler {
         return value != null ? value : 0;
     }
 }
-
-

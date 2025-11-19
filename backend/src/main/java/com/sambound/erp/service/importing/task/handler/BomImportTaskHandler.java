@@ -2,18 +2,16 @@ package com.sambound.erp.service.importing.task.handler;
 
 import com.sambound.erp.dto.BomImportResponse;
 import com.sambound.erp.service.BomImportService;
-import com.sambound.erp.service.importing.ImportError;
-import com.sambound.erp.service.importing.task.ImportTaskContext;
+import com.sambound.erp.service.importing.ExcelImportService;
 import com.sambound.erp.service.importing.task.ImportTaskExecutionResult;
 import com.sambound.erp.service.importing.task.ImportTaskFailureDetail;
-import com.sambound.erp.service.importing.task.ImportTaskHandler;
 import org.springframework.stereotype.Component;
 
 import java.util.ArrayList;
 import java.util.List;
 
 @Component
-public class BomImportTaskHandler implements ImportTaskHandler {
+public class BomImportTaskHandler extends AbstractImportTaskHandler<BomImportResponse> {
 
     private final BomImportService bomImportService;
 
@@ -27,9 +25,12 @@ public class BomImportTaskHandler implements ImportTaskHandler {
     }
 
     @Override
-    public ImportTaskExecutionResult execute(ImportTaskContext context) {
-        BomImportResponse response = bomImportService.importFromBytes(
-                context.fileContent(), context.fileName());
+    protected ExcelImportService<BomImportResponse> getImportService() {
+        return bomImportService;
+    }
+
+    @Override
+    protected ImportTaskExecutionResult convertToExecutionResult(BomImportResponse response) {
         BomImportResponse.BomImportResult bomResult = response.bomResult();
         BomImportResponse.BomItemImportResult itemResult = response.itemResult();
 
@@ -39,22 +40,10 @@ public class BomImportTaskHandler implements ImportTaskHandler {
 
         List<ImportTaskFailureDetail> failures = new ArrayList<>();
         if (bomResult.errors() != null) {
-            bomResult.errors().forEach(err -> failures.add(new ImportTaskFailureDetail(
-                    new ImportError(
-                            err.sheetName(),
-                            err.rowNumber() != null ? err.rowNumber() : 0,
-                            err.field(),
-                            err.message()),
-                    null)));
+            bomResult.errors().forEach(err -> failures.add(new ImportTaskFailureDetail(err, null)));
         }
         if (itemResult.errors() != null) {
-            itemResult.errors().forEach(err -> failures.add(new ImportTaskFailureDetail(
-                    new ImportError(
-                            err.sheetName(),
-                            err.rowNumber() != null ? err.rowNumber() : 0,
-                            err.field(),
-                            err.message()),
-                    null)));
+            itemResult.errors().forEach(err -> failures.add(new ImportTaskFailureDetail(err, null)));
         }
 
         return ImportTaskExecutionResult.builder()
@@ -70,5 +59,3 @@ public class BomImportTaskHandler implements ImportTaskHandler {
         return value != null ? value : 0;
     }
 }
-
-
