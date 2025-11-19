@@ -245,7 +245,7 @@ onActivated(() => {
 const loadOrders = async () => {
   loading.value = true
   try {
-    const params: any = {
+    const params: Record<string, unknown> = {
       page: pagination.page - 1,
       size: pagination.size,
     }
@@ -376,22 +376,6 @@ const formatNumber = (value: number | string | undefined): string => {
   const num = typeof value === 'string' ? parseFloat(value) : value
   if (isNaN(num)) return '-'
   return num.toLocaleString('zh-CN', { minimumFractionDigits: 0, maximumFractionDigits: 6 })
-}
-
-const formatDateTime = (value: string): string => {
-  if (!value) return '-'
-  try {
-    const date = new Date(value)
-    return date.toLocaleString('zh-CN', {
-      year: 'numeric',
-      month: '2-digit',
-      day: '2-digit',
-      hour: '2-digit',
-      minute: '2-digit',
-    })
-  } catch {
-    return value
-  }
 }
 </script>
 

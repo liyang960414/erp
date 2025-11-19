@@ -2,6 +2,14 @@ import axios, { type AxiosInstance, type AxiosError } from 'axios'
 import { ElMessage } from 'element-plus'
 import router from '@/router'
 
+// API 错误响应类型定义
+interface ApiErrorResponse {
+  title?: string
+  detail?: string
+  errors?: Array<{ message: string; field?: string }>
+  success?: boolean
+}
+
 // 确定 API base URL
 // 开发环境：使用环境变量或默认值
 // 生产环境（打包后）：使用相对路径 /api
@@ -58,7 +66,7 @@ request.interceptors.response.use(
 
     if (error.response) {
       const status = error.response.status
-      const res = error.response.data as any
+      const res = error.response.data as ApiErrorResponse
 
       switch (status) {
         case 400:
@@ -127,7 +135,7 @@ request.interceptors.response.use(
 
       // 显示表单验证错误
       if (res.errors && Array.isArray(res.errors)) {
-        const errorMessages = res.errors.map((err: any) => err.message).join(', ')
+        const errorMessages = res.errors.map((err) => err.message).join(', ')
         message = errorMessages || message
       }
     } else if (error.request) {

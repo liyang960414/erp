@@ -63,9 +63,12 @@ export const useAuthStore = defineStore('auth', () => {
     try {
       user.value = await authApi.getCurrentUser()
       localStorage.setItem('user', JSON.stringify(user.value))
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('获取用户信息失败:', error)
-      const status = error?.response?.status
+      const status =
+        error && typeof error === 'object' && 'response' in error
+          ? (error as { response?: { status?: number } }).response?.status
+          : undefined
 
       // 401和403错误已在请求拦截器中统一处理（会自动调用logout和跳转）
       if (status === 401 || status === 403) {
