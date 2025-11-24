@@ -1,7 +1,0 @@
-<component name="ProjectRunConfigurationManager">
-  <configuration default="false" name="Compound Build All" type="CompoundRunConfigurationType">
-    <toRun name="Maven Package" type="MavenRunConfiguration" />
-    <toRun name="NPM Build" type="js.build_tools.npm" />
-    <method v="2" />
-  </configuration>
-</component>
