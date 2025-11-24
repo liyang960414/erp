@@ -50,7 +50,7 @@ public abstract class AbstractImportProcessor<T> implements ReadListener<T> {
 
     @Override
     public void doAfterAllAnalysed(AnalysisContext context) {
-        logger.info("数据收集完成，共 {} 条数据", totalRows.get());
+        logger.debug("数据收集完成，共 {} 条数据", totalRows.get());
         onDataCollectionComplete();
     }
 
@@ -73,7 +73,7 @@ public abstract class AbstractImportProcessor<T> implements ReadListener<T> {
      */
     protected void waitForBatches(List<? extends CompletableFuture<?>> futures) {
         if (futures == null || futures.isEmpty()) {
-            logger.info("没有需要等待的批次");
+            logger.debug("没有需要等待的批次");
             return;
         }
 
@@ -119,5 +119,6 @@ public abstract class AbstractImportProcessor<T> implements ReadListener<T> {
         return errorCollector;
     }
 }
+
 
 

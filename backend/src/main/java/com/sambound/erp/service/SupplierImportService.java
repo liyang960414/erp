@@ -3,6 +3,9 @@ package com.sambound.erp.service;
 import com.sambound.erp.dto.SupplierImportResponse;
 import com.sambound.erp.repository.SupplierRepository;
 import com.sambound.erp.service.importing.AbstractImportService;
+import com.sambound.erp.service.importing.ImportContext;
+import com.sambound.erp.service.importing.ImportProperties;
+import com.sambound.erp.service.importing.ImportModuleConfig;
 import com.sambound.erp.service.importing.supplier.SupplierImportProcessor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.PlatformTransactionManager;
@@ -13,12 +16,15 @@ import java.io.InputStream;
 public class SupplierImportService extends AbstractImportService<SupplierImportResponse> {
 
     private final SupplierRepository supplierRepository;
+    private final ImportModuleConfig supplierModuleConfig;
 
     public SupplierImportService(
             SupplierRepository supplierRepository,
-            PlatformTransactionManager transactionManager) {
-        super(transactionManager);
+            PlatformTransactionManager transactionManager,
+            ImportProperties importProperties) {
+        super(transactionManager, importProperties.getModuleConfig("supplier"));
         this.supplierRepository = supplierRepository;
+        this.supplierModuleConfig = importProperties.getModuleConfig("supplier");
     }
 
     @Override
@@ -26,17 +32,20 @@ public class SupplierImportService extends AbstractImportService<SupplierImportR
         SupplierImportProcessor processor = new SupplierImportProcessor(
                 supplierRepository,
                 transactionTemplate,
-                executorService
+                executorService,
+                supplierModuleConfig
         );
         return processor.process(inputStream);
     }
 
     @Override
-    protected void logImportResult(SupplierImportResponse result) {
-        logger.info("供应商导入完成：总计 {} 条，成功 {} 条，失败 {} 条",
-                result.supplierResult().totalRows(),
-                result.supplierResult().successCount(),
-                result.supplierResult().failureCount());
+    protected void logImportResult(SupplierImportResponse result, ImportContext context) {
+        int total = result.supplierResult().totalRows();
+        int success = result.supplierResult().successCount();
+        int failure = result.supplierResult().failureCount();
+        long duration = System.currentTimeMillis() - context.getStartTimeMillis();
+        logger.info("[ExcelImport] stage=done module={} file={} total={} success={} failure={} durationMs={}",
+                context.getModule(), context.getFileName(), total, success, failure, duration);
     }
 
     /**

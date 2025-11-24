@@ -99,18 +99,6 @@ public class SaleOrderImportProcessor implements ReadListener<SaleOrderExcelRow>
         return importToDatabase();
     }
 
-    /**
-     * 从字节数组处理导入（兼容旧代码）
-     */
-    public SaleOrderImportResponse process(byte[] fileBytes) {
-        try (ByteArrayInputStream inputStream = new ByteArrayInputStream(fileBytes)) {
-            return process(inputStream);
-        } catch (IOException e) {
-            logger.error("关闭输入流失败", e);
-            throw new RuntimeException("关闭输入流失败: " + e.getMessage(), e);
-        }
-    }
-
     @Override
     public void invoke(SaleOrderExcelRow data, AnalysisContext context) {
         totalRows.incrementAndGet();

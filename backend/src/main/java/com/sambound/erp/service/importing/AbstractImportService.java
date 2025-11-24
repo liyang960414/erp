@@ -7,6 +7,9 @@ import org.springframework.transaction.support.TransactionTemplate;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.InputStream;
+import java.io.OutputStream;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
@@ -19,14 +22,28 @@ public abstract class AbstractImportService<R> {
     protected final Logger logger = LoggerFactory.getLogger(getClass());
     protected final TransactionTemplate transactionTemplate;
     protected final ExecutorService executorService;
+    protected final ImportModuleConfig moduleConfig;
+    private final ThreadLocal<ImportContext> currentContext = new ThreadLocal<>();
 
     protected AbstractImportService(PlatformTransactionManager transactionManager) {
-        this(transactionManager, ImportServiceConfig.DEFAULT_TRANSACTION_TIMEOUT);
+        this(transactionManager, ImportModuleConfig.defaultConfig("default"));
     }
 
     protected AbstractImportService(PlatformTransactionManager transactionManager, int transactionTimeout) {
-        this.transactionTemplate = createTransactionTemplate(transactionManager, transactionTimeout);
-        this.executorService = Executors.newVirtualThreadPerTaskExecutor();
+        this(transactionManager, ImportModuleConfig.builder()
+                .module("default")
+                .transactionTimeoutSeconds(transactionTimeout)
+                .build());
+    }
+
+    protected AbstractImportService(PlatformTransactionManager transactionManager, ImportModuleConfig moduleConfig) {
+        this.moduleConfig = moduleConfig == null
+                ? ImportModuleConfig.defaultConfig("default")
+                : moduleConfig;
+        this.transactionTemplate = createTransactionTemplate(
+                transactionManager,
+                this.moduleConfig.transactionTimeoutSeconds());
+        this.executorService = createExecutorService(this.moduleConfig);
     }
 
     /**
@@ -50,16 +67,25 @@ public abstract class AbstractImportService<R> {
         try {
             String fileName = file.getOriginalFilename();
             long fileSize = file.getSize();
-            logger.info("开始导入Excel文件: {}，文件大小: {} MB", fileName, fileSize / (1024.0 * 1024.0));
+            ImportContext context = createContext(fileName, fileSize);
+            currentContext.set(context);
+            logger.info("[ExcelImport] stage=start module={} file={} sizeMB={}",
+                    context.getModule(), fileName, toMb(fileSize));
             
-            try (InputStream inputStream = file.getInputStream()) {
+            Path tempFile = writeToTempFile(file.getInputStream(), fileName);
+            try (InputStream inputStream = Files.newInputStream(tempFile)) {
                 R result = importFromInputStream(inputStream, fileName, fileSize);
-                logImportResult(result);
+                logImportResult(result, context);
                 return result;
+            } finally {
+                deleteTempFile(tempFile);
             }
         } catch (Exception e) {
-            logger.error("Excel文件导入失败: {}", file.getOriginalFilename(), e);
+            logger.error("[ExcelImport] stage=failed module={} file={}",
+                    moduleConfig.module(), file.getOriginalFilename(), e);
             throw new RuntimeException("Excel文件导入失败: " + e.getMessage(), e);
+        } finally {
+            currentContext.remove();
         }
     }
 
@@ -84,16 +110,25 @@ public abstract class AbstractImportService<R> {
      */
     public R importFromBytes(byte[] fileBytes, String fileName, long fileSize) {
         try {
-            logger.info("开始导入Excel文件: {}，文件大小: {} MB", fileName, fileSize / (1024.0 * 1024.0));
+            ImportContext context = createContext(fileName, fileSize);
+            currentContext.set(context);
+            logger.info("[ExcelImport] stage=start module={} file={} sizeMB={}",
+                    context.getModule(), fileName, toMb(fileSize));
             
-            try (InputStream inputStream = new java.io.ByteArrayInputStream(fileBytes)) {
+            Path tempFile = writeToTempFile(new java.io.ByteArrayInputStream(fileBytes), fileName);
+            try (InputStream inputStream = Files.newInputStream(tempFile)) {
                 R result = importFromInputStream(inputStream, fileName, fileSize);
-                logImportResult(result);
+                logImportResult(result, context);
                 return result;
+            } finally {
+                deleteTempFile(tempFile);
             }
         } catch (Exception e) {
-            logger.error("Excel文件导入失败: {}", fileName, e);
+            logger.error("[ExcelImport] stage=failed module={} file={}",
+                    moduleConfig.module(), fileName, e);
             throw new RuntimeException("Excel文件导入失败: " + e.getMessage(), e);
+        } finally {
+            currentContext.remove();
         }
     }
 
@@ -113,6 +148,61 @@ public abstract class AbstractImportService<R> {
     protected void logImportResult(R result) {
         // 默认实现为空，子类可以覆盖
     }
+
+    protected void logImportResult(R result, ImportContext context) {
+        logImportResult(result);
+    }
+
+    protected ImportContext getCurrentContext() {
+        return currentContext.get();
+    }
+
+    protected ImportContext createContext(String fileName, long fileSize) {
+        return new ImportContext()
+                .setModule(moduleConfig.module())
+                .setFileName(fileName)
+                .setFileSizeBytes(fileSize)
+                .setModuleConfig(moduleConfig)
+                .setStartTimeMillis(System.currentTimeMillis());
+    }
+
+    private ExecutorService createExecutorService(ImportModuleConfig config) {
+        return switch (config.executorType()) {
+            case VIRTUAL_THREAD -> Executors.newVirtualThreadPerTaskExecutor();
+            case FIXED_THREAD_POOL -> Executors.newFixedThreadPool(config.maxConcurrentBatches());
+        };
+    }
+
+    private double toMb(long bytes) {
+        return Math.round((bytes / (1024.0 * 1024.0)) * 100.0) / 100.0;
+    }
+
+    private Path writeToTempFile(InputStream inputStream, String originalName) throws java.io.IOException {
+        Path tempFile = createTempFile(originalName);
+        try (InputStream in = inputStream; OutputStream outputStream = Files.newOutputStream(tempFile)) {
+            in.transferTo(outputStream);
+        }
+        return tempFile;
+    }
+
+    private Path createTempFile(String originalName) throws java.io.IOException {
+        String suffix = originalName != null && originalName.contains(".")
+                ? originalName.substring(originalName.lastIndexOf('.'))
+                : ".tmp";
+        return Files.createTempFile("excel-import-", suffix);
+    }
+
+    private void deleteTempFile(Path tempFile) {
+        if (tempFile == null) {
+            return;
+        }
+        try {
+            Files.deleteIfExists(tempFile);
+        } catch (Exception ex) {
+            logger.warn("[ExcelImport] 无法删除临时文件: {}", tempFile, ex);
+        }
+    }
 }
+
 
 

@@ -11,12 +11,25 @@ public final class ImportError {
     private final int rowNumber;
     private final String field;
     private final String message;
+    private final ErrorType errorType;
+    private final String errorCode;
 
     public ImportError(String section, int rowNumber, String field, String message) {
+        this(section, rowNumber, field, message, ErrorType.DATA_ERROR, null);
+    }
+
+    public ImportError(String section, int rowNumber, String field, String message, ErrorType errorType) {
+        this(section, rowNumber, field, message, errorType, null);
+    }
+
+    public ImportError(String section, int rowNumber, String field, String message,
+                       ErrorType errorType, String errorCode) {
         this.section = section;
         this.rowNumber = rowNumber;
         this.field = field;
         this.message = message;
+        this.errorType = errorType == null ? ErrorType.DATA_ERROR : errorType;
+        this.errorCode = errorCode;
     }
 
     public String getSection() {
@@ -35,6 +48,14 @@ public final class ImportError {
         return message;
     }
 
+    public ErrorType getErrorType() {
+        return errorType;
+    }
+
+    public String getErrorCode() {
+        return errorCode;
+    }
+
     @Override
     public boolean equals(Object o) {
         if (this == o) {
@@ -47,12 +68,14 @@ public final class ImportError {
         return rowNumber == that.rowNumber
                 && Objects.equals(section, that.section)
                 && Objects.equals(field, that.field)
-                && Objects.equals(message, that.message);
+                && Objects.equals(message, that.message)
+                && errorType == that.errorType
+                && Objects.equals(errorCode, that.errorCode);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(section, rowNumber, field, message);
+        return Objects.hash(section, rowNumber, field, message, errorType, errorCode);
     }
 
     @Override
@@ -62,7 +85,18 @@ public final class ImportError {
                 + ", rowNumber=" + rowNumber
                 + ", field='" + field + '\''
                 + ", message='" + message + '\''
+                + ", errorType='" + errorType + '\''
+                + ", errorCode='" + errorCode + '\''
                 + '}';
+    }
+
+    /**
+     * 错误类型
+     */
+    public enum ErrorType {
+        VALIDATION_ERROR,
+        DATA_ERROR,
+        SYSTEM_ERROR
     }
 }
 

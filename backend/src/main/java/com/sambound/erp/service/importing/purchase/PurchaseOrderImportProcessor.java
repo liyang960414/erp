@@ -164,12 +164,12 @@ public class PurchaseOrderImportProcessor implements ReadListener<PurchaseOrderE
 
     @Override
     public void doAfterAllAnalysed(AnalysisContext context) {
-        logger.info("采购订单数据收集完成，共 {} 条订单明细数据", orderDataList.size());
+        logger.debug("采购订单数据收集完成，共 {} 条订单明细数据", orderDataList.size());
     }
 
     private PurchaseOrderImportResponse importToDatabase() {
         if (orderDataList.isEmpty()) {
-            logger.info("未找到采购订单数据");
+            logger.debug("未找到采购订单数据");
             return new PurchaseOrderImportResponse(
                     new PurchaseOrderImportResponse.PurchaseOrderImportResult(0, 0, 0, new ArrayList<>())
             );
@@ -217,10 +217,10 @@ public class PurchaseOrderImportProcessor implements ReadListener<PurchaseOrderE
 
         int totalOrderCount = headerMap.size();
         int totalItemCount = itemHeaderMap.values().stream().mapToInt(Map::size).sum();
-        logger.info("找到 {} 个订单，{} 条明细，开始导入到数据库", totalOrderCount, totalItemCount);
+        logger.debug("找到 {} 个订单，{} 条明细，开始导入到数据库", totalOrderCount, totalItemCount);
 
         if (totalOrderCount == 0) {
-            logger.info("未收集到有效的采购订单");
+            logger.debug("未收集到有效的采购订单");
             return new PurchaseOrderImportResponse(
                     new PurchaseOrderImportResponse.PurchaseOrderImportResult(0, 0, 0, new ArrayList<>())
             );
@@ -255,7 +255,7 @@ public class PurchaseOrderImportProcessor implements ReadListener<PurchaseOrderE
                     batchSemaphore.acquire();
                     try {
                         long batchStartTime = System.currentTimeMillis();
-                        logger.info("处理采购订单批次 {}/{}，订单数量: {}", batchIndex, totalBatches, batch.size());
+                        logger.debug("处理采购订单批次 {}/{}，订单数量: {}", batchIndex, totalBatches, batch.size());
 
                         int batchSuccess = transactionTemplate.execute(status ->
                                 importBatchOrders(batch, headerMap,
@@ -264,7 +264,7 @@ public class PurchaseOrderImportProcessor implements ReadListener<PurchaseOrderE
                         );
 
                         long batchDuration = System.currentTimeMillis() - batchStartTime;
-                        logger.info("批次 {}/{} 完成，耗时: {}ms，成功: {} 条",
+                        logger.debug("批次 {}/{} 完成，耗时: {}ms，成功: {} 条",
                                 batchIndex, totalBatches, batchDuration, batchSuccess);
 
                         return new BatchResult(batchSuccess, List.of());
@@ -686,11 +686,11 @@ public class PurchaseOrderImportProcessor implements ReadListener<PurchaseOrderE
         }
 
         if (supplierCodes.isEmpty()) {
-            logger.info("未找到需要查询的供应商");
+            logger.debug("未找到需要查询的供应商");
             return new HashMap<>();
         }
 
-        logger.info("开始预加载 {} 个供应商", supplierCodes.size());
+        logger.debug("开始预加载 {} 个供应商", supplierCodes.size());
         long startTime = System.currentTimeMillis();
 
         Map<String, Supplier> supplierCache = new HashMap<>(supplierCodes.size());
@@ -712,7 +712,7 @@ public class PurchaseOrderImportProcessor implements ReadListener<PurchaseOrderE
         }
 
         long duration = System.currentTimeMillis() - startTime;
-        logger.info("供应商预加载完成：共 {} 个，找到 {} 个，耗时 {}ms",
+        logger.debug("供应商预加载完成：共 {} 个，找到 {} 个，耗时 {}ms",
                 supplierCodes.size(), supplierCache.size(), duration);
         return supplierCache;
     }

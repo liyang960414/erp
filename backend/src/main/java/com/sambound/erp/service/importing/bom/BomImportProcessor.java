@@ -78,18 +78,6 @@ public class BomImportProcessor {
         }
     }
 
-    /**
-     * 从字节数组处理导入（兼容旧代码）
-     */
-    public BomImportResponse process(byte[] fileBytes) {
-        try (ByteArrayInputStream inputStream = new ByteArrayInputStream(fileBytes)) {
-            return process(inputStream);
-        } catch (IOException e) {
-            logger.error("关闭输入流失败", e);
-            throw new RuntimeException("关闭输入流失败: " + e.getMessage(), e);
-        }
-    }
-
     private class BomDataCollector implements ReadListener<BomExcelRow> {
 
         private final List<BomData> bomDataList = new ArrayList<>();

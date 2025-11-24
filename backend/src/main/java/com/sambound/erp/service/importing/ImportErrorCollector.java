@@ -9,15 +9,6 @@ import java.util.stream.Collectors;
  */
 public class ImportErrorCollector {
 
-    /**
-     * 错误类型
-     */
-    public enum ErrorType {
-        VALIDATION_ERROR,  // 验证错误（必填字段、格式等）
-        DATA_ERROR,        // 数据错误（关联实体不存在等）
-        SYSTEM_ERROR       // 系统错误（数据库异常、超时等）
-    }
-
     private final int maxErrorCount;
     private final List<ImportError> errors = new ArrayList<>();
 
@@ -39,7 +30,7 @@ public class ImportErrorCollector {
      * @return 是否成功添加
      */
     public boolean addError(String section, int rowNumber, String field, String message) {
-        return addError(section, rowNumber, field, message, ErrorType.DATA_ERROR);
+        return addError(section, rowNumber, field, message, ImportError.ErrorType.DATA_ERROR, null);
     }
 
     /**
@@ -52,11 +43,20 @@ public class ImportErrorCollector {
      * @param errorType 错误类型
      * @return 是否成功添加
      */
-    public boolean addError(String section, int rowNumber, String field, String message, ErrorType errorType) {
+    public boolean addError(String section, int rowNumber, String field, String message,
+                            ImportError.ErrorType errorType) {
+        return addError(section, rowNumber, field, message, errorType, null);
+    }
+
+    /**
+     * 添加错误（带错误类型与错误码）
+     */
+    public boolean addError(String section, int rowNumber, String field, String message,
+                            ImportError.ErrorType errorType, String errorCode) {
         if (errors.size() >= maxErrorCount) {
             return false;
         }
-        errors.add(new ImportError(section, rowNumber, field, message));
+        errors.add(new ImportError(section, rowNumber, field, message, errorType, errorCode));
         return true;
     }
 
@@ -64,21 +64,21 @@ public class ImportErrorCollector {
      * 添加验证错误
      */
     public boolean addValidationError(String section, int rowNumber, String field, String message) {
-        return addError(section, rowNumber, field, message, ErrorType.VALIDATION_ERROR);
+        return addError(section, rowNumber, field, message, ImportError.ErrorType.VALIDATION_ERROR);
     }
 
     /**
      * 添加数据错误
      */
     public boolean addDataError(String section, int rowNumber, String field, String message) {
-        return addError(section, rowNumber, field, message, ErrorType.DATA_ERROR);
+        return addError(section, rowNumber, field, message, ImportError.ErrorType.DATA_ERROR);
     }
 
     /**
      * 添加系统错误
      */
     public boolean addSystemError(String section, int rowNumber, String field, String message) {
-        return addError(section, rowNumber, field, message, ErrorType.SYSTEM_ERROR);
+        return addError(section, rowNumber, field, message, ImportError.ErrorType.SYSTEM_ERROR);
     }
 
     /**
