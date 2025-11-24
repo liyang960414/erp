@@ -17,6 +17,7 @@ import org.springframework.transaction.TransactionDefinition;
 import org.springframework.transaction.support.TransactionTemplate;
 
 import java.io.ByteArrayInputStream;
+import java.io.InputStream;
 import java.math.BigDecimal;
 import java.util.*;
 import java.util.concurrent.*;
@@ -55,6 +56,23 @@ public class UnitImportProcessor {
         this.executorService = executorService;
     }
 
+    /**
+     * 从输入流处理导入（新方法，支持流式读取）
+     */
+    public UnitImportResponse process(InputStream inputStream) {
+        try {
+            // 由于需要读取两次，需要将流转换为字节数组
+            byte[] fileBytes = inputStream.readAllBytes();
+            return process(fileBytes);
+        } catch (Exception e) {
+            logger.error("Excel文件导入失败", e);
+            throw new RuntimeException("Excel文件导入失败: " + e.getMessage(), e);
+        }
+    }
+
+    /**
+     * 从字节数组处理导入（兼容旧代码）
+     */
     public UnitImportResponse process(byte[] fileBytes) {
         try {
             // 第一遍读取：收集所有唯一的单位组编码

@@ -18,6 +18,8 @@ import org.slf4j.LoggerFactory;
 import org.springframework.transaction.support.TransactionTemplate;
 
 import java.io.ByteArrayInputStream;
+import java.io.IOException;
+import java.io.InputStream;
 import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -59,10 +61,13 @@ public class BomImportProcessor {
         this.transactionTemplate = transactionTemplate;
     }
 
-    public BomImportResponse process(byte[] fileBytes) {
+    /**
+     * 从输入流处理导入（新方法，支持流式读取）
+     */
+    public BomImportResponse process(InputStream inputStream) {
         try {
             BomDataCollector collector = new BomDataCollector();
-            FastExcel.read(new ByteArrayInputStream(fileBytes), BomExcelRow.class, collector)
+            FastExcel.read(inputStream, BomExcelRow.class, collector)
                     .sheet("物料清单#单据头(FBillHead)")
                     .headRowNumber(2)
                     .doRead();
@@ -70,6 +75,18 @@ public class BomImportProcessor {
         } catch (Exception e) {
             logger.error("BOM Excel 导入失败", e);
             throw new RuntimeException("BOM Excel 导入失败: " + e.getMessage(), e);
+        }
+    }
+
+    /**
+     * 从字节数组处理导入（兼容旧代码）
+     */
+    public BomImportResponse process(byte[] fileBytes) {
+        try (ByteArrayInputStream inputStream = new ByteArrayInputStream(fileBytes)) {
+            return process(inputStream);
+        } catch (IOException e) {
+            logger.error("关闭输入流失败", e);
+            throw new RuntimeException("关闭输入流失败: " + e.getMessage(), e);
         }
     }
 
@@ -220,6 +237,10 @@ public class BomImportProcessor {
             int bomSuccessCount = 0;
             int itemSuccessCount = 0;
 
+            // 在事务内重新初始化所有缓存实体的懒加载字段
+            // 因为预加载是在事务外进行的，实体可能已经脱离了原来的 session
+            initializeCacheEntities(materialCache, unitCache);
+
             List<BillOfMaterial> bomsToSave = new ArrayList<>();
             Map<BillOfMaterial, List<BomItem>> bomItemsMap = new LinkedHashMap<>();
 
@@ -266,6 +287,23 @@ public class BomImportProcessor {
                                 continue;
                             }
 
+                            // 确保 childMaterial 的懒加载字段已初始化（在事务内）
+                            // 必须在访问 childMaterial.getBaseUnit() 之前初始化
+                            if (childMaterial.getMaterialGroup() != null) {
+                                childMaterial.getMaterialGroup().getId();
+                                childMaterial.getMaterialGroup().getCode();
+                                childMaterial.getMaterialGroup().getName();
+                            }
+                            if (childMaterial.getBaseUnit() != null) {
+                                Unit baseUnit = childMaterial.getBaseUnit();
+                                baseUnit.getId();
+                                if (baseUnit.getUnitGroup() != null) {
+                                    baseUnit.getUnitGroup().getId();
+                                    baseUnit.getUnitGroup().getCode();
+                                    baseUnit.getUnitGroup().getName();
+                                }
+                            }
+
                             Unit childUnit;
                             if (itemData.childUnitCode() != null) {
                                 childUnit = unitCache.get(itemData.childUnitCode());
@@ -274,8 +312,20 @@ public class BomImportProcessor {
                                             "子项单位不存在: " + itemData.childUnitCode());
                                     continue;
                                 }
+                                // 确保从缓存获取的 Unit 的懒加载字段已初始化（在事务内）
+                                if (childUnit.getUnitGroup() != null) {
+                                    childUnit.getUnitGroup().getId();
+                                    childUnit.getUnitGroup().getCode();
+                                    childUnit.getUnitGroup().getName();
+                                }
                             } else {
                                 childUnit = childMaterial.getBaseUnit();
+                                // 确保 baseUnit 的懒加载字段已初始化（在事务内）
+                                if (childUnit != null && childUnit.getUnitGroup() != null) {
+                                    childUnit.getUnitGroup().getId();
+                                    childUnit.getUnitGroup().getCode();
+                                    childUnit.getUnitGroup().getName();
+                                }
                             }
 
                             Integer seq = itemData.sequence() != null ? itemData.sequence() : sequence++;
@@ -303,6 +353,26 @@ public class BomImportProcessor {
                     }
 
                     if (!bomItems.isEmpty()) {
+                        // 在放入 HashMap 之前，确保所有相关实体的懒加载字段都已初始化
+                        // 因为 HashMap.put() 会调用 hashCode()，而 hashCode() 会访问所有字段
+                        // Material -> baseUnit -> unitGroup 的链式访问需要在事务内完成
+                        if (bom.getMaterial() != null) {
+                            Material material = bom.getMaterial();
+                            // 初始化 Material 的懒加载字段
+                            if (material.getMaterialGroup() != null) {
+                                material.getMaterialGroup().getId();
+                                material.getMaterialGroup().getCode();
+                            }
+                            if (material.getBaseUnit() != null) {
+                                Unit baseUnit = material.getBaseUnit();
+                                baseUnit.getId();
+                                // 初始化 Unit 的懒加载字段
+                                if (baseUnit.getUnitGroup() != null) {
+                                    baseUnit.getUnitGroup().getId();
+                                    baseUnit.getUnitGroup().getCode();
+                                }
+                            }
+                        }
                         bomItemsMap.put(bom, bomItems);
                     }
                     bomSuccessCount++;
@@ -327,6 +397,45 @@ public class BomImportProcessor {
             return new BatchImportResult(bomSuccessCount, itemSuccessCount);
         }
 
+        /**
+         * 在事务内初始化所有缓存实体的懒加载字段
+         * 因为预加载是在事务外进行的，实体可能已经脱离了原来的 session
+         * 解决方案：在事务内重新查询这些实体，确保它们在当前 session 中
+         */
+        private void initializeCacheEntities(Map<String, Material> materialCache, Map<String, Unit> unitCache) {
+            // 在事务内重新查询 Material，确保它们在当前 session 中
+            if (!materialCache.isEmpty()) {
+                Set<String> materialCodes = new HashSet<>(materialCache.keySet());
+                List<String> materialCodeList = new ArrayList<>(materialCodes);
+                for (int i = 0; i < materialCodeList.size(); i += BATCH_QUERY_CHUNK_SIZE) {
+                    int end = Math.min(i + BATCH_QUERY_CHUNK_SIZE, materialCodeList.size());
+                    List<String> chunk = materialCodeList.subList(i, end);
+                    // 在事务内重新查询，确保实体在当前 session 中
+                    List<Material> materials = materialRepository.findByCodeInWithMaterialGroup(chunk);
+                    for (Material material : materials) {
+                        // 替换缓存中的实体，使用当前 session 中的实体
+                        materialCache.put(material.getCode(), material);
+                    }
+                }
+            }
+            
+            // 在事务内重新查询 Unit，确保它们在当前 session 中
+            if (!unitCache.isEmpty()) {
+                Set<String> unitCodes = new HashSet<>(unitCache.keySet());
+                List<String> unitCodeList = new ArrayList<>(unitCodes);
+                for (int i = 0; i < unitCodeList.size(); i += BATCH_QUERY_CHUNK_SIZE) {
+                    int end = Math.min(i + BATCH_QUERY_CHUNK_SIZE, unitCodeList.size());
+                    List<String> chunk = unitCodeList.subList(i, end);
+                    // 在事务内重新查询，确保实体在当前 session 中
+                    List<Unit> units = unitRepository.findByCodeInWithUnitGroup(chunk);
+                    for (Unit unit : units) {
+                        // 替换缓存中的实体，使用当前 session 中的实体
+                        unitCache.put(unit.getCode(), unit);
+                    }
+                }
+            }
+        }
+
         private void preloadMaterialsAndUnits(
                 Map<BomHeader, List<BomItemData>> bomGroups,
                 Map<String, Material> materialCache,
@@ -349,7 +458,14 @@ public class BomImportProcessor {
             for (int i = 0; i < materialCodeList.size(); i += BATCH_QUERY_CHUNK_SIZE) {
                 int end = Math.min(i + BATCH_QUERY_CHUNK_SIZE, materialCodeList.size());
                 List<String> chunk = materialCodeList.subList(i, end);
-                materialRepository.findByCodeIn(chunk).forEach(m -> materialCache.put(m.getCode(), m));
+                // 使用 JOIN FETCH 预加载 MaterialGroup 和 baseUnit，避免 LazyInitializationException
+                // 当 Material 被放入 HashMap 时，hashCode() 会访问 MaterialGroup 和 baseUnit
+                List<Material> materials = materialRepository.findByCodeInWithMaterialGroup(chunk);
+                for (Material m : materials) {
+                    // 注意：预加载是在事务外进行的，所以这里的初始化可能不够
+                    // 真正的初始化会在 importBatchBoms 的 initializeCacheEntities 中进行
+                    materialCache.put(m.getCode(), m);
+                }
             }
 
             if (!unitCodes.isEmpty()) {
@@ -357,7 +473,19 @@ public class BomImportProcessor {
                 for (int i = 0; i < unitCodeList.size(); i += BATCH_QUERY_CHUNK_SIZE) {
                     int end = Math.min(i + BATCH_QUERY_CHUNK_SIZE, unitCodeList.size());
                     List<String> chunk = unitCodeList.subList(i, end);
-                    unitRepository.findByCodeIn(chunk).forEach(u -> unitCache.put(u.getCode(), u));
+                    // 使用 JOIN FETCH 预加载 UnitGroup，避免 LazyInitializationException
+                    List<Unit> units = unitRepository.findByCodeInWithUnitGroup(chunk);
+                    for (Unit u : units) {
+                        // 确保 UnitGroup 完全初始化（在事务内）
+                        // 访问多个字段以确保代理对象被完全初始化
+                        // 注意：虽然使用了 JOIN FETCH，但 UnitGroup 可能仍然是代理对象
+                        if (u.getUnitGroup() != null) {
+                            u.getUnitGroup().getId();
+                            u.getUnitGroup().getCode(); // 触发代理初始化
+                            u.getUnitGroup().getName(); // 进一步确保初始化
+                        }
+                        unitCache.put(u.getCode(), u);
+                    }
                 }
             }
         }

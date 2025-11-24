@@ -19,6 +19,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.transaction.support.TransactionTemplate;
 
 import java.io.ByteArrayInputStream;
+import java.io.InputStream;
 import java.util.*;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -56,6 +57,24 @@ public class MaterialImportProcessor {
         this.executorService = executorService;
     }
 
+    /**
+     * 从输入流处理导入（新方法，支持流式读取）
+     */
+    public MaterialImportResponse process(InputStream inputStream) {
+        try {
+            // 由于需要读取两次（物料组和物料），需要将流转换为字节数组
+            // 对于大文件，可以考虑使用支持 mark/reset 的 BufferedInputStream
+            byte[] fileBytes = inputStream.readAllBytes();
+            return process(fileBytes);
+        } catch (Exception e) {
+            logger.error("Excel文件导入失败", e);
+            throw new RuntimeException("Excel文件导入失败: " + e.getMessage(), e);
+        }
+    }
+
+    /**
+     * 从字节数组处理导入（兼容旧代码）
+     */
     public MaterialImportResponse process(byte[] fileBytes) {
         try {
             // 处理物料组：收集数据
@@ -410,10 +429,6 @@ public class MaterialImportProcessor {
             int rowNum = context.readRowHolder().getRowIndex();
 
             if (code == null || code.trim().isEmpty() || name == null || name.trim().isEmpty()) {
-                if (errors.size() < MAX_ERROR_COUNT) {
-                    errors.add(new ImportError(
-                            "物料", rowNum, "FNumber", "物料编码或名称为空"));
-                }
                 return;
             }
 
@@ -806,15 +821,24 @@ public class MaterialImportProcessor {
             }
 
             // 批量查询单位：使用IN查询一次性获取
+            // 使用 JOIN FETCH 预加载 UnitGroup，避免 LazyInitializationException
             if (!unitCodes.isEmpty()) {
                 List<String> unitCodesList = new ArrayList<>(unitCodes);
                 // 分批查询，避免IN查询参数过多
                 for (int i = 0; i < unitCodesList.size(); i += BATCH_QUERY_CHUNK_SIZE) {
                     int end = Math.min(i + BATCH_QUERY_CHUNK_SIZE, unitCodesList.size());
                     List<String> chunk = unitCodesList.subList(i, end);
-                    unitRepository.findByCodeIn(chunk).forEach(unit -> {
+                    List<Unit> units = unitRepository.findByCodeInWithUnitGroup(chunk);
+                    for (Unit unit : units) {
+                        // 确保 UnitGroup 完全初始化（在事务内）
+                        // 访问多个字段以确保代理对象被完全初始化
+                        if (unit.getUnitGroup() != null) {
+                            unit.getUnitGroup().getId();
+                            unit.getUnitGroup().getCode();
+                            unit.getUnitGroup().getName();
+                        }
                         unitCache.put(unit.getCode(), unit);
-                    });
+                    }
                 }
             }
 

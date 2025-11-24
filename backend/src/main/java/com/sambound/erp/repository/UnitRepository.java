@@ -56,5 +56,15 @@ public interface UnitRepository extends JpaRepository<Unit, Long> {
      */
     @Query("SELECT u FROM Unit u WHERE u.code IN :codes")
     List<Unit> findByCodeIn(@Param("codes") List<String> codes);
+    
+    /**
+     * 批量查询单位（按编码列表），同时预加载 UnitGroup
+     * 用于避免 LazyInitializationException（当 Unit 被放入 HashMap 时，hashCode() 会访问 UnitGroup）
+     * 
+     * @param codes 单位编码列表
+     * @return 单位列表（UnitGroup 已加载）
+     */
+    @Query("SELECT DISTINCT u FROM Unit u LEFT JOIN FETCH u.unitGroup WHERE u.code IN :codes")
+    List<Unit> findByCodeInWithUnitGroup(@Param("codes") List<String> codes);
 }
 

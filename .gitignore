@@ -224,3 +224,5 @@ dependency-tree.txt
 # build-with-config.sh
 # BUILD.md
 # config.env.example
+/.idea/
+*.iml

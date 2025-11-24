@@ -13,6 +13,8 @@ import org.slf4j.LoggerFactory;
 import org.springframework.transaction.support.TransactionTemplate;
 
 import java.io.ByteArrayInputStream;
+import java.io.IOException;
+import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -50,16 +52,31 @@ public class SupplierImportProcessor implements ReadListener<SupplierExcelRow> {
         this.executorService = executorService;
     }
 
-    public SupplierImportResponse process(byte[] fileBytes) {
+    /**
+     * 从输入流处理导入（新方法，支持流式读取）
+     */
+    public SupplierImportResponse process(InputStream inputStream) {
         supplierDataList.clear();
         totalRows.set(0);
 
-        FastExcel.read(new ByteArrayInputStream(fileBytes), SupplierExcelRow.class, this)
+        FastExcel.read(inputStream, SupplierExcelRow.class, this)
                 .sheet("供应商#单据头(FBillHead)")
                 .headRowNumber(2)
                 .doRead();
 
         return importToDatabase();
+    }
+
+    /**
+     * 从字节数组处理导入（兼容旧代码）
+     */
+    public SupplierImportResponse process(byte[] fileBytes) {
+        try (ByteArrayInputStream inputStream = new ByteArrayInputStream(fileBytes)) {
+            return process(inputStream);
+        } catch (IOException e) {
+            logger.error("关闭输入流失败", e);
+            throw new RuntimeException("关闭输入流失败: " + e.getMessage(), e);
+        }
     }
 
     @Override

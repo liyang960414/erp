@@ -3,63 +3,56 @@ package com.sambound.erp.service;
 import com.sambound.erp.dto.UnitImportResponse;
 import com.sambound.erp.repository.UnitGroupRepository;
 import com.sambound.erp.repository.UnitRepository;
+import com.sambound.erp.service.importing.AbstractImportService;
 import com.sambound.erp.service.importing.unit.UnitImportProcessor;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.PlatformTransactionManager;
-import org.springframework.web.multipart.MultipartFile;
 
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
+import java.io.InputStream;
 
 @Service
-public class UnitImportService {
-
-    private static final Logger logger = LoggerFactory.getLogger(UnitImportService.class);
+public class UnitImportService extends AbstractImportService<UnitImportResponse> {
 
     private final UnitService unitService;
     private final UnitRepository unitRepository;
     private final UnitGroupRepository unitGroupRepository;
-    private final PlatformTransactionManager transactionManager;
-    private final ExecutorService executorService;
 
     public UnitImportService(
             UnitService unitService,
             UnitRepository unitRepository,
             UnitGroupRepository unitGroupRepository,
             PlatformTransactionManager transactionManager) {
+        super(transactionManager);
         this.unitService = unitService;
         this.unitRepository = unitRepository;
         this.unitGroupRepository = unitGroupRepository;
-        this.transactionManager = transactionManager;
-        this.executorService = Executors.newVirtualThreadPerTaskExecutor();
     }
 
-    public UnitImportResponse importFromExcel(MultipartFile file) {
-        try {
-            return importFromBytes(file.getBytes(), file.getOriginalFilename());
-        } catch (Exception e) {
-            logger.error("单位 Excel 导入失败", e);
-            throw new RuntimeException("单位 Excel 导入失败: " + e.getMessage(), e);
-        }
-    }
-
-    public UnitImportResponse importFromBytes(byte[] fileBytes, String fileName) {
-        logger.info("开始导入单位 Excel 文件: {}", fileName);
+    @Override
+    protected UnitImportResponse importFromInputStream(InputStream inputStream, String fileName, long fileSize) throws Exception {
         UnitImportProcessor processor = new UnitImportProcessor(
                 unitService,
                 unitRepository,
                 unitGroupRepository,
-                transactionManager,
+                transactionTemplate.getTransactionManager(),
                 executorService
         );
-        UnitImportResponse response = processor.process(fileBytes);
+        return processor.process(inputStream);
+    }
+
+    @Override
+    protected void logImportResult(UnitImportResponse response) {
         logger.info("单位导入完成：总计 {} 条，成功 {} 条，失败 {} 条",
                 response.totalRows(),
                 response.successCount(),
                 response.failureCount());
-        return response;
+    }
+
+    /**
+     * 从字节数组执行导入（兼容旧代码）
+     */
+    public UnitImportResponse importFromBytes(byte[] fileBytes, String fileName) {
+        return importFromBytes(fileBytes, fileName, fileBytes.length);
     }
 }
 

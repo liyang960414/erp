@@ -966,46 +966,42 @@ COMMIT;
 -- ============================================
 -- 初始化完成提示
 -- ============================================
-\echo ''
-\echo '========================================'
-\echo 'ERP系统数据库初始化成功！'
-\echo '========================================'
-\echo ''
-\echo '默认账户信息:'
-\echo '  用户名: admin'
-\echo '  密码: admin123'
-\echo '  角色: ADMIN'
-\echo ''
-\echo '测试账户信息:'
-\echo '  用户名: testuser'
-\echo '  密码: admin123'
-\echo '  角色: USER'
-\echo ''
-\echo '已创建的表:'
-\echo '  - users (用户表)'
-\echo '  - roles (角色表)'
-\echo '  - permissions (权限表)'
-\echo '  - user_roles (用户角色关联表)'
-\echo '  - role_permissions (角色权限关联表)'
-\echo '  - audit_logs (审计日志表)'
-\echo '  - import_tasks (导入任务主表)'
-\echo '  - import_task_items (导入任务子项表)'
-\echo '  - import_task_dependencies (导入任务依赖表)'
-\echo '  - import_task_failures (导入失败记录表)'
-\echo '  - unit_groups (单位组表)'
-\echo '  - units (单位表)'
-\echo '  - unit_conversions (单位转换表)'
-\echo '  - material_groups (物料组表)'
-\echo '  - materials (物料表)'
-\echo '  - customers (客户表)'
-\echo '  - suppliers (供应商表)'
-\echo '  - sale_orders (销售订单表)'
-\echo '  - sale_order_items (销售订单明细表)'
-\echo '  - sale_outstocks (销售出库主表)'
-\echo '  - sale_outstock_items (销售出库明细表)'
-\echo '  - purchase_orders (采购订单表)'
-\echo '  - purchase_order_items (采购订单明细表)'
-\echo '  - sub_req_orders (委外订单表)'
-\echo '  - sub_req_order_items (委外订单明细表)'
-\echo ''
+-- 
+-- 默认账户信息:
+--   用户名: admin
+--   密码: admin123
+--   角色: ADMIN
+-- 
+-- 测试账户信息:
+--   用户名: testuser
+--   密码: admin123
+--   角色: USER
+-- 
+-- 已创建的表:
+--   - users (用户表)
+--   - roles (角色表)
+--   - permissions (权限表)
+--   - user_roles (用户角色关联表)
+--   - role_permissions (角色权限关联表)
+--   - audit_logs (审计日志表)
+--   - import_tasks (导入任务主表)
+--   - import_task_items (导入任务子项表)
+--   - import_task_dependencies (导入任务依赖表)
+--   - import_task_failures (导入失败记录表)
+--   - unit_groups (单位组表)
+--   - units (单位表)
+--   - unit_conversions (单位转换表)
+--   - material_groups (物料组表)
+--   - materials (物料表)
+--   - customers (客户表)
+--   - suppliers (供应商表)
+--   - sale_orders (销售订单表)
+--   - sale_order_items (销售订单明细表)
+--   - sale_outstocks (销售出库主表)
+--   - sale_outstock_items (销售出库明细表)
+--   - purchase_orders (采购订单表)
+--   - purchase_order_items (采购订单明细表)
+--   - sub_req_orders (委外订单表)
+--   - sub_req_order_items (委外订单明细表)
+--
 

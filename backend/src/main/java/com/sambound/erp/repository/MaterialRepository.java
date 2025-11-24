@@ -25,6 +25,26 @@ public interface MaterialRepository extends JpaRepository<Material, Long>, Mater
     List<Material> findByCodeIn(@Param("codes") List<String> codes);
     
     /**
+     * 批量查询物料（按编码列表），同时预加载 MaterialGroup 和 baseUnit
+     * 用于避免 LazyInitializationException（当 Material 被放入 HashMap 时，hashCode() 会访问这些字段）
+     * 
+     * @param codes 物料编码列表
+     * @return 物料列表（MaterialGroup 和 baseUnit 已加载）
+     */
+    @Query("SELECT DISTINCT m FROM Material m " +
+           "LEFT JOIN FETCH m.materialGroup " +
+           "LEFT JOIN FETCH m.baseUnit " +
+           "WHERE m.code IN :codes")
+    List<Material> findByCodeInWithMaterialGroup(@Param("codes") List<String> codes);
+    
+    /**
+     * 批量查询物料（按编码列表），同时预加载 MaterialGroup 和 baseUnit（别名方法，保持一致性）
+     */
+    default List<Material> findByCodeInWithAssociations(List<String> codes) {
+        return findByCodeInWithMaterialGroup(codes);
+    }
+    
+    /**
      * 使用 PostgreSQL 的 INSERT ... ON CONFLICT 实现原子性的插入或获取操作
      * 
      * @param code 物料编码

@@ -22,6 +22,8 @@ import org.slf4j.LoggerFactory;
 import org.springframework.transaction.support.TransactionTemplate;
 
 import java.io.ByteArrayInputStream;
+import java.io.IOException;
+import java.io.InputStream;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -85,13 +87,28 @@ public class SaleOrderImportProcessor implements ReadListener<SaleOrderExcelRow>
         this.executorService = executorService;
     }
 
-    public SaleOrderImportResponse process(byte[] fileBytes) {
-        FastExcel.read(new ByteArrayInputStream(fileBytes), SaleOrderExcelRow.class, this)
+    /**
+     * 从输入流处理导入（新方法，支持流式读取）
+     */
+    public SaleOrderImportResponse process(InputStream inputStream) {
+        FastExcel.read(inputStream, SaleOrderExcelRow.class, this)
                 .sheet()
                 .headRowNumber(2)
                 .doRead();
 
         return importToDatabase();
+    }
+
+    /**
+     * 从字节数组处理导入（兼容旧代码）
+     */
+    public SaleOrderImportResponse process(byte[] fileBytes) {
+        try (ByteArrayInputStream inputStream = new ByteArrayInputStream(fileBytes)) {
+            return process(inputStream);
+        } catch (IOException e) {
+            logger.error("关闭输入流失败", e);
+            throw new RuntimeException("关闭输入流失败: " + e.getMessage(), e);
+        }
     }
 
     @Override
@@ -548,9 +565,17 @@ public class SaleOrderImportProcessor implements ReadListener<SaleOrderExcelRow>
             List<String> materialCodeList = new ArrayList<>(materialCodes);
             for (int i = 0; i < materialCodeList.size(); i += 1000) {
                 int end = Math.min(i + 1000, materialCodeList.size());
-                List<Material> materials = materialRepository.findByCodeIn(materialCodeList.subList(i, end));
+                // 使用 JOIN FETCH 预加载 MaterialGroup 和 baseUnit，避免 LazyInitializationException
+                List<Material> materials = materialRepository.findByCodeInWithMaterialGroup(materialCodeList.subList(i, end));
                 for (Material material : materials) {
                     materialCache.put(material.getCode(), material);
+                    // 确保懒加载字段已初始化（在事务内）
+                    if (material.getMaterialGroup() != null) {
+                        material.getMaterialGroup().getId();
+                    }
+                    if (material.getBaseUnit() != null) {
+                        material.getBaseUnit().getId();
+                    }
                 }
             }
         }
@@ -559,8 +584,16 @@ public class SaleOrderImportProcessor implements ReadListener<SaleOrderExcelRow>
             List<String> unitCodeList = new ArrayList<>(unitCodes);
             for (int i = 0; i < unitCodeList.size(); i += 1000) {
                 int end = Math.min(i + 1000, unitCodeList.size());
-                List<Unit> units = unitRepository.findByCodeIn(unitCodeList.subList(i, end));
+                // 使用 JOIN FETCH 预加载 UnitGroup，避免 LazyInitializationException
+                List<Unit> units = unitRepository.findByCodeInWithUnitGroup(unitCodeList.subList(i, end));
                 for (Unit unit : units) {
+                    // 确保 UnitGroup 完全初始化（在事务内）
+                    // 访问多个字段以确保代理对象被完全初始化
+                    if (unit.getUnitGroup() != null) {
+                        unit.getUnitGroup().getId();
+                        unit.getUnitGroup().getCode();
+                        unit.getUnitGroup().getName();
+                    }
                     unitCache.put(unit.getCode(), unit);
                 }
             }

@@ -755,9 +755,17 @@ public class PurchaseOrderImportProcessor implements ReadListener<PurchaseOrderE
             for (int i = 0; i < materialCodeList.size(); i += 1000) {
                 int end = Math.min(i + 1000, materialCodeList.size());
                 List<String> chunk = materialCodeList.subList(i, end);
-                List<Material> materials = materialRepository.findByCodeIn(chunk);
+                // 使用 JOIN FETCH 预加载 MaterialGroup 和 baseUnit，避免 LazyInitializationException
+                List<Material> materials = materialRepository.findByCodeInWithMaterialGroup(chunk);
                 for (Material material : materials) {
                     materialCache.put(material.getCode(), material);
+                    // 确保懒加载字段已初始化（在事务内）
+                    if (material.getMaterialGroup() != null) {
+                        material.getMaterialGroup().getId();
+                    }
+                    if (material.getBaseUnit() != null) {
+                        material.getBaseUnit().getId();
+                    }
                 }
             }
         }
@@ -770,8 +778,16 @@ public class PurchaseOrderImportProcessor implements ReadListener<PurchaseOrderE
             for (int i = 0; i < unitCodeList.size(); i += 1000) {
                 int end = Math.min(i + 1000, unitCodeList.size());
                 List<String> chunk = unitCodeList.subList(i, end);
-                List<Unit> units = unitRepository.findByCodeIn(chunk);
+                // 使用 JOIN FETCH 预加载 UnitGroup，避免 LazyInitializationException
+                List<Unit> units = unitRepository.findByCodeInWithUnitGroup(chunk);
                 for (Unit unit : units) {
+                    // 确保 UnitGroup 完全初始化（在事务内）
+                    // 访问多个字段以确保代理对象被完全初始化
+                    if (unit.getUnitGroup() != null) {
+                        unit.getUnitGroup().getId();
+                        unit.getUnitGroup().getCode();
+                        unit.getUnitGroup().getName();
+                    }
                     unitCache.put(unit.getCode(), unit);
                 }
             }

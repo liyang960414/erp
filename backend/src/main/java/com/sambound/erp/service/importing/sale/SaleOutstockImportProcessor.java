@@ -21,6 +21,8 @@ import org.springframework.transaction.TransactionDefinition;
 import org.springframework.transaction.support.TransactionTemplate;
 
 import java.io.ByteArrayInputStream;
+import java.io.IOException;
+import java.io.InputStream;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
@@ -74,10 +76,13 @@ public class SaleOutstockImportProcessor {
         this.executorService = executorService;
     }
 
-    public SaleOutstockImportResponse process(byte[] fileBytes) {
+    /**
+     * 从输入流处理导入（新方法，支持流式读取）
+     */
+    public SaleOutstockImportResponse process(InputStream inputStream) {
         try {
             SaleOutstockDataCollector collector = new SaleOutstockDataCollector();
-            FastExcel.read(new ByteArrayInputStream(fileBytes), SaleOutstockExcelRow.class, collector)
+            FastExcel.read(inputStream, SaleOutstockExcelRow.class, collector)
                     .sheet()
                     .headRowNumber(2)
                     .doRead();
@@ -92,6 +97,18 @@ public class SaleOutstockImportProcessor {
         } catch (Exception e) {
             logger.error("销售出库Excel导入失败", e);
             throw new RuntimeException("销售出库Excel导入失败: " + e.getMessage(), e);
+        }
+    }
+
+    /**
+     * 从字节数组处理导入（兼容旧代码）
+     */
+    public SaleOutstockImportResponse process(byte[] fileBytes) {
+        try (ByteArrayInputStream inputStream = new ByteArrayInputStream(fileBytes)) {
+            return process(inputStream);
+        } catch (IOException e) {
+            logger.error("关闭输入流失败", e);
+            throw new RuntimeException("关闭输入流失败: " + e.getMessage(), e);
         }
     }
 
