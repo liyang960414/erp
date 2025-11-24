@@ -3,9 +3,6 @@
 # ============================================
 # Maven 构建产物
 target/
-!.mvn/wrapper/maven-wrapper.properties
-!**/src/main/**/target/
-!**/src/test/**/target/
 
 # 编译输出
 *.class
@@ -18,8 +15,7 @@ target/
 
 # JAR 文件（排除所有构建产物，包括 Maven Wrapper JAR）
 *.jar
-# Maven Wrapper JAR 会通过 mvnw 脚本自动下载，不需要提交
-.mvn/wrapper/maven-wrapper.jar
+
 # 明确排除构建后的 JAR
 backend/target/*.jar
 frontend/dist/*.jar
@@ -79,23 +75,7 @@ frontend/.eslintcache
 # IntelliJ IDEA / WebStorm
 # 策略：保留项目共享配置，排除用户特定配置
 # 共享项目级 .idea 配置，忽略用户特有文件
-.idea/workspace.xml
-.idea/tasks.xml
-.idea/shelf/
-.idea/dictionaries/
-.idea/httpRequests/
-.idea/sonarlint/
-.idea/inspectionProfiles/
-.idea/scopes/
-.idea/dataSources.local.xml
-.idea/usage.statistics.xml
-.idea/**/jarRepositories.xml~
-.idea/**/__pycache__/
-.idea/**/dataSources/
-
-# 保留模块配置文件（.iml 文件在模块目录下，不在 .idea 中）
-backend/*.iml
-frontend/*.iml
+.idea
 
 # 注意：用户特定的配置已在 .idea/ 排除规则中自动排除
 # 包括：workspace.xml, tasks.xml, dictionaries/, shelf/, 
@@ -104,32 +84,6 @@ frontend/*.iml
 
 # VS Code
 .vscode/
-!.vscode/extensions.json
-!.vscode/settings.json
-!.vscode/tasks.json
-!.vscode/launch.json
-
-# Eclipse
-.apt_generated
-.classpath
-.factorypath
-.project
-.settings/
-.springBeans
-.sts4-cache/
-bin/
-!**/src/main/**/bin/
-!**/src/test/**/bin/
-
-# NetBeans
-/nbproject/private/
-/nbbuild/
-/dist/
-/nbdist/
-/.nb-gradle/
-build/
-!**/src/main/**/build/
-!**/src/test/**/build/
 
 # ============================================
 # 操作系统文件
