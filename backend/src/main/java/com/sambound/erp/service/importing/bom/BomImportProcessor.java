@@ -13,6 +13,7 @@ import com.sambound.erp.repository.BomItemRepository;
 import com.sambound.erp.repository.MaterialRepository;
 import com.sambound.erp.repository.UnitRepository;
 import com.sambound.erp.service.importing.dto.BomExcelRow;
+import com.sambound.erp.service.importing.ImportError;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.transaction.support.TransactionTemplate;
@@ -29,6 +30,8 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutorService;
 import java.util.concurrent.atomic.AtomicInteger;
 
 /**
@@ -41,24 +44,29 @@ public class BomImportProcessor {
     private static final int MAX_ERROR_COUNT = 1000;
     private static final int BATCH_QUERY_CHUNK_SIZE = 1000;
     private static final int BOM_BATCH_SIZE = 500;
+    // 流式处理时的批次大小，达到此大小时立即处理
+    private static final int STREAM_BATCH_SIZE = 200;
 
     private final BillOfMaterialRepository bomRepository;
     private final BomItemRepository bomItemRepository;
     private final MaterialRepository materialRepository;
     private final UnitRepository unitRepository;
     private final TransactionTemplate transactionTemplate;
+    private final ExecutorService executorService;
 
     public BomImportProcessor(
             BillOfMaterialRepository bomRepository,
             BomItemRepository bomItemRepository,
             MaterialRepository materialRepository,
             UnitRepository unitRepository,
-            TransactionTemplate transactionTemplate) {
+            TransactionTemplate transactionTemplate,
+            ExecutorService executorService) {
         this.bomRepository = bomRepository;
         this.bomItemRepository = bomItemRepository;
         this.materialRepository = materialRepository;
         this.unitRepository = unitRepository;
         this.transactionTemplate = transactionTemplate;
+        this.executorService = executorService;
     }
 
     /**
@@ -81,7 +89,9 @@ public class BomImportProcessor {
     private class BomDataCollector implements ReadListener<BomExcelRow> {
 
         private final List<BomData> bomDataList = new ArrayList<>();
+        private final List<BomData> currentBatch = new ArrayList<>();
         private final AtomicInteger totalRows = new AtomicInteger(0);
+        private final List<CompletableFuture<BatchResult>> futures = new ArrayList<>();
         private BomHeader currentHeader = null;
 
         @Override
@@ -120,16 +130,158 @@ public class BomImportProcessor {
                         trimToNull(data.getChildBomVersion()),
                         data.getMemo()
                 );
-                bomDataList.add(new BomData(currentHeader, itemData));
+                BomData bomData = new BomData(currentHeader, itemData);
+                bomDataList.add(bomData);
+                currentBatch.add(bomData);
+
+                // 达到批次大小时立即处理
+                if (currentBatch.size() >= STREAM_BATCH_SIZE) {
+                    processBatchImmediately();
+                }
             }
         }
 
         @Override
         public void doAfterAllAnalysed(AnalysisContext context) {
             logger.info("BOM 数据收集完成，共 {} 条明细记录", bomDataList.size());
+            // 处理剩余数据
+            if (!currentBatch.isEmpty()) {
+                processBatchImmediately();
+            }
+        }
+
+        /**
+         * 立即处理当前批次（流式处理）
+         */
+        private void processBatchImmediately() {
+            if (currentBatch.isEmpty()) {
+                return;
+            }
+
+            List<BomData> batchToProcess = new ArrayList<>(currentBatch);
+            currentBatch.clear();
+
+            logger.debug("流式处理 BOM 批次，共 {} 条数据", batchToProcess.size());
+
+            // 异步处理批次
+            CompletableFuture<BatchResult> future = CompletableFuture.supplyAsync(() -> {
+                try {
+                    return processBatch(batchToProcess);
+                } catch (Exception e) {
+                    logger.error("批次处理异常", e);
+                    return new BatchResult(0, List.of(new ImportError(
+                            "BOM", 0, null, "批次处理异常: " + e.getMessage())));
+                }
+            }, BomImportProcessor.this.executorService);
+            futures.add(future);
+        }
+
+        /**
+         * 处理单个批次
+         */
+        private BatchResult processBatch(List<BomData> batch) {
+            // 使用原有的导入逻辑处理批次
+            // 这里需要调用原有的 importToDatabase 中的逻辑，但只处理当前批次
+            List<ImportError> errors = new ArrayList<>();
+            AtomicInteger successCount = new AtomicInteger(0);
+
+            // 在事务中处理批次
+            int batchSuccess = transactionTemplate.execute(status ->
+                    importBatchBoms(batch, errors)
+            );
+
+            return new BatchResult(batchSuccess, errors);
+        }
+
+        /**
+         * 导入批次 BOM 数据
+         */
+        private int importBatchBoms(List<BomData> batch, List<ImportError> errors) {
+            // 构建 BOM 数据结构
+            Map<BomHeader, List<BomItemData>> bomGroups = new LinkedHashMap<>();
+            for (BomData data : batch) {
+                bomGroups.computeIfAbsent(data.header(), k -> new ArrayList<>()).add(data.item());
+            }
+
+            if (bomGroups.isEmpty()) {
+                return 0;
+            }
+
+            // 预加载当前批次需要的数据
+            Map<String, Material> materialCache = new HashMap<>();
+            Map<String, Unit> unitCache = new HashMap<>();
+            preloadMaterialsAndUnits(bomGroups, materialCache, unitCache);
+            Map<String, BillOfMaterial> existingBomMap = preloadExistingBoms(bomGroups, materialCache);
+
+            List<Map.Entry<BomHeader, List<BomItemData>>> bomList = new ArrayList<>(bomGroups.entrySet());
+
+            // 转换错误列表
+            List<BomImportResponse.ImportError> itemErrors = new ArrayList<>();
+
+            // 在事务中处理批次
+            BatchImportResult result = transactionTemplate.execute(status ->
+                    importBatchBoms(bomList, materialCache, unitCache, existingBomMap, itemErrors)
+            );
+
+            // 转换错误回 ImportError（BomImportResponse.ImportError 使用 sheetName 而不是 section）
+            errors.addAll(itemErrors.stream()
+                    .map(e -> new ImportError(
+                            e.sheetName() != null ? e.sheetName() : "BOM",
+                            e.rowNumber() != null ? e.rowNumber() : 0,
+                            e.field(),
+                            e.message()))
+                    .toList());
+
+            return result != null ? result.bomSuccessCount() : 0;
+        }
+
+        /**
+         * 等待所有批次完成
+         */
+        private void waitForBatches(AtomicInteger successCount, List<ImportError> errors) {
+            for (CompletableFuture<BatchResult> future : futures) {
+                try {
+                    BatchResult result = future.get();
+                    successCount.addAndGet(result.successCount());
+                    errors.addAll(result.errors());
+                } catch (Exception e) {
+                    logger.error("获取批次处理结果失败", e);
+                }
+            }
+        }
+
+        /**
+         * 批次处理结果
+         */
+        private record BatchResult(int successCount, List<ImportError> errors) {
         }
 
         public BomImportResponse importToDatabase() {
+            // 如果有流式处理的批次，等待它们完成
+            if (!futures.isEmpty()) {
+                List<ImportError> errors = new ArrayList<>();
+                AtomicInteger successCount = new AtomicInteger(0);
+                waitForBatches(successCount, errors);
+
+                int totalBomCount = bomDataList.size();
+                List<BomImportResponse.ImportError> bomErrors = errors.stream()
+                        .map(e -> new BomImportResponse.ImportError(
+                                e.getSection() != null ? e.getSection() : "BOM",
+                                e.getRowNumber(),
+                                e.getField(),
+                                e.getMessage()))
+                        .collect(java.util.stream.Collectors.toList());
+
+                return new BomImportResponse(
+                        new BomImportResponse.BomImportResult(
+                                totalBomCount,
+                                successCount.get(),
+                                totalBomCount - successCount.get(),
+                                bomErrors),
+                        new BomImportResponse.BomItemImportResult(0, 0, 0, new ArrayList<>())
+                );
+            }
+
             if (bomDataList.isEmpty()) {
                 logger.info("未找到 BOM 数据");
                 return new BomImportResponse(

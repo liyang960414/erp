@@ -74,7 +74,7 @@ public abstract class AbstractImportService<R> {
             
             Path tempFile = writeToTempFile(file.getInputStream(), fileName);
             try (InputStream inputStream = Files.newInputStream(tempFile)) {
-                R result = importFromInputStream(inputStream, fileName, fileSize);
+                R result = importFromInputStream(inputStream, fileName, fileSize, tempFile);
                 logImportResult(result, context);
                 return result;
             } finally {
@@ -117,7 +117,7 @@ public abstract class AbstractImportService<R> {
             
             Path tempFile = writeToTempFile(new java.io.ByteArrayInputStream(fileBytes), fileName);
             try (InputStream inputStream = Files.newInputStream(tempFile)) {
-                R result = importFromInputStream(inputStream, fileName, fileSize);
+                R result = importFromInputStream(inputStream, fileName, fileSize, tempFile);
                 logImportResult(result, context);
                 return result;
             } finally {
@@ -141,6 +141,25 @@ public abstract class AbstractImportService<R> {
      * @return 导入结果
      */
     protected abstract R importFromInputStream(InputStream inputStream, String fileName, long fileSize) throws Exception;
+
+    /**
+     * 从输入流执行导入（支持多 sheet 读取）
+     * 如果 Processor 需要读取多个 sheet，可以使用此方法，临时文件路径会保存在 context 中
+     *
+     * @param inputStream 输入流
+     * @param fileName    文件名
+     * @param fileSize    文件大小
+     * @param tempFile    临时文件路径
+     * @return 导入结果
+     */
+    protected R importFromInputStream(InputStream inputStream, String fileName, long fileSize, Path tempFile) throws Exception {
+        // 将临时文件路径保存到 context，供子类使用
+        ImportContext context = getCurrentContext();
+        if (context != null) {
+            context.setAttribute("tempFile", tempFile);
+        }
+        return importFromInputStream(inputStream, fileName, fileSize);
+    }
 
     /**
      * 记录导入结果（子类可以覆盖以提供更详细的日志）

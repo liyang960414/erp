@@ -48,6 +48,8 @@ public class SubReqOrderImportProcessor implements ReadListener<SubReqOrderExcel
     private static final int MAX_ERROR_COUNT = 1000;
     private static final int BATCH_SIZE = 100;
     private static final int MAX_CONCURRENT_BATCHES = 10;
+    // 流式处理时的批次大小，达到此大小时立即处理
+    private static final int STREAM_BATCH_SIZE = 200;
 
     private final SubReqOrderRepository subReqOrderRepository;
     private final SubReqOrderItemRepository subReqOrderItemRepository;
@@ -59,7 +61,9 @@ public class SubReqOrderImportProcessor implements ReadListener<SubReqOrderExcel
     private final ExecutorService executorService;
 
     private final List<SubReqOrderData> orderDataList = new ArrayList<>();
+    private final List<SubReqOrderData> currentBatch = new ArrayList<>();
     private final AtomicInteger totalRows = new AtomicInteger(0);
+    private final List<CompletableFuture<BatchResult>> futures = new ArrayList<>();
     private SubReqOrderHeader currentHeader;
 
     public SubReqOrderImportProcessor(SubReqOrderRepository subReqOrderRepository,
@@ -139,7 +143,14 @@ public class SubReqOrderImportProcessor implements ReadListener<SubReqOrderExcel
                         data.getPickMtrlStatus(),
                         data.getDescription()
                 );
-                orderDataList.add(new SubReqOrderData(currentHeader, itemHeader));
+                SubReqOrderData orderData = new SubReqOrderData(currentHeader, itemHeader);
+                orderDataList.add(orderData);
+                currentBatch.add(orderData);
+
+                // 达到批次大小时立即处理
+                if (currentBatch.size() >= STREAM_BATCH_SIZE) {
+                    processBatchImmediately();
+                }
             }
         }
     }
@@ -147,22 +158,47 @@ public class SubReqOrderImportProcessor implements ReadListener<SubReqOrderExcel
     @Override
     public void doAfterAllAnalysed(AnalysisContext context) {
         logger.info("委外订单数据收集完成，共 {} 条订单明细数据", orderDataList.size());
+        // 处理剩余数据
+        if (!currentBatch.isEmpty()) {
+            processBatchImmediately();
+        }
     }
 
-    private SubReqOrderImportResponse importToDatabase() {
-        if (orderDataList.isEmpty()) {
-            logger.info("未找到委外订单数据");
-            return new SubReqOrderImportResponse(
-                    new SubReqOrderImportResponse.SubReqOrderImportResult(0, 0, 0, new ArrayList<>())
-            );
+    /**
+     * 立即处理当前批次（流式处理）
+     */
+    private void processBatchImmediately() {
+        if (currentBatch.isEmpty()) {
+            return;
         }
 
-        long startTime = System.currentTimeMillis();
-        int estimatedOrderCount = Math.max(1000, orderDataList.size() / 10);
-        Map<Integer, SubReqOrderHeader> headerMap = new LinkedHashMap<>(estimatedOrderCount);
-        Map<Integer, Map<Integer, SubReqOrderItemHeader>> itemHeaderMap = new LinkedHashMap<>(estimatedOrderCount);
+        List<SubReqOrderData> batchToProcess = new ArrayList<>(currentBatch);
+        currentBatch.clear();
 
-        for (SubReqOrderData data : orderDataList) {
+        logger.debug("流式处理委外订单批次，共 {} 条数据", batchToProcess.size());
+
+        // 异步处理批次
+        CompletableFuture<BatchResult> future = CompletableFuture.supplyAsync(() -> {
+            try {
+                return processBatch(batchToProcess);
+            } catch (Exception e) {
+                logger.error("批次处理异常", e);
+                return new BatchResult(0, List.of(new ImportError(
+                        "委外订单", 0, null, "批次处理异常: " + e.getMessage())));
+            }
+        }, executorService);
+        futures.add(future);
+    }
+
+    /**
+     * 处理单个批次
+     */
+    private BatchResult processBatch(List<SubReqOrderData> batch) {
+        // 构建订单数据结构（与原有逻辑类似）
+        Map<Integer, SubReqOrderHeader> headerMap = new LinkedHashMap<>();
+        Map<Integer, Map<Integer, SubReqOrderItemHeader>> itemHeaderMap = new LinkedHashMap<>();
+
+        for (SubReqOrderData data : batch) {
             if (data == null || data.header() == null || data.itemHeader() == null) {
                 continue;
             }
@@ -195,78 +231,51 @@ public class SubReqOrderImportProcessor implements ReadListener<SubReqOrderExcel
             items.putIfAbsent(sequence, itemHeader);
         }
 
-        int totalOrderCount = headerMap.size();
-        int totalItemCount = itemHeaderMap.values().stream().mapToInt(Map::size).sum();
-        logger.info("找到 {} 个订单，{} 条明细，开始导入到数据库", totalOrderCount, totalItemCount);
-
-        if (totalOrderCount == 0) {
-            logger.info("未收集到有效的委外订单");
-            return new SubReqOrderImportResponse(
-                    new SubReqOrderImportResponse.SubReqOrderImportResult(0, 0, 0, new ArrayList<>())
-            );
+        if (headerMap.isEmpty()) {
+            return new BatchResult(0, List.of());
         }
 
-        List<ImportError> errors = Collections.synchronizedList(new ArrayList<>());
+        List<ImportError> errors = new ArrayList<>();
         AtomicInteger successCount = new AtomicInteger(0);
 
+        // 预加载当前批次需要的数据
         Map<String, Supplier> supplierCache = preloadSuppliers(itemHeaderMap, errors);
         Map<String, Material> materialCache = new HashMap<>();
         Map<String, Unit> unitCache = new HashMap<>();
         Map<String, BillOfMaterial> bomCache = new HashMap<>();
         preloadMaterialsUnitsAndBoms(itemHeaderMap, materialCache, unitCache, bomCache);
-
         Map<Integer, SubReqOrder> existingOrderMap = preloadExistingOrders(headerMap.keySet());
 
         List<Map.Entry<Integer, Map<Integer, SubReqOrderItemHeader>>> orderList =
                 new ArrayList<>(itemHeaderMap.entrySet());
 
-        List<CompletableFuture<BatchResult>> futures = new ArrayList<>();
-        Semaphore batchSemaphore = new Semaphore(MAX_CONCURRENT_BATCHES);
-        int totalBatches = (orderList.size() + BATCH_SIZE - 1) / BATCH_SIZE;
+        // 在事务中处理批次
+        int batchSuccess = transactionTemplate.execute(status ->
+                importBatchOrders(orderList, headerMap,
+                        supplierCache, materialCache, unitCache, bomCache,
+                        existingOrderMap, errors)
+        );
 
-        for (int i = 0; i < orderList.size(); i += BATCH_SIZE) {
-            int end = Math.min(i + BATCH_SIZE, orderList.size());
-            List<Map.Entry<Integer, Map<Integer, SubReqOrderItemHeader>>> batch =
-                    new ArrayList<>(orderList.subList(i, end));
-            int batchIndex = (i / BATCH_SIZE) + 1;
+        return new BatchResult(batchSuccess, errors);
+    }
 
-            CompletableFuture<BatchResult> future = CompletableFuture.supplyAsync(() -> {
-                try {
-                    batchSemaphore.acquire();
-                    try {
-                        long batchStartTime = System.currentTimeMillis();
-                        logger.info("处理委外订单批次 {}/{}，订单数量: {}", batchIndex, totalBatches, batch.size());
-
-                        int batchSuccess = transactionTemplate.execute(status ->
-                                importBatchOrders(batch, headerMap,
-                                        supplierCache, materialCache, unitCache, bomCache,
-                                        existingOrderMap, errors)
-                        );
-
-                        long batchDuration = System.currentTimeMillis() - batchStartTime;
-                        logger.info("批次 {}/{} 完成，耗时: {}ms，成功: {} 条",
-                                batchIndex, totalBatches, batchDuration, batchSuccess);
-
-                        return new BatchResult(batchSuccess, List.of());
-                    } finally {
-                        batchSemaphore.release();
-                    }
-                } catch (InterruptedException e) {
-                    Thread.currentThread().interrupt();
-                    logger.warn("批次 {} 处理被中断", batchIndex);
-                    return new BatchResult(0, buildBatchErrors(batch, headerMap, "批次处理被中断"));
-                } catch (Exception e) {
-                    logger.error("批次 {} 导入失败", batchIndex, e);
-                    return new BatchResult(0, buildBatchErrors(batch, headerMap, "批次导入失败: " + e.getMessage()));
-                }
-            }, executorService);
-
-            futures.add(future);
+    private SubReqOrderImportResponse importToDatabase() {
+        if (futures.isEmpty()) {
+            logger.info("未找到委外订单数据");
+            return new SubReqOrderImportResponse(
+                    new SubReqOrderImportResponse.SubReqOrderImportResult(0, 0, 0, new ArrayList<>())
+            );
         }
 
+        long startTime = System.currentTimeMillis();
+        List<ImportError> errors = Collections.synchronizedList(new ArrayList<>());
+        AtomicInteger successCount = new AtomicInteger(0);
+
+        // 等待所有异步批次完成
         waitForBatches(futures, successCount, errors);
 
         long totalDuration = System.currentTimeMillis() - startTime;
+        int totalOrderCount = orderDataList.size();
         logger.info("委外订单导入完成：总耗时 {}ms，总计 {} 条，成功 {} 条，失败 {} 条",
                 totalDuration, totalOrderCount, successCount.get(), totalOrderCount - successCount.get());
 

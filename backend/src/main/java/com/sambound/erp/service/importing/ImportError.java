@@ -1,10 +1,13 @@
 package com.sambound.erp.service.importing;
 
+import lombok.Getter;
+
 import java.util.Objects;
 
 /**
  * 导入错误信息，记录所在模块、行号、字段及详细描述。
  */
+@Getter
 public final class ImportError {
 
     private final String section;
@@ -30,30 +33,6 @@ public final class ImportError {
         this.message = message;
         this.errorType = errorType == null ? ErrorType.DATA_ERROR : errorType;
         this.errorCode = errorCode;
-    }
-
-    public String getSection() {
-        return section;
-    }
-
-    public int getRowNumber() {
-        return rowNumber;
-    }
-
-    public String getField() {
-        return field;
-    }
-
-    public String getMessage() {
-        return message;
-    }
-
-    public ErrorType getErrorType() {
-        return errorType;
-    }
-
-    public String getErrorCode() {
-        return errorCode;
     }
 
     @Override

@@ -10,6 +10,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.PlatformTransactionManager;
 
 import java.io.InputStream;
+import java.nio.file.Files;
+import java.nio.file.Path;
 
 @Service
 public class MaterialImportService extends AbstractImportService<MaterialImportResponse> {
@@ -38,6 +40,17 @@ public class MaterialImportService extends AbstractImportService<MaterialImportR
                 transactionTemplate,
                 executorService
         );
+        
+        // 如果 context 中有临时文件路径，使用 Path 方式（支持多 sheet 读取）
+        // 否则使用 InputStream 方式（兼容旧代码）
+        var context = getCurrentContext();
+        if (context != null && context.containsAttribute("tempFile")) {
+            Path tempFile = context.getAttribute("tempFile");
+            if (tempFile != null) {
+                return processor.process(tempFile);
+            }
+        }
+        
         return processor.process(inputStream);
     }
 

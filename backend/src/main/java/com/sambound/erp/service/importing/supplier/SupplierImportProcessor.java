@@ -16,15 +16,8 @@ import org.springframework.transaction.support.TransactionTemplate;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import java.util.Map;
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Semaphore;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.TimeoutException;
+import java.util.*;
+import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 
@@ -112,7 +105,8 @@ public class SupplierImportProcessor implements ReadListener<SupplierExcelRow> {
         long startTime = System.currentTimeMillis();
         List<ImportError> errors = Collections.synchronizedList(new ArrayList<>());
         AtomicInteger successCount = new AtomicInteger(0);
-        Map<String, Supplier> existingSupplierMap = preloadExistingSuppliers();
+        // 改为按需查询，不再一次性加载所有供应商
+        Map<String, Supplier> existingSupplierMap = new ConcurrentHashMap<>();
 
         List<List<SupplierData>> batches = partition(supplierDataList, batchSize);
         List<CompletableFuture<BatchResult>> futures = new ArrayList<>();
@@ -177,6 +171,20 @@ public class SupplierImportProcessor implements ReadListener<SupplierExcelRow> {
                             List<ImportError> errors) {
         int successCount = 0;
 
+        // 批量查询当前批次需要的供应商（按需查询）
+        Set<String> codesToQuery = batch.stream()
+                .map(SupplierData::code)
+                .filter(code -> !existingSupplierMap.containsKey(code))
+                .collect(Collectors.toSet());
+
+        if (!codesToQuery.isEmpty()) {
+            // 批量查询供应商
+            List<Supplier> suppliers = supplierRepository.findByCodeIn(new ArrayList<>(codesToQuery));
+            for (Supplier supplier : suppliers) {
+                existingSupplierMap.put(supplier.getCode(), supplier);
+            }
+        }
+
         for (SupplierData data : batch) {
             try {
                 Supplier existing = existingSupplierMap.get(data.code());
@@ -210,11 +218,6 @@ public class SupplierImportProcessor implements ReadListener<SupplierExcelRow> {
         }
 
         return successCount;
-    }
-
-    private Map<String, Supplier> preloadExistingSuppliers() {
-        List<Supplier> suppliers = supplierRepository.findAll();
-        return suppliers.stream().collect(Collectors.toMap(Supplier::getCode, supplier -> supplier));
     }
 
     private void waitForBatches(List<CompletableFuture<BatchResult>> futures,

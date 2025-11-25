@@ -52,6 +52,8 @@ public class SaleOutstockImportProcessor {
     private static final int BATCH_SIZE = 500;
     private static final int IMPORT_BATCH_SIZE = 50;
     private static final int MAX_CONCURRENT_IMPORTS = 10;
+    // 流式处理时的批次大小，达到此大小时立即处理
+    private static final int STREAM_BATCH_SIZE = 200;
 
     private final SaleOutstockRepository saleOutstockRepository;
     private final SaleOrderItemRepository saleOrderItemRepository;
@@ -103,8 +105,10 @@ public class SaleOutstockImportProcessor {
     private class SaleOutstockDataCollector implements ReadListener<SaleOutstockExcelRow> {
 
         private final List<SaleOutstockData> outstockDataList = new ArrayList<>();
+        private final List<SaleOutstockData> currentBatch = new ArrayList<>();
         private final Map<Integer, String> billNoByRowNumber = new ConcurrentHashMap<>();
         private final AtomicInteger totalRows = new AtomicInteger(0);
+        private final List<Future<BatchResult>> futures = new ArrayList<>();
         private SaleOutstockHeader currentHeader = null;
 
         @Override
@@ -155,9 +159,16 @@ public class SaleOutstockImportProcessor {
                         saleOrderEntryId
                 );
 
-                outstockDataList.add(new SaleOutstockData(currentHeader, item));
+                SaleOutstockData outstockData = new SaleOutstockData(currentHeader, item);
+                outstockDataList.add(outstockData);
+                currentBatch.add(outstockData);
                 if (currentBillNo != null) {
                     billNoByRowNumber.put(item.rowNumber(), currentBillNo);
+                }
+
+                // 达到批次大小时立即处理
+                if (currentBatch.size() >= STREAM_BATCH_SIZE) {
+                    processBatchImmediately();
                 }
             }
         }
@@ -165,9 +176,167 @@ public class SaleOutstockImportProcessor {
         @Override
         public void doAfterAllAnalysed(AnalysisContext context) {
             logger.info("销售出库数据收集完成，共 {} 条出库明细数据", outstockDataList.size());
+            // 处理剩余数据
+            if (!currentBatch.isEmpty()) {
+                processBatchImmediately();
+            }
+        }
+
+        /**
+         * 立即处理当前批次（流式处理）
+         */
+        private void processBatchImmediately() {
+            if (currentBatch.isEmpty()) {
+                return;
+            }
+
+            List<SaleOutstockData> batchToProcess = new ArrayList<>(currentBatch);
+            currentBatch.clear();
+
+            logger.debug("流式处理销售出库批次，共 {} 条数据", batchToProcess.size());
+
+            // 异步处理批次
+            Future<BatchResult> future = executorService.submit(() -> {
+                try {
+                    return processBatch(batchToProcess);
+                } catch (Exception e) {
+                    logger.error("批次处理异常", e);
+                    return new BatchResult(0, List.of(new ImportError(
+                            "销售出库", 0, null, "批次处理异常: " + e.getMessage())));
+                }
+            });
+            futures.add(future);
+        }
+
+        /**
+         * 处理单个批次
+         */
+        private BatchResult processBatch(List<SaleOutstockData> batch) {
+            // 构建出库数据结构
+            Map<SaleOutstockHeader, List<SaleOutstockItemData>> outstockGroups = new LinkedHashMap<>();
+            for (SaleOutstockData data : batch) {
+                outstockGroups.computeIfAbsent(data.header(), k -> new ArrayList<>()).add(data.item());
+            }
+
+            if (outstockGroups.isEmpty()) {
+                return new BatchResult(0, List.of());
+            }
+
+            List<ImportError> errors = new ArrayList<>();
+            AtomicInteger successCount = new AtomicInteger(0);
+
+            // 在事务中处理批次
+            int batchSuccess = transactionTemplate.execute(status ->
+                    importBatchOutstocks(outstockGroups, errors)
+            );
+
+            return new BatchResult(batchSuccess, errors);
+        }
+
+        /**
+         * 导入批次出库数据
+         */
+        private int importBatchOutstocks(Map<SaleOutstockHeader, List<SaleOutstockItemData>> outstockGroups,
+                                         List<ImportError> errors) {
+            // 使用原有的处理逻辑，但只处理当前批次
+            int successCount = 0;
+            Set<Long> saleOrdersToRefresh = ConcurrentHashMap.newKeySet();
+            ConcurrentHashMap<Integer, ReentrantLock> sequenceLocks = new ConcurrentHashMap<>();
+
+            List<Map.Entry<SaleOutstockHeader, List<SaleOutstockItemData>>> entries =
+                    new ArrayList<>(outstockGroups.entrySet());
+
+            for (Map.Entry<SaleOutstockHeader, List<SaleOutstockItemData>> entry : entries) {
+                if (errors.size() >= MAX_ERROR_COUNT) {
+                    break;
+                }
+
+                SaleOutstockHeader header = entry.getKey();
+                List<SaleOutstockItemData> items = entry.getValue();
+
+                try {
+                    Set<Long> affectedSaleOrders = transactionTemplate.execute(status ->
+                            processOutstock(header, items, sequenceLocks));
+                    if (affectedSaleOrders != null) {
+                        saleOrdersToRefresh.addAll(affectedSaleOrders);
+                    }
+                    successCount++;
+                } catch (Exception e) {
+                    Throwable cause = e.getCause() != null ? e.getCause() : e;
+                    if (cause instanceof ImportException importException) {
+                        errors.add(new ImportError(
+                                "销售出库", importException.rowNumber, importException.field, importException.getMessage()));
+                    } else {
+                        logger.error("导入销售出库单失败", cause);
+                        errors.add(new ImportError(
+                                "销售出库", header.rowNumber(), "单据编号", "导入失败: " + cause.getMessage()));
+                    }
+                }
+            }
+
+            // 刷新销售订单状态
+            if (!saleOrdersToRefresh.isEmpty()) {
+                try {
+                    Map<Long, Integer> saleOrderFirstRowMap = new ConcurrentHashMap<>();
+                    if (!entries.isEmpty()) {
+                        saleOrdersToRefresh.forEach(id -> saleOrderFirstRowMap.put(id, entries.get(0).getKey().rowNumber()));
+                    }
+                    refreshSaleOrderStatus(saleOrdersToRefresh, saleOrderFirstRowMap);
+                } catch (ImportException e) {
+                    errors.add(new ImportError("销售出库", e.rowNumber, e.field, e.getMessage()));
+                }
+            }
+
+            return successCount;
+        }
+
+        /**
+         * 等待所有批次完成
+         */
+        private void waitForBatches(AtomicInteger successCount, List<ImportError> errors) {
+            for (Future<BatchResult> future : futures) {
+                try {
+                    BatchResult result = future.get();
+                    successCount.addAndGet(result.successCount());
+                    errors.addAll(result.errors());
+                } catch (Exception e) {
+                    logger.error("获取批次处理结果失败", e);
+                }
+            }
+        }
+
+        /**
+         * 批次处理结果
+         */
+        private record BatchResult(int successCount, List<ImportError> errors) {
         }
 
         public SaleOutstockImportResponse importToDatabase() {
+            if (futures.isEmpty() && outstockDataList.isEmpty()) {
+                logger.info("未找到销售出库数据");
+                return new SaleOutstockImportResponse(
+                        new SaleOutstockImportResponse.SaleOutstockImportResult(0, 0, 0, new ArrayList<>())
+                );
+            }
+
+            // 如果有流式处理的批次，等待它们完成
+            if (!futures.isEmpty()) {
+                List<ImportError> errors = Collections.synchronizedList(new ArrayList<>());
+                AtomicInteger successCount = new AtomicInteger(0);
+                waitForBatches(successCount, errors);
+
+                int totalOutstockCount = outstockDataList.size();
+                return new SaleOutstockImportResponse(
+                        new SaleOutstockImportResponse.SaleOutstockImportResult(
+                                totalOutstockCount,
+                                successCount.get(),
+                                totalOutstockCount - successCount.get(),
+                                new ArrayList<>(errors)
+                        )
+                );
+            }
+
+            // 如果没有流式处理批次，使用原有逻辑（兼容）
             if (outstockDataList.isEmpty()) {
                 logger.info("未找到销售出库数据");
                 return new SaleOutstockImportResponse(

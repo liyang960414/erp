@@ -16,7 +16,6 @@ import org.springframework.transaction.PlatformTransactionManager;
 import org.springframework.transaction.TransactionDefinition;
 import org.springframework.transaction.support.TransactionTemplate;
 
-import java.io.ByteArrayInputStream;
 import java.io.InputStream;
 import java.math.BigDecimal;
 import java.util.*;
@@ -29,6 +28,8 @@ public class UnitImportProcessor {
 
     // 批次大小：每批处理100条记录
     private static final int BATCH_SIZE = 100;
+    // 流式处理时的批次大小，达到此大小时立即处理
+    private static final int STREAM_BATCH_SIZE = 200;
 
     private final UnitService unitService;
     private final UnitRepository unitRepository;
@@ -57,31 +58,35 @@ public class UnitImportProcessor {
     }
 
     /**
-     * 从字节数组处理导入（兼容旧代码）
+     * 从输入流处理导入（流式分批处理）
+     * 先收集单位组编码并预加载，然后流式处理单位数据
      */
     public UnitImportResponse process(InputStream inputStream) {
+        CombinedCollector collector = new CombinedCollector();
         try {
-            // 第一遍读取：收集所有唯一的单位组编码
-            UnitGroupCollector collector = new UnitGroupCollector();
+            // 使用 CombinedCollector 收集单位组编码和流式处理单位数据
             FastExcel.read(inputStream, UnitExcelRow.class, collector)
                     .sheet()
                     .headRowNumber(2)
                     .doRead();
+        } catch (Exception e) {
+            logger.error("Excel文件读取失败", e);
+            throw new RuntimeException("Excel文件读取失败: " + e.getMessage(), e);
+        }
 
-            // 预加载单位组到数据库
-            Map<String, UnitGroup> unitGroupCache = collector.preloadAndCache();
-            logger.info("预加载了 {} 个单位组", unitGroupCache.size());
-
-            // 第二遍读取：导入单位数据
-            UnitDataImporter importer = new UnitDataImporter(unitGroupCache);
-            FastExcel.read(inputStream, UnitExcelRow.class, importer)
-                    .sheet()
-                    .headRowNumber(2)
-                    .doRead();
-
-            // 等待所有异步批次处理完成
+        try {
+            // doAfterAllAnalysed 已经处理了预加载和导入器创建
+            // 但如果文件为空或格式错误，doAfterAllAnalysed 可能没有被调用
+            // 确保 importer 被初始化
+            UnitDataImporter importer = collector.getImporter();
+            if (importer == null) {
+                // 如果没有数据，创建一个空的导入器并返回空结果
+                logger.warn("没有数据需要导入，返回空结果");
+                Map<String, UnitGroup> emptyCache = new HashMap<>();
+                importer = new UnitDataImporter(emptyCache);
+            }
+            
             importer.waitForCompletion();
-
             return importer.getResult();
         } catch (Exception e) {
             logger.error("Excel文件导入失败", e);
@@ -90,16 +95,21 @@ public class UnitImportProcessor {
     }
 
     /**
-     * 单位组收集器（第一遍读取）
+     * 组合收集器：单次读取同时收集单位组编码和单位数据
+     * 由于需要先预加载单位组，所以先收集所有数据，然后在 doAfterAllAnalysed 中分批处理
      */
-    private class UnitGroupCollector implements ReadListener<UnitExcelRow> {
+    private class CombinedCollector implements ReadListener<UnitExcelRow> {
         private final Map<String, String> unitGroupMap = new HashMap<>();
+        private final List<UnitExcelRow> allRows = new ArrayList<>();
         private final AtomicInteger totalRows = new AtomicInteger(0);
+        private UnitDataImporter importer;
+        private Map<String, UnitGroup> unitGroupCache;
 
         @Override
         public void invoke(UnitExcelRow data, AnalysisContext context) {
             totalRows.incrementAndGet();
 
+            // 收集单位组编码
             String unitGroupCode = data.getUnitGroupCode();
             String unitGroupName = data.getUnitGroupName();
 
@@ -111,12 +121,45 @@ public class UnitImportProcessor {
                 // 如果同一个编码有多个名称，保留第一个遇到的名称
                 unitGroupMap.putIfAbsent(code, name);
             }
+
+            // 收集行数据（由于需要先预加载单位组，所以先收集）
+            allRows.add(data);
         }
 
         @Override
         public void doAfterAllAnalysed(AnalysisContext context) {
-            logger.info("第一遍读取完成，共 {} 行数据，收集到 {} 个单位组",
+            logger.info("读取完成，共 {} 行数据，收集到 {} 个单位组",
                     totalRows.get(), unitGroupMap.size());
+            
+            // 先预加载单位组
+            unitGroupCache = preloadAndCache();
+            logger.debug("单位组预加载完成，缓存大小: {}", unitGroupCache.size());
+            
+            // 创建导入器
+            importer = new UnitDataImporter(unitGroupCache);
+            logger.debug("导入器已创建");
+            
+            // 然后分批处理所有数据（流式分批处理）
+            if (!allRows.isEmpty()) {
+                int batchCount = (allRows.size() + STREAM_BATCH_SIZE - 1) / STREAM_BATCH_SIZE;
+                logger.info("开始分批处理 {} 条数据，共 {} 个批次", allRows.size(), batchCount);
+                // 分批处理，每批 STREAM_BATCH_SIZE 条
+                for (int i = 0; i < allRows.size(); i += STREAM_BATCH_SIZE) {
+                    int end = Math.min(i + STREAM_BATCH_SIZE, allRows.size());
+                    List<UnitExcelRow> batch = new ArrayList<>(allRows.subList(i, end));
+                    importer.processBatchImmediately(batch);
+                }
+                allRows.clear();
+            } else {
+                logger.info("没有数据需要处理");
+            }
+        }
+
+        /**
+         * 获取导入器
+         */
+        public UnitDataImporter getImporter() {
+            return importer;
         }
 
         /**
@@ -165,11 +208,10 @@ public class UnitImportProcessor {
     }
 
     /**
-     * 单位数据导入器（第二遍读取）
+     * 单位数据导入器
      */
-    private class UnitDataImporter implements ReadListener<UnitExcelRow> {
+    private class UnitDataImporter {
         private final Map<String, UnitGroup> unitGroupCache;
-        private final List<UnitExcelRow> batch = new ArrayList<>();
         private final List<CompletableFuture<BatchResult>> futures = new ArrayList<>();
         private final AtomicInteger successCount = new AtomicInteger(0);
         private final AtomicInteger totalRows = new AtomicInteger(0);
@@ -179,26 +221,43 @@ public class UnitImportProcessor {
             this.unitGroupCache = unitGroupCache;
         }
 
-        @Override
-        public void invoke(UnitExcelRow data, AnalysisContext context) {
-            totalRows.incrementAndGet();
-
-            // 累积批次
-            batch.add(data);
-            if (batch.size() >= BATCH_SIZE) {
-                // 异步提交批次处理任务
-                processBatchAsync(new ArrayList<>(batch));
-                batch.clear();
+        /**
+         * 立即处理批次（流式处理）
+         */
+        public void processBatchImmediately(List<UnitExcelRow> batch) {
+            if (batch.isEmpty()) {
+                return;
             }
+
+            totalRows.addAndGet(batch.size());
+            logger.debug("流式处理单位批次，共 {} 条数据", batch.size());
+            
+            // 异步提交批次处理任务
+            processBatchAsync(new ArrayList<>(batch));
         }
 
-        @Override
-        public void doAfterAllAnalysed(AnalysisContext context) {
+        /**
+         * 处理所有累积的行数据（兼容方法，已废弃，使用 processBatchImmediately）
+         */
+        @Deprecated
+        public void processAllRows(List<UnitExcelRow> allRows) {
+            totalRows.set(allRows.size());
+            
+            // 按批次处理数据
+            List<UnitExcelRow> batch = new ArrayList<>();
+            for (UnitExcelRow data : allRows) {
+                batch.add(data);
+                if (batch.size() >= BATCH_SIZE) {
+                    // 异步提交批次处理任务
+                    processBatchAsync(new ArrayList<>(batch));
+                    batch.clear();
+                }
+            }
+            
             // 处理剩余数据
             if (!batch.isEmpty()) {
                 processBatchAsync(new ArrayList<>(batch));
             }
-            // 注意：等待操作在外部调用 waitForCompletion() 方法执行
         }
 
         private void processBatchAsync(List<UnitExcelRow> batchData) {

@@ -52,6 +52,8 @@ public class SaleOrderImportProcessor implements ReadListener<SaleOrderExcelRow>
     private static final int MAX_ERROR_COUNT = 1000;
     private static final int BATCH_SIZE = 100;
     private static final int MAX_CONCURRENT_BATCHES = 10;
+    // 流式处理时的批次大小，达到此大小时立即处理
+    private static final int STREAM_BATCH_SIZE = 200;
     private static final DateTimeFormatter DATE_FORMATTER = DateTimeFormatter.ofPattern("yyyy-MM-dd");
     private static final DateTimeFormatter DATETIME_FORMATTER = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm");
 
@@ -65,7 +67,9 @@ public class SaleOrderImportProcessor implements ReadListener<SaleOrderExcelRow>
     private final ExecutorService executorService;
 
     private final List<SaleOrderData> orderDataList = new ArrayList<>();
+    private final List<SaleOrderData> currentBatch = new ArrayList<>();
     private final AtomicInteger totalRows = new AtomicInteger(0);
+    private final List<CompletableFuture<BatchResult>> futures = new ArrayList<>();
     private SaleOrderHeader currentHeader;
 
     public SaleOrderImportProcessor(
@@ -142,29 +146,65 @@ public class SaleOrderImportProcessor implements ReadListener<SaleOrderExcelRow>
                     data.getBomVersion(),
                     data.getEntryNote()
             );
-            orderDataList.add(new SaleOrderData(currentHeader, itemData));
+            SaleOrderData orderData = new SaleOrderData(currentHeader, itemData);
+            orderDataList.add(orderData);
+            currentBatch.add(orderData);
+
+            // 达到批次大小时立即处理
+            if (currentBatch.size() >= STREAM_BATCH_SIZE) {
+                processBatchImmediately();
+            }
         }
     }
 
     @Override
     public void doAfterAllAnalysed(AnalysisContext context) {
         logger.info("销售订单数据收集完成，共 {} 条明细", orderDataList.size());
+        // 处理剩余数据
+        if (!currentBatch.isEmpty()) {
+            processBatchImmediately();
+        }
     }
 
-    private SaleOrderImportResponse importToDatabase() {
-        if (orderDataList.isEmpty()) {
-            return new SaleOrderImportResponse(
-                    new SaleOrderImportResponse.SaleOrderImportResult(0, 0, 0, new ArrayList<>())
-            );
+    /**
+     * 立即处理当前批次（流式处理）
+     */
+    private void processBatchImmediately() {
+        if (currentBatch.isEmpty()) {
+            return;
         }
 
-        long startTime = System.currentTimeMillis();
-        Map<SaleOrderHeader, List<SaleOrderItemData>> orderGroups = groupByHeader(orderDataList);
-        int totalOrderCount = orderGroups.size();
+        List<SaleOrderData> batchToProcess = new ArrayList<>(currentBatch);
+        currentBatch.clear();
 
-        List<ImportError> errors = Collections.synchronizedList(new ArrayList<>());
+        logger.debug("流式处理销售订单批次，共 {} 条数据", batchToProcess.size());
+
+        // 异步处理批次
+        CompletableFuture<BatchResult> future = CompletableFuture.supplyAsync(() -> {
+            try {
+                return processBatch(batchToProcess);
+            } catch (Exception e) {
+                logger.error("批次处理异常", e);
+                return new BatchResult(0, List.of(new ImportError(
+                        "销售订单", 0, null, "批次处理异常: " + e.getMessage())));
+            }
+        }, executorService);
+        futures.add(future);
+    }
+
+    /**
+     * 处理单个批次
+     */
+    private BatchResult processBatch(List<SaleOrderData> batch) {
+        Map<SaleOrderHeader, List<SaleOrderItemData>> orderGroups = groupByHeader(batch);
+        if (orderGroups.isEmpty()) {
+            return new BatchResult(0, List.of());
+        }
+
+        List<ImportError> errors = new ArrayList<>();
         AtomicInteger successCount = new AtomicInteger(0);
 
+        // 预加载当前批次需要的数据
         Map<String, Customer> customerCache = preloadAndCreateCustomers(orderGroups, errors);
         Map<String, Material> materialCache = new HashMap<>();
         Map<String, Unit> unitCache = new HashMap<>();
@@ -174,51 +214,31 @@ public class SaleOrderImportProcessor implements ReadListener<SaleOrderExcelRow>
         List<Map.Entry<SaleOrderHeader, List<SaleOrderItemData>>> orderList =
                 new ArrayList<>(orderGroups.entrySet());
 
-        List<CompletableFuture<BatchResult>> futures = new ArrayList<>();
-        Semaphore batchSemaphore = new Semaphore(MAX_CONCURRENT_BATCHES);
-        int totalBatches = (orderList.size() + BATCH_SIZE - 1) / BATCH_SIZE;
+        // 在事务中处理批次
+        int batchSuccess = transactionTemplate.execute(status ->
+                importBatchOrders(orderList, customerCache, materialCache, unitCache,
+                        existingOrderMap, errors)
+        );
 
-        for (int i = 0; i < orderList.size(); i += BATCH_SIZE) {
-            int end = Math.min(i + BATCH_SIZE, orderList.size());
-            List<Map.Entry<SaleOrderHeader, List<SaleOrderItemData>>> batch =
-                    new ArrayList<>(orderList.subList(i, end));
-            int batchIndex = (i / BATCH_SIZE) + 1;
+        return new BatchResult(batchSuccess, errors);
+    }
 
-            CompletableFuture<BatchResult> future = CompletableFuture.supplyAsync(() -> {
-                try {
-                    batchSemaphore.acquire();
-                    try {
-                        long batchStartTime = System.currentTimeMillis();
-                        logger.info("处理销售订单批次 {}/{}，订单数量: {}", batchIndex, totalBatches, batch.size());
-
-                        int batchSuccess = transactionTemplate.execute(status ->
-                                importBatchOrders(batch, customerCache, materialCache, unitCache, existingOrderMap, errors)
-                        );
-
-                        long batchDuration = System.currentTimeMillis() - batchStartTime;
-                        logger.info("批次 {}/{} 完成，耗时: {}ms，成功: {} 条",
-                                batchIndex, totalBatches, batchDuration, batchSuccess);
-
-                        return new BatchResult(batchSuccess, List.of());
-                    } finally {
-                        batchSemaphore.release();
-                    }
-                } catch (InterruptedException e) {
-                    Thread.currentThread().interrupt();
-                    logger.warn("批次 {} 处理被中断", batchIndex);
-                    return new BatchResult(0, buildBatchErrors(batch, "批次处理被中断"));
-                } catch (Exception e) {
-                    logger.error("批次 {} 导入失败", batchIndex, e);
-                    return new BatchResult(0, buildBatchErrors(batch, "批次导入失败: " + e.getMessage()));
-                }
-            }, executorService);
-
-            futures.add(future);
+    private SaleOrderImportResponse importToDatabase() {
+        if (futures.isEmpty()) {
+            return new SaleOrderImportResponse(
+                    new SaleOrderImportResponse.SaleOrderImportResult(0, 0, 0, new ArrayList<>())
+            );
         }
 
+        long startTime = System.currentTimeMillis();
+        List<ImportError> errors = Collections.synchronizedList(new ArrayList<>());
+        AtomicInteger successCount = new AtomicInteger(0);
+
+        // 等待所有异步批次完成
         waitForBatches(futures, successCount, errors);
 
         long totalDuration = System.currentTimeMillis() - startTime;
+        int totalOrderCount = orderDataList.size();
         logger.info("销售订单导入完成：总耗时 {}ms，总计 {} 条，成功 {} 条，失败 {} 条",
                 totalDuration, totalOrderCount, successCount.get(), totalOrderCount - successCount.get());
 

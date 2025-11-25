@@ -74,6 +74,8 @@ logging:
   file:
     # 直接使用环境变量，避免循环引用。如需配置可通过环境变量 LOGGING_FILE_NAME 设置
     name: ${LOGGING_FILE_NAME:./logs/erp.log}
+  pattern:
+    console: '%d{yyyy-MM-dd HH:mm:ss.SSS} [%thread] %highlight(%-5level) %cyan(%logger{40}) : %msg%n'
   logback:
     rollingpolicy:
       # 使用环境变量避免循环引用

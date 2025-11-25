@@ -41,7 +41,8 @@ public class BomImportService extends AbstractImportService<BomImportResponse> {
                 bomItemRepository,
                 materialRepository,
                 unitRepository,
-                transactionTemplate
+                transactionTemplate,
+                executorService
         );
         return processor.process(inputStream);
     }
